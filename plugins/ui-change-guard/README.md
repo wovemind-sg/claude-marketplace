@@ -34,7 +34,9 @@ Base · files · pages reviewed · tests · perf measured
 
 Each Blocker names the page and element in user terms, the file:line, the evidence (grep hit, test output, measurement), and the smallest action that makes it safe.
 
-### `/ui-change-guard:engineer-review-ui-change [PR number or URL]`
+### `/ui-change-guard:engineer-review-ui-change [PR number or URL] [--model <name>]`
+
+`--model` sets the subagent model (default `sonnet`).
 
 For the engineer receiving a flagged PR. Reads the PR body, all comments, and inline review comments, checks out the branch, briefs you on what the designer was trying to do, then asks one question per flagged danger. After every question is answered it implements the follow-ups, one Sonnet subagent per task, strictly in series (non-trivial tasks get a plan first, shown to you). Subagents stop and return questions instead of guessing; the skill relays them to you. With your OK it commits, and posts a humanized PR comment summarizing the outcome per decision item plus a "For the designer to follow up" section. Questions and the comment follow `/humanizer:humanizer` rules; install the `humanizer` plugin for best results, otherwise the rules are applied inline.
 

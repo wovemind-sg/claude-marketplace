@@ -1,6 +1,6 @@
 ---
 description: Spawn a subagent to implement a small GitHub issue labeled `ai` — a specific issue number, or the oldest open one if none given — skipping the full review/test-plan cycle
-argument-hint: [issue number] [model override, e.g. "opus"]
+argument-hint: [issue number] [model override, e.g. "opus"] [--label <name>]
 ---
 
 ## Task
@@ -10,6 +10,8 @@ Implement one small, mechanically obvious residual work item, tracked as a GitHu
 If the issue turns out not to be trivial once read in full — spans multiple files/components, involves a design or sequencing decision, or the approach isn't obvious — stop and tell the user to use `/plan-tools:impl-issue` instead rather than pushing ahead with the lite path.
 
 ## Steps
+
+Labels: if `$ARGUMENTS` contains `--label <name>`, remove it from `$ARGUMENTS` before step 1 parses them and use `<name>` in place of `ai` in the issue query. Without it, the label is `ai`.
 
 1. Parse `$ARGUMENTS` for an optional issue number (bare digits or `#123`) and an optional model override (`sonnet`, `opus`, `haiku`, `fable`), in either order. Default model: `sonnet`.
 2. Resolve which issue to work on:

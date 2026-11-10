@@ -1,7 +1,7 @@
 ---
 name: capture
 description: Capture before/after screenshots and short clips of the UI changes in a branch or PR, flag unintended visual changes, and publish a reviewable audit page as a Claude artifact or on Cloudflare Pages. Use whenever the user wants screenshots of UI changes, a visual audit, a visual regression check, a UI diff for a PR, before/after images, or to "show reviewers what the UI looks like", whenever templates, components, styles, screens or front-end code changed and reviewers need to see the result, and when /plan-tools:finalize-pr asks for a UI audit. Works for web (Playwright, desktop and mobile emulation) and, for Capacitor/Expo apps, simulators and emulators. Also use it to set up, refresh or inspect the `.ui-audit/` config and manifest in a repo.
-argument-hint: "[--platforms web,ios,android] [--baseline base+head|head-only|head+base-related] [--full] [--pr N] [--publish artifact|cloudflare] [--themes light|light+dark] [--unattended]"
+argument-hint: "[--platforms web,ios,android] [--baseline base+head|head-only|head+base-related] [--full] [--pr N] [--publish artifact|cloudflare] [--themes light|light+dark] [--unattended] [--model <name>]"
 ---
 
 # UI audit capture
@@ -26,6 +26,8 @@ References, read only when the step says so:
 Never commit or push anything yourself, with one exception: step 0 may commit the user's uncommitted work, only after they say yes. Files changed in the repo (`.ui-audit/`) are left in the working tree for the caller or user to commit. Never commit images.
 
 ## Delegate to Haiku subagents when the work is mechanical
+
+`--model <name>` (default `haiku`) sets the model for these helper subagents; "Haiku" in this section means that model.
 
 Capture runs are long and mostly repetitive, and every screenshot, snapshot and shell output lands in context. Spawn subagents with `model: haiku` for the mechanical parts so the main session keeps only the results. Haiku is reliable when the task is a fixed recipe with a checkable output; it is not reliable at open-ended judgment, so keep that yourself (or use Sonnet).
 

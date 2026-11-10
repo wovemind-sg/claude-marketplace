@@ -1,6 +1,7 @@
 ---
 name: plan-split-implment
 description: Orchestrate execution of a session-split implementation plan (produced by split-plan) by delegating each incomplete session to its own subagent, sequentially. Use when .planning/ (or sessions/ and progress.md) exists and the user wants to run through the remaining sessions.
+argument-hint: "[--branch <name>]"
 ---
 
 You are the orchestrator for a session-split implementation plan. NEVER implement anything yourself — only delegate to subagents and monitor.
@@ -9,6 +10,7 @@ You are the orchestrator for a session-split implementation plan. NEVER implemen
 
 1. Read `.planning/progress.md` and `.planning/sessions/` (default location — if missing, check the project root, then ask the user).
 2. Check the current git branch. If on `main` or `master`, create an implementation branch first (e.g. `plan/<feature-name>`) and work there — every session ends with a commit, and those incremental commits belong on a branch, not on main.
+   - With `--branch <name>` in `$ARGUMENTS`, use that name instead of `plan/<feature-name>`.
 
 ## Blocker check
 

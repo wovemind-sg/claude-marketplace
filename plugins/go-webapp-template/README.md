@@ -94,7 +94,7 @@ railway ssh --service "<service name>" -- ./out migrate up
 The second skill in this plugin converts an existing project that was scaffolded with `fastapi-template` into this Go stack, in place, in the same repo:
 
 ```
-/go-webapp-template:fastapi-go-migration
+/go-webapp-template:fastapi-go-migration [--branch <name>]   # default branch go-migration
 ```
 
 Or just say "migrate this app to Go" inside the project. What it does:

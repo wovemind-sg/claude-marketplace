@@ -1,6 +1,7 @@
 ---
 name: fastapi-go-migration
 description: Migrates an existing FastAPI web app that was scaffolded with the fastapi-template skill (FastAPI + Jinja2 + SQLModel/Alembic + fastapi-cache2 + OpenRouter + signed cookies) to the go-webapp-template stack (net/http + html/template + pgx/goose + go-redis + slog) in place, in the same repo — inventory, idempotent goose baseline from the Alembic schema, per-module port, template conversion, parity gates, then Python removal and Railway cutover. Use this skill whenever the user wants to move, port, convert, rewrite, or migrate a Python/FastAPI backend to Go or golang, says "replace FastAPI with Go", "rewrite the backend in Go", "fastapi to go", "make this a Go app", or asks what it would take to drop Python from a web app — even if they do not name either template. Not for scaffolding a brand-new Go app (use go-webapp-template) and not for Python-only changes.
+argument-hint: "[--branch <name>]"
 ---
 
 ## What this skill does
@@ -9,6 +10,7 @@ Turns a `fastapi-template` project into a `go-webapp-template` project **in the 
 
 Fixed decisions — do not re-ask:
 - In place, on a `go-migration` branch. Nothing is committed without the user's ok; nothing is deployed by the skill.
+  - With `--branch <name>` in `$ARGUMENTS`, use that name wherever this skill and its references say the `go-migration` branch.
 - Alembic is replaced by one **idempotent** goose baseline (`CREATE ... IF NOT EXISTS`) that is a no-op on the production DB and builds the schema on a fresh one. `alembic_version` stays until a later migration drops it.
 - Python Playwright e2e tests under `tests/` are kept and pointed at the Go binary (the only Python left; `uv` stays for them). Python unit tests are ported or deleted per file.
 - Go source comes from the `go-webapp-template:go-webapp-template` skill at runtime. Load it with the Skill tool and read its three reference files; never copy its templates into this skill.

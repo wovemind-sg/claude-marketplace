@@ -1,7 +1,7 @@
 ---
 name: audit
 description: Legal and regulatory compliance audit of a software product repo (web app, SaaS, iOS/Android or Capacitor app; FastAPI/Go, Postgres, Redis, Railway) — GDPR/UK GDPR/ePrivacy/PECR, US state privacy laws (CCPA etc.), COPPA and children's codes, Israel PPL and Singapore PDPA, Apple App Store and Google Play rules (privacy manifest, Data safety, account deletion, trader status, target API), EU AI Act, DSA, Cyber Resilience Act, Data Act, accessibility (EAA, ADA, WCAG), payments and auto-renewal law, open-source licences and SBOM, security baseline, privacy policy / terms / DPA. Publishes the report as a private claude.ai Artifact page with Blockers / Required / Recommended cards — each explaining the rule, what was found (file:line), what to do and the owner — plus shared In progress / Done / Won't fix statuses. Use whenever the user asks "are we compliant", "GDPR check", "do we need a privacy policy", "will this get rejected by the app store", "app store rejection", "can we launch in the EU", "ready to launch/distribute", "license audit", "SBOM", "terms of service", "legal review", "what laws apply to us" — even if they do not say "audit". Not legal advice.
-argument-hint: "[optional: repo path, or focus e.g. 'app stores only' / 'EU only']"
+argument-hint: "[optional: repo path, or focus e.g. 'app stores only' / 'EU only'] [--markets <list>] [--size <size>]"
 ---
 
 Audit the repo for gaps between what the code does and what the law and the app stores require, and publish the result as an Artifact page.
@@ -15,6 +15,8 @@ Three non-negotiables:
 3. **Normal English in the report.** Write every card in full, normal English sentences regardless of any terse/caveman/compressed chat mode active in this session — those modes govern chat, not the report. Explain each rule so a founder with no legal background understands it.
 
 `$ARGUMENTS`: a path → audit that repo (default: current working directory). A focus ("app stores only", "EU only", "licensing") → still run Step 1, skip questions the focus answers, load only the matching modules plus `security-baseline.md`, and state the focus in the Profile.
+
+`--markets <comma-separated list>` and `--size <size>`: remove them from `$ARGUMENTS` before reading a path or focus. They answer Round 1 questions 1 and 2, so do not ask those; record them in the Profile as "(from argument)". Market names: `EU` (= EU/EEA), `US`, `UK`, `Israel` (or `IL`), `Singapore` (or `SG`). Sizes: `micro`, `small`, `larger`, `unsure`. Without them, the defaults below apply.
 
 All paths below are relative to `${CLAUDE_PLUGIN_ROOT}/skills/audit/`.
 

@@ -1,8 +1,11 @@
 ---
 description: One-off migration — convert old-format .planning/residual/*.md files into `ai`-labeled GitHub issues, then delete the files
+argument-hint: [--label <name>]
 ---
 
 Migrate residual work from the old file-based format (`.planning/residual/<N>_*.md`) to the new GitHub-issue format used by `/plan-tools:write-issue` and `/plan-tools:impl-issue`.
+
+Labels: if `$ARGUMENTS` contains `--label <name>`, remove it from `$ARGUMENTS` before anything else reads them and use `<name>` wherever this command says `ai` as a label (the label check, the label creation and `--label` on the issue). Without it, the label is `ai`.
 
 Steps:
 

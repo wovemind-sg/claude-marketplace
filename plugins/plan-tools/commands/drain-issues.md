@@ -1,11 +1,13 @@
 ---
 description: Drive open `ai`-labeled GitHub issues to zero — loop branch → implement → finalize PR → merge → reset for every issue until none remain
-argument-hint: [optional model override, e.g. "opus" — defaults to sonnet]
+argument-hint: [optional model override, e.g. "opus" — defaults to sonnet] [--label <name>]
 ---
 
 Empty out open GitHub issues labeled `ai` one at a time, each through a full branch → implement → finalize → merge → reset cycle, looping until none remain.
 
 Resolve model: parse "$ARGUMENTS" for a model override (`sonnet`, `opus`, `haiku`, `fable`). Default: `sonnet`.
+
+Resolve label: if "$ARGUMENTS" contains `--label <name>`, remove it before resolving the model and use `<name>` wherever this command says `ai` as a label, including the step 1 query and its notification. Tell each cycle subagent to treat `--label <name>` as passed to `impl-issue.md`, `finalize-pr.md` and `write-issue.md`. Default: `ai`.
 
 Determine the main branch (`git symbolic-ref refs/remotes/origin/HEAD`, or ask if ambiguous) once, up front.
 

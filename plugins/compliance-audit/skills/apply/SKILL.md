@@ -1,7 +1,7 @@
 ---
 name: apply
 description: Implement the fixes from a published compliance-audit Artifact report, card by card, end to end — reads every card not marked Done or Won't fix plus the planning answers saved on the page, orders the cards by dependency (legal documents last), then for each card plans with an Opus subagent, splits the plan, implements with Sonnet subagents, finalizes and raises a PR against the base branch, sets squash auto-merge and waits for the merge before starting the next card. Use whenever the user wants to apply, implement, fix, execute or work through the compliance audit findings, cards or report — "apply the audit", "fix the compliance cards", "implement the legal changes", "I answered the questions, go" — even if they do not say "apply". Not for running the audit itself (use audit).
-argument-hint: "[artifact url] [--planner opus] [--implementer sonnet] [--base <branch>]"
+argument-hint: "[artifact url] [--planner opus] [--implementer sonnet] [--base <branch>] [--branch-prefix <prefix>]"
 ---
 
 Implement every open card of a compliance-audit report, one card per PR, in dependency order, without supervision.
@@ -18,6 +18,7 @@ Parse `$ARGUMENTS`:
 | `--planner <model>` | `opus` | model for planning subagents |
 | `--implementer <model>` | `sonnet` | model for implementing, review, test and merge-conflict subagents |
 | `--base <branch>` | the plugin setting `default_base_branch` (`${user_config.default_base_branch}`); when that is empty or still contains the text `user_config`, the repository's default branch (`gh repo view --json defaultBranchRef -q .defaultBranchRef.name`) | PR base branch; every card branches from it and merges into it |
+| `--branch-prefix <prefix>` | `compliance/` | prefix of each card's branch; replaces `compliance/` in Step 1.4 and Step 3 |
 
 Run from the root of the audited repo. All paths below are relative to `${CLAUDE_PLUGIN_ROOT}/skills/apply/`.
 

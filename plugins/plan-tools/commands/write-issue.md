@@ -1,9 +1,11 @@
 ---
 description: Open a GitHub issue labeled `ai` for deferred work (e.g. a bug found during review but out of scope for the current PR)
-argument-hint: <description of the work to do later>
+argument-hint: <description of the work to do later> [--label <name>]
 ---
 
 Record deferred work as a GitHub issue so it can be picked up and executed later.
+
+Labels: if `$ARGUMENTS` contains `--label <name>`, remove it from `$ARGUMENTS` before anything else reads them and use `<name>` wherever this command says `ai` as a label (the label check, the label creation and `--label` on the issue). Without it, the label is `ai`.
 
 Steps:
 

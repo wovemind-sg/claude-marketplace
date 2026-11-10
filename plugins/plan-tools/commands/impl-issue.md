@@ -1,6 +1,6 @@
 ---
 description: Spawn a subagent to implement a GitHub issue labeled `ai` — a specific issue number, or the oldest open one if none given
-argument-hint: [issue number] [model override, e.g. "opus"]
+argument-hint: [issue number] [model override, e.g. "opus"] [--label <name>]
 ---
 
 ## Task
@@ -8,6 +8,8 @@ argument-hint: [issue number] [model override, e.g. "opus"]
 Implement one pending residual work item, tracked as a GitHub issue labeled `ai`, then raise a PR for it.
 
 ## Steps
+
+Labels: if `$ARGUMENTS` contains `--label <name>`, remove it from `$ARGUMENTS` before step 1 parses them and use `<name>` in place of `ai` in the issue query and pass `--label <name>` on to `finalize-pr.md` in step 3, so its follow-up issues get the same label. Without it, the label is `ai`.
 
 1. Parse `$ARGUMENTS` for an optional issue number (bare digits or `#123`) and an optional model override (`sonnet`, `opus`, `haiku`, `fable`), in either order. Default model: `sonnet`.
 2. Resolve which issue to work on:

@@ -71,7 +71,7 @@ Executes a session-split plan (as produced by `split-plan`). Reads `sessions/` a
 Usage:
 
 ```
-/plan-tools:plan-split-implment
+/plan-tools:plan-split-implment [--branch <name>]   # default branch plan/<feature-name>
 ```
 
 ### `/plan-tools:write-issue`
@@ -81,7 +81,7 @@ Records deferred work (e.g. a bug found during review but out of scope now) as a
 Usage:
 
 ```
-/plan-tools:write-issue <description of the work to do later>
+/plan-tools:write-issue [--label <name>] <description of the work to do later>   # default label ai
 ```
 
 ### `/plan-tools:impl-issue`
@@ -91,7 +91,7 @@ Spawns a subagent to implement the oldest open `ai`-labeled GitHub issue, commit
 Usage:
 
 ```
-/plan-tools:impl-issue [optional model override]
+/plan-tools:impl-issue [optional model override] [--label <name>]   # default label ai
 ```
 
 ### `/plan-tools:finalize-pr`
@@ -114,7 +114,7 @@ Run `/plan-tools:hook-finalize-pr [description]` to create or edit that file int
 Usage:
 
 ```
-/plan-tools:finalize-pr [optional extra context]
+/plan-tools:finalize-pr [optional extra context] [--label <name>] [--model <name>]   # defaults: label ai, model sonnet
 ```
 
 ### `/plan-tools:drain-issues`
@@ -124,7 +124,7 @@ Drains open `ai`-labeled GitHub issues to zero. Loops: spawns one subagent per i
 Usage:
 
 ```
-/plan-tools:drain-issues [optional model override]
+/plan-tools:drain-issues [optional model override] [--label <name>]   # default label ai
 ```
 
 Auto-commits, auto-pushes, and auto-merges without per-step confirmation by design — confirm with the user this is wanted before the first run.
@@ -136,7 +136,7 @@ Ships the current plan end to end. Asks up front for the implementer and finaliz
 Usage:
 
 ```
-/plan-tools:plan-implement-complete [optional plan file]
+/plan-tools:plan-implement-complete [optional plan file] [--branch <name>]   # default branch plan/<feature-name>
 ```
 
 ### `/plan-tools:monitor-pr`

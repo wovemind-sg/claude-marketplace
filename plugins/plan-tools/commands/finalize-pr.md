@@ -1,9 +1,11 @@
 ---
 description: Ask every question up front, then run code review with fixes, a security review when the diff is security-relevant, a test plan, residual work and the PR, unattended
-argument-hint: [optional extra context for the review/PR, e.g. target branch]
+argument-hint: [optional extra context for the review/PR, e.g. target branch] [--label <name>] [--model <name>]
 ---
 
 Finalize the current branch's work into a PR-ready state, then open the PR.
+
+Flags: remove `--label <name>` and `--model <name>` from `$ARGUMENTS` before anything below reads them. `--model <name>` replaces `sonnet` in every `model: sonnet` below (default `sonnet`). `--label <name>` is the label meant wherever this file says `ai` (default `ai`); pass it on to `/plan-tools:write-issue` in step 4.
 
 Steps:
 
@@ -70,7 +72,7 @@ Steps:
 
 4. **Residual work.** Collect the unresolved items reported by steps 1, 1b, 2 and 3b (findings not fixed, test-plan gaps not addressed) and size each distinct action item:
    - **Small–medium** (a contained fix: a few files, no open design decision, roughly under half a day): fix it. Spawn one agent per item (subagent_type: general-purpose, model: sonnet), **sequentially** since they share the working tree, instructing it to implement the fix, run the relevant tests, commit, and report back what it changed — or why it couldn't, in which case treat the item as big.
-   - **Big** (needs a design decision, spans several subsystems, or is substantial new work well beyond this PR's scope): invoke `/plan-tools:write-issue <description>` once — one GitHub issue (labeled `ai`) per item.
+   - **Big** (needs a design decision, spans several subsystems, or is substantial new work well beyond this PR's scope): invoke `/plan-tools:write-issue <description>` once — one GitHub issue (labeled `ai`) per item. With `--label <name>`, invoke `/plan-tools:write-issue --label <name> <description>`.
 
    If there are no unresolved items, skip this step.
 

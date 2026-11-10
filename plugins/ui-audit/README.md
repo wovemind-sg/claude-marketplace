@@ -12,7 +12,7 @@ Visual UI-change audit for pull requests. Reviewers cannot see UI changes from a
 ## Usage
 
 ```
-/ui-audit:capture [--platforms web,ios,android] [--baseline base+head|head-only|head+base-related] [--full] [--pr N] [--publish artifact|cloudflare] [--themes light|light+dark] [--unattended]
+/ui-audit:capture [--platforms web,ios,android] [--baseline base+head|head-only|head+base-related] [--full] [--pr N] [--publish artifact|cloudflare] [--themes light|light+dark] [--unattended] [--model <name>]   # --model: helper subagent model, default haiku
 ```
 
 The skill also triggers when you ask for screenshots of UI changes, a visual audit or before/after images. `/plan-tools:finalize-pr` offers to run it when a PR touches UI files, then calls it with `--unattended`, which asks nothing and uses the passed flags, the config and the defaults (no dark-mode offer; a failed base falls back to `head-only`).

@@ -16,7 +16,7 @@ Built for micro software companies shipping native apps (iOS/Android, incl. Capa
 ## Usage
 
 ```
-/compliance-audit:audit [focus]
+/compliance-audit:audit [focus] [--markets EU,US,UK,Israel,Singapore] [--size micro|small|larger]   # defaults: all five markets, micro
 ```
 
 `focus` is optional, e.g. `EU only`, `app store only`, `licensing`. Run it from the root of the repo you want audited.
@@ -24,7 +24,7 @@ Built for micro software companies shipping native apps (iOS/Android, incl. Capa
 After answering the planning questions on the report page:
 
 ```
-/compliance-audit:apply [artifact url] [--planner opus] [--implementer sonnet] [--base <branch>]
+/compliance-audit:apply [artifact url] [--planner opus] [--implementer sonnet] [--base <branch>] [--branch-prefix <prefix>]   # default prefix compliance/
 ```
 
 Implements every card not marked Done or Won't fix, one PR per card. It orders cards by dependency (legal documents last), then per card: an Opus subagent plans from the card and your saved answers and asks you anything they do not settle; `/plan-tools:split-plan` splits the plan if needed; Sonnet subagents implement it (`/plan-tools:plan-split-implment` when split); anything they surface is fixed on the same branch, never opened as a follow-up issue; `/plan-tools:finalize-pr` reviews, runs the test plan once and raises the PR against `--base` (default: the plugin setting `default_base_branch`, set with `/plugin configure compliance-audit@wovemind`; when empty, the repository's default branch) with the results in the body; the PR is set to squash auto-merge and the skill waits for the merge, merging the base branch back in whenever it moves. The card is then marked Done and the next card starts. Cards whose fix lies outside the repo (store consoles, registrations, lawyer review) are listed at the end, not implemented.

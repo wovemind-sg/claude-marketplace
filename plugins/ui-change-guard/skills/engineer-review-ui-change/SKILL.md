@@ -1,7 +1,7 @@
 ---
 name: engineer-review-ui-change
 description: Walk an engineer through a designer's UI pull request one decision at a time, implement the agreed follow-ups with serial Sonnet subagents, and post a summary comment on the PR. Use when the engineer says "review the designer's PR", "the UI guard flagged this PR", "engineer review of UI change", "go through the UI review handoff", or gives a PR number or URL whose body contains a ui-change-guard engineer handoff section, even if they do not name the skill.
-argument-hint: "[PR number or URL]"
+argument-hint: "[PR number or URL] [--model <name>]"
 ---
 
 Take a designer's UI pull request from "flagged by the guard" to "every danger decided, fixed where needed, and recorded on the PR". The engineer was not in the design session and has no context, so your job is to give them that context, ask what only they can decide, and then do the work they choose.
@@ -41,6 +41,8 @@ Never assume. When an answer is ambiguous, or you hit anything unclear at any po
 Do not change any code until every question is answered. Then turn the answers into a task list (one task per distinct change), show it to the engineer, and let them correct it before you start.
 
 ## Step 5: Implement, one subagent per task, strictly serially
+
+With `--model <name>` in `$ARGUMENTS` (remove it before Step 1 resolves the PR), use that model in place of `sonnet` for every subagent in this step, plan and implementation alike. Default: `sonnet`.
 
 For each task, launch a subagent with the `Agent` tool and `model: "sonnet"`. Launch one, wait for its completion notice, and only then launch the next. Never run two at once, because tasks can touch the same files.
 

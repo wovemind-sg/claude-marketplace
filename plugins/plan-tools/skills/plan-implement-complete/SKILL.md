@@ -1,7 +1,7 @@
 ---
 name: plan-implement-complete
 description: Take the current implementation plan all the way to a PR — implement it with subagents (via plan-split-implment when the plan was split into .planning/ sessions), fold any related problems found along the way into the plan instead of filing follow-up issues, run finalize-pr once, open the PR, and optionally monitor it until it auto-merges. Use whenever the user says "implement the plan end to end", "implement and raise a PR", "finish this plan", "take the plan to a PR", "implement it all and merge", or otherwise wants a plan implemented and shipped in one go rather than session by session.
-argument-hint: [optional path to the plan file]
+argument-hint: [optional path to the plan file] [--branch <name>]
 ---
 
 Ship the current plan end to end: implement → finalize → PR → (optionally) merge. You orchestrate; subagents do the implementation work so this session's context stays free for coordination.
@@ -11,6 +11,7 @@ Ship the current plan end to end: implement → finalize → PR → (optionally)
 - `.planning/progress.md` + `.planning/sessions/` exist (output of `/plan-tools:split-plan`) → **split plan**.
 - Otherwise the plan is `$ARGUMENTS` if given, else the plan in this conversation (e.g. just approved from plan mode), else the most recent file in `~/.claude/plans/`. Confirm the file with the user if you had to guess → **single plan**.
 - No plan found → tell the user and stop.
+- `--branch <name>` in `$ARGUMENTS` is a flag for step 3, not the plan path; remove it before looking for a path.
 
 ## 2. Ask everything up front
 
@@ -27,6 +28,7 @@ If git permission is **No**, still implement and commit locally (commits stay on
 ## 3. Implement
 
 Make sure you're on a feature branch first; if on `main`/`master`, create one (`plan/<feature-name>`).
+With `--branch <name>`, use that name instead, and pass `--branch <name>` to `/plan-tools:plan-split-implment`.
 
 Every implementing subagent gets the chosen model and this instruction block verbatim in its prompt — it is what keeps the plan self-contained:
 

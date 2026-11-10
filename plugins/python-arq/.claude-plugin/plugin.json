@@ -1,7 +1,7 @@
 {
   "name": "python-arq",
   "description": "Complete reference for the arq Python library (v0.28) — async job queues with asyncio and Redis: enqueueing, workers, retries, cron, results, error flows.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": {
     "name": "Wovemind"
   },

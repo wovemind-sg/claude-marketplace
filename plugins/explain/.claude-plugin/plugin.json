@@ -1,7 +1,7 @@
 {
   "name": "explain",
   "description": "Explain code and concepts in the current project, building only on what the user already knows well plus what earlier explanations covered. Keeps a per-topic learning log in ~/.explain_skill/.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": {
     "name": "Wovemind"
   },

@@ -1,7 +1,7 @@
 {
   "name": "openfeature",
   "description": "Complete reference for OpenFeature, the CNCF vendor-neutral feature-flag standard — specification concepts, providers, hooks, events, evaluation context, OFREP, CLI, MCP server and ecosystem, with deep-dive references for the Go, .NET (C#) and Python SDKs.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": {
     "name": "Wovemind"
   },

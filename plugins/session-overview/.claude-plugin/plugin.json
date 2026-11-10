@@ -1,7 +1,7 @@
 {
   "name": "session-overview",
   "description": "Side pane (/sessions) listing every open Claude Code session on the machine, grouped by project, with its goal and state.",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "author": {"name": "Wovemind"},
   "license": "MIT",
   "types": "./types/index.d.ts"

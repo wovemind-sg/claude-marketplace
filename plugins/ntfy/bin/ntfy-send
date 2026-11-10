@@ -45,12 +45,25 @@ while [ $# -gt 0 ]; do
 done
 
 [ -n "$server" ] && [ -n "$message" ] || usage
+# Only http(s) servers and plain topic names, so neither can become a curl option, another scheme or another path.
+case "$server" in http://*|https://*) ;; *) echo "ntfy-send: server must start with http:// or https://" >&2; exit 1 ;; esac
+[[ "$topic" =~ ^[A-Za-z0-9_-]{1,64}$ ]] || { echo "ntfy-send: topic may only contain letters, digits, _ and - (max 64)" >&2; exit 1; }
+for v in "$title" "$priority" "$tags"; do  # a line break would inject extra headers
+  [[ "$v" != *[$'\r\n']* ]] || { echo "ntfy-send: -t, -p and -T must be one line" >&2; exit 1; }
+done
 
 args=(-sSf)  # -f: exit non-zero on an HTTP error (bad token, rate limit)
-[ -f "$token_file" ] && args+=(-H "Authorization: Bearer $(cat "$token_file")")
+auth=""
+if [ -f "$token_file" ]; then
+  case "$server" in http://*) echo "ntfy-send: warning: sending the ~/.ntfy token over plain http" >&2 ;; esac
+  # Header read from stdin, so the token never appears in the process list.
+  auth="Authorization: Bearer $(cat "$token_file")"
+  args+=(-H @-)
+fi
 [ -n "$title" ] && args+=(-H "Title: $title")
 [ -n "$priority" ] && args+=(-H "Priority: $priority")
 [ -n "$tags" ] && args+=(-H "Tags: $tags")
 
-curl "${args[@]}" -d "$message" "${server%/}/$topic"
+# --data-raw: a message starting with @ is sent as text, not read from a local file.
+printf '%s\n' "$auth" | curl "${args[@]}" --data-raw "$message" "${server%/}/$topic"
 echo

@@ -14,6 +14,6 @@ Steps:
 3. For each file, oldest (`<N>_*.md`) first:
    - Read its full contents.
    - Derive a title from the filename or the file's first line (e.g. `fix-null-check-auth-middleware` → `Fix null check in auth middleware`).
-   - Create the issue: `gh issue create --title "<title>" --body "<file contents>" --label ai`.
+   - Create the issue: `gh issue create --title "<title>" --body-file <file> --label ai` (`--body-file`, so backticks and `$` in the file are not run as shell).
    - Delete the file once the issue is created successfully.
 4. Report to the user: how many issues were created (with URLs), and confirm `.planning/residual/` is now empty (remove the directory if empty).

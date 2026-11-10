@@ -40,8 +40,11 @@ The simplest way to send is the `ntfy-send` script this plugin puts on the
 `PATH` (it adds the token header itself when `~/.ntfy` exists):
 
 ```bash
-ntfy-send -s ${user_config.server} -o <topic> "message" [-t title] [-p priority] [-T tags]
+ntfy-send -s '${user_config.server}' -o <topic> [-t title] [-p priority] [-T tags] -- "message"
 ```
+
+`--` lets a message start with `-`. Single-quote any value with `$`, backticks or
+`'` in it, since double quotes would run them as shell.
 
 For raw `curl` (needed for the options below), add the auth header only when
 `~/.ntfy` exists, and drop it from the examples otherwise. Read the token at
@@ -49,18 +52,19 @@ call time — never print it, log it, or paste it into a file/command where
 it'd be echoed back to the user:
 
 ```bash
-curl -H "Authorization: Bearer $(cat ~/.ntfy)" -d "message" ${user_config.server}/<topic>
+curl -H "Authorization: Bearer $(cat ~/.ntfy)" --data-raw "message" '${user_config.server}'/<topic>
 ```
 
 ## Sending a basic notification
 
 ```bash
 curl -H "Authorization: Bearer $(cat ~/.ntfy)" \
-     -d "Backup finished successfully" \
-     ${user_config.server}/<topic>
+     --data-raw "Backup finished successfully" \
+     '${user_config.server}'/<topic>
 ```
 
-`-d` is the message body. That alone is enough for a working notification —
+`--data-raw` is the message body (unlike `-d`, it never reads a file when the
+message starts with `@`). That alone is enough for a working notification —
 everything below is optional embellishment.
 
 ## Adding title, priority, tags
@@ -82,8 +86,8 @@ curl -H "Authorization: Bearer $(cat ~/.ntfy)" \
      -H "Title: Build failed" \
      -H "Priority: high" \
      -H "Tags: warning,rotating_light" \
-     -d "CI pipeline failed on main branch" \
-     ${user_config.server}/<topic>
+     --data-raw "CI pipeline failed on main branch" \
+     '${user_config.server}'/<topic>
 ```
 
 Reach for **high/urgent priority + a tag** when the message is actionable or

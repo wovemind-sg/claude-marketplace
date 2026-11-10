@@ -10,8 +10,10 @@ Parse "$ARGUMENTS" for:
 Continue with the work already in progress / requested in this conversation. Once the condition is met, send a push notification using this plugin's `ntfy-send` script (or the ntfy skill's curl pattern if the script isn't available). The server is the plugin's `server` setting, `${user_config.server}`; if that value still contains the text `user_config`, the setting was never saved, so use `https://ntfy.sh`. The topic is the plugin's `topic` setting, `${user_config.topic}`; if that value still contains the text `user_config`, use `claude`. A topic the user names in "$ARGUMENTS" wins:
 
 ```bash
-ntfy-send -s ${user_config.server} -o <topic> "<short message describing what happened>" -t "<short title>" -p 4
+ntfy-send -s '${user_config.server}' -o <topic> -t "<short title>" -p 4 -- "<short message describing what happened>"
 ```
+
+Single-quote any value with `$`, backticks or `'` in it (`'\''` for a literal `'`).
 
 - Message: one line, states what happened (e.g. "Implementation finished — all tests passing").
 - Title: short context label (e.g. the task or repo name).

@@ -46,7 +46,7 @@ done
 
 [ -n "$server" ] && [ -n "$message" ] || usage
 
-args=(-sS)
+args=(-sSf)  # -f: exit non-zero on an HTTP error (bad token, rate limit)
 [ -f "$token_file" ] && args+=(-H "Authorization: Bearer $(cat "$token_file")")
 [ -n "$title" ] && args+=(-H "Title: $title")
 [ -n "$priority" ] && args+=(-H "Priority: $priority")

@@ -135,7 +135,7 @@
     {
       "name": "ntfy",
       "source": "./plugins/ntfy",
-      "description": "Send push notifications to phone/desktop via a self-hosted ntfy instance over its HTTP API.",
+      "description": "Send push notifications to phone/desktop via ntfy.sh or a self-hosted ntfy instance over its HTTP API.",
       "author": {
         "name": "Wovemind"
       },

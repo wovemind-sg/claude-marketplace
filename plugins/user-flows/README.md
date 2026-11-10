@@ -6,6 +6,32 @@ Extract a deduplicated inventory of user flows from an application codebase and 
 extract user flows → generate automated tests for the flows → run the tests after big changes
 ```
 
+## Install
+
+```
+claude plugin marketplace add wovemind-sg/claude-marketplace
+/plugin install user-flows@wovemind
+```
+
+## Requirements
+
+- Extracting, updating and adding flows needs nothing beyond Claude Code; the skills read the code and write `user-flows.md`.
+- `test-user-flow` needs [`uv`](https://docs.astral.sh/uv/) and Python 3. On first run it adds `pytest-playwright` as a dev dependency and installs the Playwright browser; it uses `make` for the generated `make test-user-flows` target. The app must be startable locally, or reachable at a deployed URL.
+
+## Environment variables and settings
+
+None. The plugin has no environment variables and no plugin settings. The base URL the tests use is written to `pyproject.toml` (`--base-url` under `[tool.pytest.ini_options]`).
+
+## Opinionated defaults
+
+| Default | Change it with |
+|---|---|
+| Extraction is exhaustive (`high`): edge cases, error paths and permission-denied paths included | `low` or `medium` as the first argument |
+| Tests are Python Playwright (`pytest-playwright`) run through `uv` | not configurable |
+| Tests live in `tests/user_flows/` | an existing folder with `user-flow:` markers, or the project's Playwright test folder, is used instead |
+| Tests are marked `user_flow` and left out of the normal `pytest` run | run them with `make test-user-flows` |
+| Local mode (tests may seed Redis/Postgres directly) when the base URL is localhost; remote mode (UI and HTTP only) for a deployed URL | say `--mode local` or `--mode remote` to `test-user-flow` |
+
 ## Skills
 
 ### `/user-flows:extract-user-flows [low|medium|high] [area]`
@@ -42,5 +68,3 @@ Generates and maintains Python Playwright E2E tests (`pytest-playwright`, run vi
 ## Output
 
 `user-flows.md` at the project root: flows grouped by area, each with a stable ID (`UF-001`, …), actor, precondition, arrow-chain steps, an assertable expected outcome, and source pointers into the code. Extraction also adds a short section to the project's `CLAUDE.md` pointing future sessions at the file and the update/test skills.
-
-No environment variables required.

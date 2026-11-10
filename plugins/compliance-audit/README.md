@@ -9,9 +9,39 @@ Built for micro software companies shipping native apps (iOS/Android, incl. Capa
 ## Install
 
 ```
-/plugin marketplace add wovemind-sg/claude-marketplace
+claude plugin marketplace add wovemind-sg/claude-marketplace
 /plugin install compliance-audit@wovemind
 ```
+
+Installing compliance-audit also installs the plugins it depends on: `plan-tools` (which brings `fastapi-template` and `htmx-vs-alpine`) and `ntfy`.
+
+## Requirements
+
+- **Claude Code with Artifacts enabled.** The report is published as a private claude.ai Artifact page, and `apply` reads it back from there.
+- **Python 3** for the detector and card-parsing scripts. They use only the standard library. `license_scan.py` uses `pip-licenses`, `go-licenses` or `license-checker` when one is installed and falls back to reading package metadata otherwise.
+- **For `apply`:** `git`, the GitHub CLI (`gh`) signed in with push access, and auto-merge enabled on the repository. It drives `plan-tools` (`split-plan`, `plan-split-implment`, `finalize-pr`) and sends push notifications through the `ntfy` plugin, so set the ntfy `server` setting first.
+
+## Settings and environment variables
+
+No environment variables are needed. The plugin has one setting, which you change with `/plugin configure compliance-audit@wovemind`:
+
+| Setting | Default | What it does |
+|---|---|---|
+| `default_base_branch` | empty | The branch `apply` opens PRs against when you do not pass `--base`. Empty means the repository's default branch. |
+
+A setting only takes effect after you open the settings dialog and save it once.
+
+## Opinionated defaults
+
+| Default | Change it with |
+|---|---|
+| Markets: EU/EEA, US, UK, Israel and Singapore (the audit confirms them with you) | `--markets <list>` on `audit` |
+| Company size: micro (fewer than 10 staff and at most EUR 2M turnover) | `--size micro\|small\|larger` on `audit` |
+| Target stack: FastAPI or Go backends with Postgres, Redis and Railway, native iOS/Android apps including Capacitor, web apps and SaaS. Other stacks are audited, but the security and hosting checks are written for this one. | not configurable |
+| `apply` plans with Opus and implements with Sonnet | `--planner <model>`, `--implementer <model>` |
+| Each card gets a branch named `compliance/<card>` | `--branch-prefix <prefix>` |
+| Each card's PR is set to squash auto-merge and the skill waits for the merge | not configurable |
+| PRs go to the repository's default branch | `--base <branch>` or the `default_base_branch` setting |
 
 ## Usage
 
@@ -104,6 +134,15 @@ Every module in `skills/audit/references/` starts with a `last-reviewed: YYYY-MM
 - **90-day freshness rule:** during an audit, a module whose `last-reviewed` is older than 90 days has its first sources re-fetched and the report records what was re-verified. The audit never edits references.
 - **Adding a module:** copy the header format of an existing module exactly (`# Title`, `last-reviewed:`, `applies-when:`, `sources:` list, then `## Who it applies to and thresholds`, `## Requirements → checks` with the 7-column table, `## Deadlines`, `## Needs a lawyer`); use only signal IDs that `detect_signals.py` emits; keep it 80–200 lines. Then add a routing row to table 1 of `_index.md`, copy its `applies-when:` line verbatim into table 2 and its date into table 3, list it in the Modules table above, run `check_sources.py`, and bump `version` in `.claude-plugin/plugin.json`.
 - **Refreshing a module:** run `python3 skills/audit/scripts/check_sources.py`, fix any 4xx or moved URLs, re-read the sources for changed thresholds, deadlines or effective dates, update the tables, then bump `last-reviewed:` to today and bump `version` in `.claude-plugin/plugin.json`.
+
+## Example
+
+Audit only the EU and UK rules for a small company, then implement the open cards against a `develop` branch:
+
+```
+/compliance-audit:audit --markets EU,UK --size small
+/compliance-audit:apply --base develop
+```
 
 ## Example report excerpt
 

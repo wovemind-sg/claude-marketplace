@@ -65,7 +65,7 @@ Don't re-ask things already answered there. Otherwise create it from the phase l
 Run `bash <launch-video-setup skill dir>/scripts/check.sh webapp` (the setup skill is a
 sibling of this one; if it isn't installed, check `ffmpeg`, `python3 -c "import PIL, playwright"`
 and `~/.launch-video/env` yourself). If anything is MISSING, stop and
-give the user one action: run `/launch-video-setup`. Don't continue until the check passes.
+give the user one action: run `/launch-video:launch-video-setup`. Don't continue until the check passes.
 
 ## Phase 1 — Plan the beats
 

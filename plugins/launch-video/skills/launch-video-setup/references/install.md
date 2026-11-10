@@ -117,7 +117,7 @@ Add to the shell profile (all at once):
 export ANDROID_HOME="<sdk root>"
 export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
 ```
-Then **USER**: open a new terminal and run `/launch-video-setup` again.
+Then **USER**: open a new terminal and run `/launch-video:launch-video-setup` again.
 
 Verify: `adb --version`, `emulator -version`.
 

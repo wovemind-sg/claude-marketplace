@@ -14,6 +14,38 @@ It targets the failure modes test suites tend to miss:
 - tests edited to pass instead of the UI fixed;
 - changes that crossed out of the design domain into routes, models, migrations, or dependencies.
 
+## Install
+
+```
+claude plugin marketplace add wovemind-sg/claude-marketplace
+/plugin install ui-change-guard@wovemind
+```
+
+## Requirements
+
+- **Python 3** for the bundled inventory-diff script and for the push-guard hook.
+- **`git`**, and the **GitHub CLI (`gh`)** signed in when the branch has a PR (the review writes its engineer handoff into the PR body, and `engineer-review-ui-change` reads the PR and its comments).
+- **The `claude` command** on your `PATH` when you install the terminal push guard, because the git hook runs the review through `claude -p`.
+- Optional: Playwright (web) or a simulator/emulator with Maestro (native) to measure performance; without them the review checks performance from the code only. The `humanizer` plugin improves the wording of `engineer-review-ui-change` questions and comments.
+
+### What runs automatically
+
+- **A Python check on every Bash tool call.** The plugin registers a `PreToolUse` hook that runs `push_guard.py gate` before each Bash command Claude runs, in every repo. It does nothing until you run `/ui-change-guard:push-guard install` in a repo; after that it blocks `git push` there until the review passes for HEAD.
+- **A `claude -p` run on each terminal push.** `push-guard install` also writes a git `pre-push` hook that runs the full review through `claude -p` on every push from your terminal. Each run takes a few minutes and uses tokens. `git push --no-verify` skips it once, and `push-guard uninstall` removes it.
+
+## Environment variables and settings
+
+None. The plugin has no environment variables and no plugin settings.
+
+## Opinionated defaults
+
+| Default | Change it with |
+|---|---|
+| Review against the merge-base with `main` or `master` | pass a base ref or a list of files to `review-ui-change` |
+| `engineer-review-ui-change` runs its plan and implement subagents on `sonnet` | `--model <name>` |
+| A commit that passed review is recorded in `.git/ui-change-guard/` and not reviewed again | not configurable |
+| `plan-tools` `finalize-pr` labels a PR `ui-risky` when this review still fails | the plan-tools `designer_ui_review` setting turns the review on |
+
 ## Skills
 
 ### `/ui-change-guard:review-ui-change [base-ref | files]`
@@ -56,6 +88,7 @@ A passed commit is recorded in `.git/ui-change-guard/reviewed-<sha>`, so each co
 ## Examples
 
 ```
+/ui-change-guard:engineer-review-ui-change 42 --model opus
 /ui-change-guard:review-ui-change
 /ui-change-guard:review-ui-change main
 /ui-change-guard:review-ui-change templates/profile.html templates/partials/nav.html
@@ -63,5 +96,3 @@ A passed commit is recorded in `.git/ui-change-guard/reviewed-<sha>`, so each co
 ```
 
 Works with the `user-flows` plugin: if `user-flows.md` exists, flows touching changed files are walked against the new markup and lost steps are reported by flow ID.
-
-No environment variables required. Python 3 for the script; Playwright (web) or a simulator/emulator + Maestro (native) optional for performance measurement.

@@ -5,7 +5,7 @@ Visual UI-change audit for pull requests. Reviewers cannot see UI changes from a
 ## Install
 
 ```
-/plugin marketplace add wovemind-sg/claude-marketplace
+claude plugin marketplace add wovemind-sg/claude-marketplace
 /plugin install ui-audit@wovemind
 ```
 
@@ -44,7 +44,22 @@ Web apps with a dark theme (detected from `prefers-color-scheme`, `.dark`/`[data
 - Python 3 with `pip install pillow numpy` (image diffing).
 - Web: the Playwright CLI (`playwright-cli`, via the `playwright-cli` skill).
 - Native (optional, untested on real apps): Xcode with iOS simulators (`xcrun simctl`), or the Android SDK with an emulator and `adb`; optionally `ffmpeg` to convert recordings.
-- Environment variables: none for artifacts; `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` for Cloudflare, as described above.
+
+## Environment variables
+
+None are needed to publish as a Claude artifact. To publish to Cloudflare Pages, set `CLOUDFLARE_API_TOKEN` (scope Account > Cloudflare Pages > Edit), plus `CLOUDFLARE_ACCOUNT_ID` when the token reaches more than one account, or run `! npx wrangler login` once instead. The plugin has no plugin settings; per-repo choices live in `.ui-audit/config.json`.
+
+## Opinionated defaults
+
+| Default | Change it with |
+|---|---|
+| Publish as a private Claude artifact | `--publish cloudflare`, or `hosting.target` in `.ui-audit/config.json` |
+| Compare base and head (`base+head`), showing only screens that really changed | `--baseline head-only` or `--baseline head+base-related` |
+| Capture desktop 1440x900 and mobile 390x844 | viewports in `.ui-audit/config.json` |
+| Light theme only; dark is captured too once the repo opts in with a `dark_mode` object in `.ui-audit/config.json` | `--themes light` for a quick run |
+| Helper subagents run on the `haiku` model | `--model <name>` |
+| Audit only what changed since the last audited commit | `--full` |
+| Record a `ui-audit` commit status on the PR head | fixed; `finalize-pr` relies on it |
 
 ## Repo metadata
 

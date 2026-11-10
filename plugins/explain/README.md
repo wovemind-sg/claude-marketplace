@@ -7,6 +7,26 @@ Explains code and concepts in the current project to an engineer who is learning
 
 The skill defines anything outside those two sets before it uses it, compares new ideas to what you already know, and flags "false friends": concepts that look familiar but behave differently. It draws ASCII diagrams for flows, call chains, lifetimes, and concurrency when a picture helps.
 
+## Install
+
+```
+claude plugin marketplace add wovemind-sg/claude-marketplace
+/plugin install explain@wovemind
+```
+
+## Requirements
+
+- Nothing beyond Claude Code. `git` is used, when present, to name the current project after its repository.
+- Optional: a connected IDE. Without an argument the skills use the code highlighted in the IDE, or the opened file; with no IDE connected they fall back to the current project.
+
+## Opinionated defaults
+
+| Default | Change it with |
+|---|---|
+| The learning log lives in `~/.explain_skill/`, shared by every project on the machine | not configurable; edit or delete the files by hand |
+| The current project (its git repo name) is registered as a topic you are learning | `/explain:explain-known` with no argument and no IDE marks it known |
+| Explanations go only as deep as your known topics and the log allow | `/explain:explain-known` and `/explain:explain-unknown` |
+
 ## Skills
 
 ### `/explain:explain [code path, symbol, question, or concept]`
@@ -37,7 +57,9 @@ Everything lives in `~/.explain_skill/`:
 
 Each explanation reads only the index files for the topics it involves, then opens the detail files whose keywords match the question. The log can grow large without filling the context window. The files are plain Markdown. Edit them by hand if you want to correct what the skill thinks you know.
 
-No environment variables required.
+## Environment variables and settings
+
+None. The plugin has no environment variables and no plugin settings.
 
 ## Example
 

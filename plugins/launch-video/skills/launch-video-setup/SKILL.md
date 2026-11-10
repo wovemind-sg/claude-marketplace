@@ -64,7 +64,7 @@ that order.
 ### Step 4 — Confirm and hand over
 
 When `check.sh` prints "everything is set up", tell the user they're ready and that
-the next thing to do is run `/launch-video-app` (or `/launch-video-webapp`) — as a
+the next thing to do is run `/launch-video:launch-video-app` (or `/launch-video:launch-video-webapp`) — as a
 single suggestion, not a list.
 
 ## Special cases
@@ -90,7 +90,7 @@ single suggestion, not a list.
 - **Things that already exist but aren't on PATH**: the checker says so. Fix PATH
   yourself by appending the export line to their shell profile (`~/.zshrc` on macOS,
   `~/.bashrc` on Linux/WSL), then ask them to do one thing: open a new terminal window
-  and run `/launch-video-setup` again.
+  and run `/launch-video:launch-video-setup` again.
 - **"ffmpeg captions (libass)" MISSING**: on macOS, Homebrew's plain `ffmpeg` formula
   is built without libass, so captions silently can't work — this is a confirmed setup
   gap, not something wrong with the video script. Run it yourself (no admin password

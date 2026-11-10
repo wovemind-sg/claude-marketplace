@@ -2,6 +2,71 @@
 
 Tools for restructuring implementation plans so large features can be built across multiple Claude Code sessions without blowing the context window.
 
+## Install
+
+```
+claude plugin marketplace add wovemind-sg/claude-marketplace
+/plugin install plan-tools@wovemind
+```
+
+Installing plan-tools also installs the plugins it depends on: `ntfy`, `fastapi-template` and `htmx-vs-alpine`.
+
+## Requirements
+
+- **`git`** and the **GitHub CLI (`gh`)**, signed in (`gh auth login`) with push access to the repository. Every issue, PR and status command goes through `gh`.
+- **The `ntfy` plugin** (installed as a dependency) for `drain-issues`, which sends a push notification when it finishes, gets blocked or a cycle stalls. Set its `server` setting first; see the ntfy README.
+- **`create-webapp`** uses `fastapi-template` and `htmx-vs-alpine` (dependencies). It also uses `use-railway` when the host is Railway, and the `capacitor-core` and `capacitor-deployment` skills when you want iOS/Android apps; when one of those is not installed it skips that part and says so.
+- **`create-app`** checks for Node, Xcode with CocoaPods (iOS), JDK 17 with the Android SDK (Android) and an EAS login (`eas login`) before it plans.
+- **`finalize-pr`** uses the built-in `/code-review` and `/security-review` skills, and the optional `ui-audit` and `ui-change-guard` plugins from this marketplace when they are installed.
+
+## Settings and environment variables
+
+No environment variables are needed. The plugin has one setting, which you change with `/plugin configure plan-tools@wovemind`:
+
+| Setting | Default | What it does |
+|---|---|---|
+| `designer_ui_review` | `false` | When `true` and the `ui-change-guard` plugin is installed, `finalize-pr` runs `/ui-change-guard:review-ui-change` before it raises the PR, and labels the PR `ui-risky` if the review still finds a problem. |
+
+A default only takes effect after you open the settings dialog and save it once. Until then the setting counts as off.
+
+## Opinionated defaults
+
+These are the team conventions the skills assume. Each one can be changed with the argument shown.
+
+| Default | Where | Change it with |
+|---|---|---|
+| Deferred work goes into GitHub issues labeled `ai` | `write-issue`, `impl-issue`, `impl-issue-lite`, `drain-issues`, `finalize-pr`, `convert-residual` | `--label <name>` |
+| Plan work happens on a branch named `plan/<feature-name>` | `plan-split-implment`, `plan-implement-complete` | `--branch <name>` |
+| Sub-agents run on the `sonnet` model | `impl-issue`, `impl-issue-lite`, `drain-issues` (model word in the arguments, e.g. `opus`); `finalize-pr` (`--model <name>`); `create-webapp`, `create-app` and `plan-implement-complete` ask you up front | see each skill |
+| A finished PR gets a `finalize-pr` commit status, and a UI audit gets a `ui-audit` status | `finalize-pr`, `monitor-pr` | fixed; a branch rule can require `finalize-pr` |
+| A PR whose designer review still fails gets the label `ui-risky` | `finalize-pr` | only runs when `designer_ui_review` is on |
+| New web apps use FastAPI + Jinja2 + HTMX + Alpine.js, deployed to Railway, with OpenRouter `openai/gpt-4o-mini` | `create-webapp` | `--host generic`, `--ai-model <model id>` |
+| New mobile apps use Expo + React Native + expo-router, built and shipped with EAS | `create-app` | fixed |
+| Auto-merge uses an allowed merge method: `plan-implement-complete` prefers squash, `monitor-pr` asks when more than one is allowed | `plan-implement-complete`, `monitor-pr` | the repository's merge settings |
+
+## Example
+
+Start a new web app, plan it, and implement it session by session:
+
+```
+/plan-tools:create-webapp a recipe box where friends share weekly meal plans
+```
+
+Or, in an existing repo where you already have a plan:
+
+```
+/plan-tools:split-plan
+/plan-tools:plan-split-implment --branch feature/meal-plans
+/plan-tools:finalize-pr
+/plan-tools:monitor-pr
+```
+
+To work through deferred issues labeled `backlog` instead of `ai`:
+
+```
+/plan-tools:drain-issues opus --label backlog
+```
+
 ## Skills
 
 ### `/plan-tools:create-webapp`
@@ -94,6 +159,26 @@ Usage:
 /plan-tools:impl-issue [optional model override] [--label <name>]   # default label ai
 ```
 
+### `/plan-tools:impl-issue-lite`
+
+Same as `impl-issue` for a small, mechanically obvious issue: the subagent implements it and opens a PR without the full `finalize-pr` review and test-plan cycle. If the issue turns out not to be small, it stops and tells you to use `impl-issue`.
+
+Usage:
+
+```
+/plan-tools:impl-issue-lite [issue number] [model override] [--label <name>]   # defaults: oldest open issue, sonnet, label ai
+```
+
+### `/plan-tools:convert-residual`
+
+One-off migration for repos that used the older file-based residual format: turns each `.planning/residual/*.md` file into a labeled GitHub issue, then deletes the files.
+
+Usage:
+
+```
+/plan-tools:convert-residual [--label <name>]   # default label ai
+```
+
 ### `/plan-tools:finalize-pr`
 
 Asks every question up front (push/PR go-ahead, UI audit), then runs unattended: `/code-review high --fix` (level `high` unless the arguments name another), a `/security-review` pass when the diff touches security-relevant code (high-confidence findings fixed, the rest become residual work), a test plan, logs any remaining loose ends as residual work (one `ai`-labeled issue per item via `write-issue`), then opens a PR, optionally runs a UI audit, and reports back what was fixed, tested, deferred, the audit URL and the PR URL.
@@ -150,7 +235,3 @@ Usage:
 ```
 
 Requires `gh` authenticated with push access to the PR branch.
-
-## Environment variables
-
-None required.

@@ -11,13 +11,35 @@ Scaffolds a complete Go web application skeleton — the Go counterpart of `fast
 - **Cache**: Redis via go-redis/v9 + generic `Cached[T]` helper
 - **Auth/session state**: HMAC-signed cookies (`internal/auth`), no session store
 - **Logging**: `log/slog`
-- **Deploy**: Railway (Procfile + `railpack.json` with an explicit `go build -o out ./cmd/server`)
+- **Deploy**: Railway (Procfile + `railpack.json` with an explicit `go build -o out ./cmd/server`) by default; with `--host generic`, none of the Railway files or wake-up code, so you deploy the `./out` binary to any host
 
 ## Install
 
 ```
-/plugin install go-webapp-template --marketplace wovemind-sg/claude-marketplace
+claude plugin marketplace add wovemind-sg/claude-marketplace
+/plugin install go-webapp-template@wovemind
 ```
+
+## Requirements
+
+To run the generated app:
+
+- Go. The generated `go.mod` says `go 1.26`; Go 1.21 or newer downloads that toolchain automatically. The code itself needs 1.22+ for its route patterns.
+- `make` for the `make dev`, `make test` and migration targets.
+- A PostgreSQL database and a Redis server, when those parts are included.
+- An OpenRouter API key, when the AI part is included.
+- For deploying with the default host, a Railway account.
+
+The `fastapi-go-migration` skill has its own requirements, listed in its section below, and uses the `plan-tools` plugin for big repos (it asks you to install `plan-tools@wovemind` if it is missing).
+
+## Opinionated defaults
+
+| Default | Change it with |
+|---|---|
+| Deploy to Railway: `Procfile`, `railpack.json`, the `internal/wake` package that retries a sleeping Railway database or Redis, and `./out migrate up` as Railway's pre-deploy command | `--host generic` (then run `./out migrate up` by hand or in your host's release step) |
+| AI calls go to OpenRouter with the model `openai/gpt-4o-mini` | `--ai-model <openrouter model id>` |
+| Server listens on port 8000 | `PORT` in the environment |
+| `fastapi-go-migration` works on a branch named `go-migration` | `--branch <name>` |
 
 ## Usage
 
@@ -40,7 +62,7 @@ Or just describe what you want:
 ├── embed.go                 # embeds templates/, static/, migrations/
 ├── internal/
 │   ├── config/
-│   ├── wake/                # ping-with-retry for a sleeping Railway DB/Redis
+│   ├── wake/                # ping-with-retry for a sleeping Railway DB/Redis (railway host only)
 │   ├── auth/                # signed cookies
 │   ├── db/                  # pgxpool, goose, example queries
 │   ├── cache/
@@ -54,12 +76,14 @@ Or just describe what you want:
 ├── static/
 ├── go.mod
 ├── Makefile
-├── Procfile
+├── Procfile                 # railway host only (the default)
 ├── .env.example
 └── .gitignore
 ```
 
-## Required Environment Variables
+## Environment variables
+
+The plugin itself needs none and has no plugin settings. The generated app reads these from `.env`:
 
 | Variable | Description |
 |---|---|
@@ -84,11 +108,19 @@ make dev          # start dev server at localhost:8000
 make test         # go test ./...
 ```
 
-Deployed on Railway, set `./out migrate up` as the service's pre-deploy command in the Railway dashboard (Settings → Deploy → Pre-deploy Command) so it runs on every deploy. To run it by hand:
+With `--host generic`, run `./out migrate up` against the production `ENGINE_URL` yourself, or in your host's release step. Deployed on Railway, set `./out migrate up` as the service's pre-deploy command in the Railway dashboard (Settings → Deploy → Pre-deploy Command) so it runs on every deploy. To run it by hand:
 
 ```bash
 railway ssh --service "<service name>" -- ./out migrate up
 ```
+
+## Example
+
+```
+/go-webapp-template:go-webapp-template create a new app called recipe-box --host generic
+```
+
+This generates `recipe-box/` with no `Procfile`, `railpack.json` or `internal/wake`. Follow the Quick Start above, then build with `go build -o out ./cmd/server` and run `./out` on your host.
 
 ## Migrating a fastapi-template project (`fastapi-go-migration`)
 

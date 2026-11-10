@@ -6,6 +6,7 @@
     "name": "Wovemind"
   },
   "license": "MIT",
+  "dependencies": ["ntfy", "fastapi-template", "htmx-vs-alpine"],
   "userConfig": {
     "designer_ui_review": {
       "type": "boolean",

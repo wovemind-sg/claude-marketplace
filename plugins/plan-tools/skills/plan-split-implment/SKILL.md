@@ -37,8 +37,8 @@ Do not start the next subagent until the previous one has finished AND `.plannin
 
 Polish the root CLAUDE.md, now that every session has appended to it piecemeal:
 
-1. Run `/claude-md-management:claude-md-improver` on it.
-2. Run `/caveman:caveman-compress claude.md` on it.
+1. If the `claude-md-management` plugin is installed (`/claude-md-management:claude-md-improver` is in the skill list), run `/claude-md-management:claude-md-improver` on it; otherwise skip this step and say so in the report.
+2. If the `caveman` plugin is installed (`/caveman:caveman-compress` is in the skill list), run `/caveman:caveman-compress claude.md` on it; otherwise skip this step and say so in the report.
 3. Commit the result.
 4. If `user-flows.md` exists at the project root, invoke `/user-flows:update-user-flows` to sync it with everything implemented across all sessions, then commit the result. Skip this step if the file doesn't exist.
 

@@ -6,6 +6,7 @@
     "name": "Wovemind"
   },
   "license": "MIT",
+  "dependencies": ["plan-tools", "ntfy"],
   "userConfig": {
     "default_base_branch": {
       "type": "string",

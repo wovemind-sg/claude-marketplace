@@ -63,7 +63,7 @@ def _send_query(url, key, skip=0):
 
 ## Endpoint Details
 
-See `references/endpoints.md` for the full specification of all 30 endpoints,
+See `${CLAUDE_PLUGIN_ROOT}/references/endpoints.md` for the full specification of all 30 endpoints,
 including URLs, request parameters, response fields, and sample data.
 
 Quick reference for the most commonly used endpoints:

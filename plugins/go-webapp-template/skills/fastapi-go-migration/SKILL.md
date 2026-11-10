@@ -68,7 +68,7 @@ Spawn a Plan subagent with: `.planning/inventory.md`, `references/mapping.md`, `
 
 Resolve all **ask** items with the user in **one** AskUserQuestion, write the answers into SPEC.md, then:
 - ≤ 3 routers and no grown features → one implementing subagent runs the sessions in order.
-- Otherwise → `/plan-tools:split-plan` on SPEC.md, then `/plan-tools:plan-split-implment`. Progress lives in `.planning/progress.md` and in the repo itself (which Go files exist, what `--go-routes` reports), so any later session can resume from the diff.
+- Otherwise → `/plan-tools:split-plan` on SPEC.md, then `/plan-tools:plan-split-implment`. If the `plan-tools` plugin is not installed (`/plan-tools:split-plan` is not in the skill list), tell the user to install it (`/plugin install plan-tools@wovemind`) and wait. Progress lives in `.planning/progress.md` and in the repo itself (which Go files exist, what `--go-routes` reports), so any later session can resume from the diff.
 
 ## Session rules (every implementing session)
 

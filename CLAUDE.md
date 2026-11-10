@@ -151,6 +151,7 @@ Each plugin lives in own directory, needs manifest at `.claude-plugin/plugin.jso
 | `homepage` | — | Documentation URL. |
 | `repository` | — | Source code URL. |
 | `license` | — | SPDX identifier (e.g. `MIT`, `Apache-2.0`). |
+| `dependencies` | — | Plugins this one needs (bare names resolve in this marketplace); installed along with it. E.g. plan-tools needs `ntfy`, `fastapi-template`, `htmx-vs-alpine`. |
 
 ### Plugin entry in `marketplace.json`
 
@@ -447,12 +448,6 @@ Or inside session:
 ```
 
 Validator checks `plugin.json`, skill/agent/command frontmatter, `hooks/hooks.json` for syntax + schema errors.
-
-**Known failure:** `claude plugin validate .` currently fails on legacy `claude-notify` plugin (reserved `claude-` prefix). Until renamed, validate single plugin instead:
-
-```bash
-claude plugin validate plugins/<name>
-```
 
 ### Common validation errors
 

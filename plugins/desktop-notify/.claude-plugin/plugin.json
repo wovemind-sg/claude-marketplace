@@ -1,5 +1,5 @@
 {
-  "name": "claude-notify",
+  "name": "desktop-notify",
   "description": "Send desktop notifications via the claude-notifier CLI when a task finishes or Claude needs user attention.",
   "version": "1.0.0",
   "author": {"name": "Wovemind"},

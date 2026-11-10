@@ -1,5 +1,5 @@
 ---
-name: claude-notify
+name: desktop-notify
 description: >
   Send a desktop notification via the claude-notifier CLI. By default, notify
   when Claude finishes the given task or gets blocked and needs the user's
@@ -8,10 +8,12 @@ description: >
   even if they don't say "claude-notifier" explicitly.
 ---
 
-# claude-notify
+# desktop-notify
 
-Sends a native desktop notification via the `claude-notifier` CLI (already
-installed at `/opt/homebrew/bin/claude-notifier`).
+Sends a native macOS desktop notification via the `claude-notifier` CLI.
+Before the first notification, find it on the path with
+`command -v claude-notifier`. If that prints nothing, tell the user
+`claude-notifier` is not installed and stop.
 
 ## Default triggers
 

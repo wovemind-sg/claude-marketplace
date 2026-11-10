@@ -78,7 +78,7 @@ The PR is waiting on the `finalize-pr` status — typically because new commits 
 
 ## 6. Stuck
 
-You can't make progress without the user: PR closed, fork you can't push to, dirty tree, a conflict needing a product decision, a check failing three times, missing credentials or permissions, `gh` erroring repeatedly. Tell the user in one short block: what's blocked, what you tried, what you need. Then wait. If the user asked to be notified (or `ntfy`/`claude-notify` skills are what they normally use), invoke that too.
+You can't make progress without the user: PR closed, fork you can't push to, dirty tree, a conflict needing a product decision, a check failing three times, missing credentials or permissions, `gh` erroring repeatedly. Tell the user in one short block: what's blocked, what you tried, what you need. Then wait. If the user asked to be notified (or `ntfy`/`desktop-notify` skills are what they normally use), invoke that too.
 
 ## 7. Done
 

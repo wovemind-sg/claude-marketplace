@@ -101,7 +101,7 @@ test-e2e:
 
 - `.github/workflows/*.yml`: replace `uv sync` / `alembic upgrade head` / `pytest` steps with `go build ./... && go vet ./... && go test ./...`, `./out migrate up` against the CI database, then `make test-e2e` if tests stay. Use `actions/setup-go` with the version from `go.mod`.
 - `README.md`: stack, `make dev`, `make migrate-up`, migrations run via the pre-deploy command set in the Railway dashboard (manual: `railway ssh --service <svc> -- ./out migrate up`).
-- Project `CLAUDE.md`: load `claude-md-management:claude-md-improver` and update — stack, layout (`cmd/`, `internal/`), the Go commands, the signed-cookie rule, the goose migration rule, and the fact that `tests/` is Python Playwright run with `uv`.
+- Project `CLAUDE.md`: load `claude-md-management:claude-md-improver` if the `claude-md-management` plugin is installed (otherwise skip it, edit the file directly and say so in the report) and update — stack, layout (`cmd/`, `internal/`), the Go commands, the signed-cookie rule, the goose migration rule, and the fact that `tests/` is Python Playwright run with `uv`.
 - Delete `.planning/` from the migration unless the project already used it for other work.
 
 ## 7. Hand the deploy to the user

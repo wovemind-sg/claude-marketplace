@@ -1,6 +1,6 @@
-# claude-notify
+# desktop-notify
 
-Send desktop notifications via the `claude-notifier` CLI.
+Send desktop notifications via the `claude-notifier` CLI. macOS only.
 
 ## What it does
 
@@ -20,8 +20,10 @@ setup needed beyond `claude-notifier` being installed.
 
 ## Required environment
 
-- `claude-notifier` CLI installed and on `PATH` (Homebrew:
-  `/opt/homebrew/bin/claude-notifier`)
+- macOS (the plugin is macOS-only)
+- `claude-notifier` CLI installed and on `PATH`. Claude checks with
+  `command -v claude-notifier`; if it is missing, Claude says it is not
+  installed and stops.
 
 ## Example
 
@@ -29,4 +31,4 @@ setup needed beyond `claude-notifier` being installed.
 claude-notifier -t "Task done" -m "Build finished, all tests pass" -S default
 ```
 
-See `skills/claude-notify/SKILL.md` for the full flag reference.
+See `skills/desktop-notify/SKILL.md` for the full flag reference.

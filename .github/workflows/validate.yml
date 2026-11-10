@@ -1,0 +1,47 @@
+name: Validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      # Needs no sign-in or API key.
+      - name: Validate marketplace and plugins
+        run: claude plugin validate .
+
+      - name: Install self-test dependencies
+        run: pip install pillow numpy
+
+      - name: Run script self-tests
+        run: |
+          set -e
+          for f in \
+            plugins/ui-audit/skills/capture/scripts/dep_hash.py \
+            plugins/ui-audit/skills/capture/scripts/diff_images.py \
+            plugins/ui-audit/skills/capture/scripts/build_report.py \
+            plugins/compliance-audit/skills/audit/scripts/detect_signals.py \
+            plugins/compliance-audit/skills/audit/scripts/license_scan.py \
+            plugins/compliance-audit/skills/apply/scripts/parse_cards.py; do
+            echo "== $f"
+            python "$f" --selftest
+          done

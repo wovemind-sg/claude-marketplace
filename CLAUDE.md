@@ -29,6 +29,8 @@ Claude Code auto-reads this file every session start. Covers structure, conventi
 
 Repo = Claude Code **plugin marketplace** — catalog for users to discover + install plugins from this team or community. Claude Code reads `.claude-plugin/marketplace.json` for plugin list. Each plugin = self-contained directory with own `.claude-plugin/plugin.json` manifest.
 
+Contributor guide: `CONTRIBUTING.md` (short version of the sections below). Security reports: `SECURITY.md`.
+
 Users add marketplace:
 
 ```bash
@@ -381,7 +383,7 @@ Uses sparse checkout to minimise bandwidth.
 5. Add entry to `.claude-plugin/marketplace.json` with `name` and `source`.
 6. Validate: `claude plugin validate .` (or `/plugin validate .` inside session).
 7. Test locally: `/plugin marketplace add ./` then `/plugin install <name>@<marketplace-name>`.
-8. Open pull request — CI re-validates all manifests.
+8. Open pull request — CI (`.github/workflows/validate.yml`) runs `claude plugin validate .` and the scripts' `--selftest` checks.
 
 ---
 
@@ -440,6 +442,8 @@ Each channel must resolve to different version string; else Claude Code treats t
 ```bash
 claude plugin validate .
 ```
+
+Passes for the whole marketplace (only warning: `sg-card-benefits` has no `version`, on purpose). Needs no sign-in.
 
 Or inside session:
 

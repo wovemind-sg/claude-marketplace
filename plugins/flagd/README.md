@@ -15,9 +15,13 @@ Gives Claude everything it needs to work with flagd without browsing:
 ## Install
 
 ```
-/plugin marketplace add wovemind-sg/claude-marketplace
+claude plugin marketplace add wovemind-sg/claude-marketplace
 /plugin install flagd@wovemind
 ```
+
+## Requirements
+
+None for the skill itself. To run what it writes you need flagd (as a Docker image, a binary or on Kubernetes) and, in your application, the OpenFeature SDK with the flagd provider for your language.
 
 ## Usage
 
@@ -29,6 +33,30 @@ Example prompts:
 - "Run flagd in docker-compose next to my FastAPI app and evaluate a flag from Python"
 - "Why does my in-process flagd provider return the default for every flag?"
 - "Gate the feature on app version >= 2.3.0 using flagd semver targeting"
+
+## Example
+
+Ask Claude:
+
+> "Add a 10% rollout of `new-checkout` to our flagd config."
+
+Claude adds a flag whose targeting uses `fractional`, which buckets users by their `targetingKey`:
+
+```json
+{
+  "$schema": "https://flagd.dev/schema/v0/flags.json",
+  "flags": {
+    "new-checkout": {
+      "state": "ENABLED",
+      "variants": { "on": true, "off": false },
+      "defaultVariant": "off",
+      "targeting": { "fractional": [["on", 10], ["off", 90]] }
+    }
+  }
+}
+```
+
+It also reminds you that your application must pass a `targetingKey` (for example the user id) in the evaluation context. Without one, the evaluation fails and your code falls back to its default value.
 
 ## Layout
 

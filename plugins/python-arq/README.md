@@ -30,5 +30,14 @@ Claude uses skill → correct `WorkerSettings`, `enqueue_job` call w/ string fun
 ## Install
 
 ```bash
+claude plugin marketplace add wovemind-sg/claude-marketplace
 /plugin install python-arq@wovemind
 ```
+
+## Requirements
+
+None for the skill itself. The code it writes needs Python with `asyncio`, the `arq` package (version 0.28) and a Redis server for the queue.
+
+## Environment variables
+
+None. The skill reads no environment variables. The code it writes connects to Redis on `localhost:6379` unless you pass your own settings, for example `RedisSettings.from_dsn(...)` with a URL from your own configuration.

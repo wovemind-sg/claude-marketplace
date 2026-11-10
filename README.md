@@ -1,93 +1,72 @@
-# Claude Code Skills Marketplace
+# Wovemind Claude Code plugins
 
-A collection of Claude Code skills — domain-specific knowledge packs that make Claude more capable for specific tasks.
+Open-source Claude Code plugins from Wovemind: skills, agents and hooks for web, mobile and AI app development. Each plugin lives in its own folder under `plugins/`, and each folder has a `README.md` with its requirements, settings and an example.
 
-## Available Skills
+## Install
 
-### HTMX vs Alpine.js (`htmx-vs-alpine`)
-
-Guides Claude to choose between HTMX and Alpine.js for client-side interactivity in server-rendered web applications.
-
-**Triggers when you ask about:**
-- Form submission, search, pagination, modals, dropdowns
-- UI toggles, tabs, accordions, infinite scroll, polling
-- Any interactive element in a server-rendered context
-
----
-
-### Supabase Python (`supabase-python`)
-
-FastAPI with Supabase and SQLAlchemy/SQLModel patterns.
-
-**Triggers when you ask about:**
-- FastAPI + Supabase projects
-- SQLModel or SQLAlchemy with Supabase
-- Python backend with Supabase auth or database
-
----
-
-### Singapore LTA DataMall API (`singapore-lta`)
-
-Query Singapore's Land Transport Authority (LTA) DataMall API for real-time and static transport data. Covers bus arrivals, routes and stops, taxi availability, car park availability, traffic incidents, train service alerts, station crowd density, EV charging points, and more.
-
-**Triggers when you ask about:**
-- Singapore bus arrivals, routes, or stops
-- Singapore traffic incidents, speed bands, or travel times
-- Singapore taxi or car park availability
-- Singapore train/MRT service alerts or crowd levels
-- LTA DataMall API
-
----
-
-### ntfy (`ntfy`)
-
-Send push notifications to phone/desktop via a self-hosted [ntfy](https://ntfy.sh) instance over its HTTP API. Covers titles, priority, tags, action buttons, attachments, scheduled delivery, and markdown formatting.
-
-**Triggers when you ask about:**
-- Being notified, pinged, or alerted when a task finishes or fails
-- Sending a push notification, even without saying "ntfy" explicitly
-
-### OpenFeature (`openfeature`)
-
-Complete reference for [OpenFeature](https://openfeature.dev/), the CNCF vendor-neutral feature-flag standard: spec concepts, providers, hooks, events, evaluation context, OFREP, CLI, MCP server and ecosystem, with deep-dive references for the Go, .NET (C#) and Python SDKs.
-
-**Triggers when you ask about:**
-- Adding feature flags, percentage rollouts, A/B tests or kill switches to an app in any language
-- OpenFeature SDKs, providers, hooks, `EvaluationContext`, `targetingKey`, `PROVIDER_READY`, `FLAG_NOT_FOUND`
-- OFREP, the `openfeature` CLI, migrating between flag vendors, writing a custom provider
-
----
-
-### UI Audit (`ui-audit`)
-
-Before/after screenshots and motion clips of every screen a PR really changed, with unintended changes flagged, published as a Claude artifact or to Cloudflare Pages (behind a password on private repos) and linked from the PR. Web via Playwright (desktop and mobile emulation); Capacitor and Expo via simulators (untested on real apps).
-
-**Triggers when you ask about:**
-- Screenshots of UI changes, a visual audit or visual regression check for a PR
-- Before/after images to show reviewers what the UI looks like
-
----
-
-## Installation
+Add the marketplace once:
 
 ```bash
 claude plugin marketplace add wovemind-sg/claude-marketplace
-claude plugin install htmx-vs-alpine@wovemind --scope user
-claude plugin install supabase-python@wovemind --scope user
-claude plugin install singapore-lta@wovemind --scope user
-claude plugin install fastapi-template@wovemind --scope user
-claude plugin install ntfy@wovemind --scope user
-claude plugin install ui-audit@wovemind --scope user
 ```
 
-## Refreshing After Changes
+Then install the plugins you want, from your shell or inside a Claude Code session:
 
 ```bash
-claude plugin marketplace remove wovemind
-claude plugin marketplace add wovemind-sg/claude-marketplace
-claude plugin install htmx-vs-alpine@wovemind --scope user
-claude plugin install supabase-python@wovemind --scope user
-claude plugin install singapore-lta@wovemind --scope user
-claude plugin install fastapi-template@wovemind --scope user
-claude plugin install ntfy@wovemind --scope user
+claude plugin install <plugin>@wovemind
 ```
+
+```
+/plugin install <plugin>@wovemind
+```
+
+For example, `claude plugin install ntfy@wovemind`.
+
+## Refresh after changes
+
+Fetch the latest version of the marketplace, then update each plugin you installed:
+
+```bash
+claude plugin marketplace update wovemind
+claude plugin update <plugin>@wovemind
+```
+
+Inside a session, run `/reload-plugins` afterwards so the session picks up the new versions.
+
+## Plugins
+
+### Development
+
+- **singapore-lta**: query Singapore's Land Transport Authority DataMall API for bus arrivals, traffic, car parks, train alerts and more (Singapore only).
+- **supabase-python**: FastAPI with Supabase for auth and storage, and SQLAlchemy or SQLModel for database queries.
+- **htmx-vs-alpine**: decides whether HTMX or Alpine.js should drive each piece of interactivity in a server-rendered app.
+- **fastapi-template**: scaffolds a FastAPI, Jinja2, HTMX and Alpine.js web app with PostgreSQL, Redis and OpenRouter AI.
+- **go-webapp-template**: scaffolds the same kind of app in Go, and migrates an existing fastapi-template project to Go.
+- **plan-tools**: plan-driven workflow: bootstrap a new web or mobile app, split plans into context-sized sessions, and drive them to pull requests.
+- **ntfy**: send push notifications to your phone or desktop through an ntfy server.
+- **evolution-api**: endpoint reference for writing WhatsApp client code against an Evolution API server.
+- **whatsapp-safety**: keeps WhatsApp automation through Evolution API from getting the number flagged or banned.
+- **user-flows**: extracts the user flows of an application into `user-flows.md` and keeps Playwright tests for them in sync.
+- **product-experience-strategist**: product strategy, UX/UI and business judgment for designing and reviewing digital products and their flows.
+- **python-arq**: reference for the arq library: async job queues in Python with asyncio and Redis.
+- **flagd**: reference for flagd, the OpenFeature feature-flag evaluation engine.
+- **openfeature**: reference for OpenFeature, the vendor-neutral feature-flag standard, with deep dives for Go, .NET and Python.
+- **ui-change-guard**: reviews UX/UI changes before you push, for lost functionality, broken wiring and regressions.
+- **compliance-audit**: audits a product repository for legal and regulatory compliance gaps and implements the fixes as pull requests (not legal advice).
+- **ui-audit**: before and after screenshots and clips of every screen a pull request changed, linked from the pull request.
+
+### Productivity
+
+- **sg-card-benefits**: monitors Singapore credit and debit card benefits and terms for changes (Singapore only).
+- **desktop-notify**: sends macOS desktop notifications through `claude-notifier` when a task finishes or Claude needs you.
+- **launch-video**: turns an app repository into a launch video with a presenter, screen recordings, voice-over and captions.
+- **explain**: explains code and concepts in the current project, building on what you already know.
+- **session-overview**: a side pane (`/sessions`) listing every open Claude Code session on the machine, grouped by project.
+
+## Licence
+
+MIT. See [`LICENSE`](LICENSE).
+
+## Contributing
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md).

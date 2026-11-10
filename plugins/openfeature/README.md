@@ -15,9 +15,13 @@ Gives Claude everything it needs to add, debug and evolve OpenFeature-based feat
 ## Install
 
 ```
-/plugin marketplace add wovemind-sg/claude-marketplace
+claude plugin marketplace add wovemind-sg/claude-marketplace
 /plugin install openfeature@wovemind
 ```
+
+## Requirements
+
+None for the skill itself. To run what it writes you need the OpenFeature SDK for your language and a provider for your flag backend, for example flagd (covered by the sibling `flagd` plugin), OFREP or a vendor provider.
 
 ## Usage
 
@@ -30,6 +34,14 @@ Example prompts:
 - "My Python FastAPI app returns the default for every flag with reason ERROR — why?"
 - "Write an OpenFeature hook that adds the request's tenant id to the evaluation context and emits an OTel span attribute"
 - "How do I migrate from LaunchDarkly to flagd without touching call sites?"
+
+## Example
+
+Ask Claude:
+
+> "My Python FastAPI app returns the default for every flag with reason ERROR. Why?"
+
+Claude checks the usual causes in order, using the troubleshooting table: the provider was registered but not ready when the first evaluation ran, the flag key does not exist in the provider (`FLAG_NOT_FOUND`), the variant type does not match the getter you called (`TYPE_MISMATCH`), or a percentage rollout received no `targetingKey`. For each one it shows how to confirm it from the evaluation details (`reason`, `error_code`, `error_message`) and the code change that fixes it, such as registering the provider with `api.set_provider_and_wait(...)` so it is ready before the app serves requests.
 
 ## Layout
 

@@ -30,8 +30,17 @@ The two quick questions to ask:
 ## Installation
 
 ```bash
+claude plugin marketplace add wovemind-sg/claude-marketplace
 /plugin install htmx-vs-alpine@wovemind
 ```
+
+## Requirements
+
+None. The skill is guidance only. It applies to projects that render HTML on the server and load HTMX and Alpine.js in the page.
+
+## Environment variables
+
+None.
 
 ## Usage
 
@@ -41,6 +50,29 @@ You can also invoke it directly:
 
 ```
 /htmx-vs-alpine:htmx-vs-alpine
+```
+
+## Example
+
+Ask Claude:
+
+> "Add a search box above the orders table that filters as I type, and a dropdown menu on each row."
+
+Claude splits the work by who owns the state. The search results come from the database, so the search box uses HTMX to ask the server for the filtered table and swap it in:
+
+```html
+<input type="search" name="q"
+       hx-get="/orders" hx-trigger="input changed delay:300ms"
+       hx-target="#orders-table">
+```
+
+Whether a row's dropdown is open matters only in the browser, so the menu uses Alpine.js and makes no request:
+
+```html
+<div x-data="{ open: false }">
+  <button @click="open = !open">Actions</button>
+  <ul x-show="open" @click.outside="open = false">...</ul>
+</div>
 ```
 
 ## Architecture philosophy

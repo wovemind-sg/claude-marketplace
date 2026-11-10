@@ -24,8 +24,17 @@ consent and privacy flows, accessibility, and implementation reviews.
 ## Installation
 
 ```bash
+claude plugin marketplace add wovemind-sg/claude-marketplace
 /plugin install product-experience-strategist@wovemind
 ```
+
+## Requirements
+
+None. The skill is prompt-only and needs no other tools or plugins.
+
+## Environment variables
+
+None.
 
 ## Usage
 
@@ -34,6 +43,14 @@ The skill activates automatically for product/UX/design work. You can also invok
 ```
 /product-experience-strategist:product-experience-strategist
 ```
+
+## Example
+
+Ask Claude:
+
+> "Review our signup flow. Users have to create an account before they can see any of the app."
+
+Claude reviews the flow as a product strategist and designer would. It weighs what the user gets against what the business needs at each step, points out where people are likely to drop off (here, asking for an account before showing any value), and proposes a revised flow, for example letting people try the core feature first and asking for an account when they want to save their work. It also checks the parts that are easy to miss, such as consent wording, privacy, accessibility, and whether the change is feasible to build.
 
 ## What it does not include
 

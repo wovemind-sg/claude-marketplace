@@ -16,16 +16,22 @@ Ask Claude send WhatsApp messages, manage groups, run outreach, wire Evolution A
 ## Installation
 
 ```
-/plugin marketplace add wovemind-sg/claude-marketplace
+claude plugin marketplace add wovemind-sg/claude-marketplace
 /plugin install whatsapp-safety@wovemind
 ```
 
-Or test local from this repo:
+To test changes from a local clone instead, run these from the root of the clone:
 
 ```
 /plugin marketplace add ./
 /plugin install whatsapp-safety@wovemind
 ```
+
+## Requirements
+
+- An Evolution API server (version 2) that you run yourself, with a WhatsApp number connected to one of its instances.
+- Permission to message the people you send to: your own number, and recipients who opted in.
+- The `evolution-api` plugin from this marketplace is optional. It holds the full endpoint reference; this plugin covers how to use those endpoints safely.
 
 ## Usage
 

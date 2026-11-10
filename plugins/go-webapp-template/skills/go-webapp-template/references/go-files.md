@@ -2,6 +2,14 @@
 
 Replace `<app-name>` with the actual app name throughout. It is the Go module path, so every internal import is `<app-name>/internal/...` and the root package is imported as `app "<app-name>"`.
 
+**Host `generic`** (`--host generic`): do not create `internal/wake/`, and make these edits where the files below use it — remove each `"<app-name>/internal/wake"` import, then:
+- `internal/db/db.go`: `if err := pool.Ping(ctx); err != nil {` instead of `wake.Ping(ctx, "DB", pool.Ping)`.
+- `internal/db/migrate.go`: `if err := sqlDB.PingContext(ctx); err != nil {` instead of `wake.Ping(ctx, "DB", sqlDB.PingContext)`.
+- `internal/cache/cache.go`: `if err := c.Ping(ctx); err != nil {` instead of `wake.Ping(ctx, "REDIS", c.Ping)`.
+- `internal/server/server.go`: drop the `dbWake, rdsWake` field, the two `wake.New` blocks and `h = s.wakeDeps(h)`; the `New` comment becomes `mux → recoverPanics → logRequests`.
+- `internal/server/middleware.go`: drop `wakeDeps`.
+- Drop the comments that mention a sleeping Railway DB/Redis or the Railway pre-deploy command.
+
 ---
 
 ## `embed.go` (project root)
@@ -243,6 +251,8 @@ func EnvInt(name string, def int) int {
 
 ## `internal/wake/wake.go`
 
+Only when host is `railway`.
+
 ```go
 // Package wake pings a dependency with retries before it is used, so a Railway
 // Postgres/Redis that went to sleep has time to wake up instead of failing the call.
@@ -325,6 +335,8 @@ func (w *Waker) Wake(ctx context.Context) error {
 ---
 
 ## `internal/wake/wake_test.go`
+
+Only when host is `railway`.
 
 ```go
 package wake
@@ -955,6 +967,8 @@ func truncate(s string, n int) string {
 	return s[:n] + "…"
 }
 ```
+
+Write the `--ai-model` value as `DefaultModel` (`openai/gpt-4o-mini` when the flag is not given).
 
 ---
 

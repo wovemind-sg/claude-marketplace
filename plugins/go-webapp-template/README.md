@@ -25,6 +25,7 @@ Invoke the skill by asking Claude to scaffold a new Go web app:
 
 ```
 /go-webapp-template:go-webapp-template create a new app called my-app
+/go-webapp-template:go-webapp-template [--host railway|generic] [--ai-model <openrouter model id>]   # defaults railway, openai/gpt-4o-mini
 ```
 
 Or just describe what you want:

@@ -19,6 +19,7 @@ Invoke the skill by asking Claude to scaffold a new web app:
 
 ```
 /fastapi-template:fastapi-template create a new app called my-app
+/fastapi-template:fastapi-template [--host railway|generic] [--ai-model <openrouter model id>]   # defaults railway, openai/gpt-4o-mini
 ```
 
 Or just describe what you want:

@@ -25,10 +25,10 @@ dependencies = [
     # Database
     "sqlmodel>=0.0.38",
     "alembic>=1.18",
-    "psycopg2-binary>=2.9",
+    "psycopg[binary]>=3.2",  # SQLAlchemy 2.1+ maps postgresql:// to psycopg 3
     # Redis + caching
     "fastapi-cache2[redis]>=0.2.2",
-    "redis>=5.0",
+    "redis>=4.2",  # fastapi-cache2 0.2.2 requires redis<5
     # AI
     "openrouter>=0.9.1",
 ]
@@ -90,6 +90,8 @@ Note: Makefile targets must use actual tab characters for indentation (not space
 ---
 
 ## `Procfile`
+
+Only when host is `railway`; with `--host generic`, do not create it.
 
 ```
 web: gunicorn app.main:app --bind 0.0.0.0:$PORT --worker-class uvicorn.workers.UvicornWorker --workers ${WEB_CONCURRENCY:-4} --timeout 60 --access-logfile - --error-logfile -

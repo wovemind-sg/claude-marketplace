@@ -1,6 +1,7 @@
 ---
 name: fastapi-template
 description: Scaffolds a complete FastAPI web application skeleton with server-side rendering, database, AI, and Redis. Always use this skill when the user wants to create a new web app, start a new FastAPI project, scaffold a Python web application, set up a new project structure, or bootstrap a full-stack app. Invoke whenever the user says "create a new project", "scaffold a web app", "start a FastAPI app", "set up a project skeleton", "new web app", or anything about bootstrapping a Python web application from scratch.
+argument-hint: "[--host railway|generic] [--ai-model <openrouter model id>]"
 ---
 
 ## Stack
@@ -16,9 +17,13 @@ Drawn from production apps:
 - **Config**: `python-dotenv` + `.env.example`
 - **Runtime**: `uv` (package management and execution)
 - **Logging**: `loguru`
-- **Deploy**: Railway via `Procfile`
+- **Deploy**: Railway via `Procfile` (only when host is `railway`)
 
 ## Generation Process
+
+Two optional flags in `$ARGUMENTS`; remove them before reading the rest of the arguments:
+- `--host railway|generic` (default `railway`). With `generic`, skip every part marked "only when host is `railway`": the `Procfile`, Railway deploy instructions, and the ping retries for sleeping serverless containers in `app/dependencies.py`. The app still reads `PORT` and its connection strings from the environment.
+- `--ai-model <openrouter model id>` (default `openai/gpt-4o-mini`) — the default `model` of `invoke_ai_model` in `app/ai.py`.
 
 1. Ask for **app name** (kebab-case) if not provided
 2. Confirm which optional features to include:
@@ -68,7 +73,7 @@ Read these reference files before generating:
 ├── alembic.ini               # Timestamp filename template
 ├── pyproject.toml
 ├── Makefile
-├── Procfile                  # Railway-compatible gunicorn
+├── Procfile                  # Railway-compatible gunicorn (only when host is `railway`)
 ├── .env.example
 ├── .env                      # local only (gitignored)
 ├── .python-version           # 3.11

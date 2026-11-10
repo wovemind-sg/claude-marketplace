@@ -74,6 +74,8 @@ Note: Makefile targets must use actual tab characters for indentation (not space
 
 ## `Procfile`
 
+Only when host is `railway`; with `--host generic`, do not create it (nor `railpack.json` below).
+
 ```
 web: ./out
 ```
@@ -91,6 +93,8 @@ The deploy image contains only the binary — no `make`, no goose CLI — which 
 ---
 
 ## `railpack.json`
+
+Only when host is `railway`.
 
 ```json
 {
@@ -143,7 +147,7 @@ SESSION_SECRET=change-me-to-a-random-secret-in-production
 OPENROUTER_API_KEY=sk-or-...
 ```
 
-Optional tuning (defaults shown): `DB_PING_RETRIES=5`, `DB_PING_INTERVAL=2`, `REDIS_PING_RETRIES=5`, `REDIS_PING_INTERVAL=2` (seconds); they apply at startup, to `migrate`, and to each request (bounding how long one request waits on a sleeping DB before a 500, after which requests fail fast for 10s; Redis failures only log and continue). `DOT_ENV_PATH` overrides the `.env` location.
+Optional tuning (only when host is `railway`; defaults shown): `DB_PING_RETRIES=5`, `DB_PING_INTERVAL=2`, `REDIS_PING_RETRIES=5`, `REDIS_PING_INTERVAL=2` (seconds); they apply at startup, to `migrate`, and to each request (bounding how long one request waits on a sleeping DB before a 500, after which requests fail fast for 10s; Redis failures only log and continue). `DOT_ENV_PATH` overrides the `.env` location.
 
 ---
 

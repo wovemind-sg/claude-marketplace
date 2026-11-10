@@ -1,7 +1,7 @@
 ---
 name: create-webapp
 description: End-to-end bootstrap of a brand-new FastAPI + Jinja2 + HTMX + Alpine.js web app — gather features, design reference and whether to ship Capacitor mobile apps, pick only the needed parts of the fastapi-template stack, collect .env values, clear blockers, plan with a subagent, split the plan into .planning/ sessions, then hand off to implementing subagents. Use whenever the user wants to start, bootstrap, kick off, or build a new web app from scratch and wants it planned and implemented end to end, not just scaffolded — even if they only say "new app", "build me an app that…", or "start a project for…".
-argument-hint: [optional one-line app idea]
+argument-hint: "[--host railway|generic] [--ai-model <openrouter model id>] [optional one-line app idea]"
 ---
 
 You are orchestrating the birth of a new web app: from a feature list to a running, committed implementation. You do not write app code yourself — you gather what the subagents need, remove everything that would stall them, then delegate planning and implementation.
@@ -9,6 +9,12 @@ You are orchestrating the birth of a new web app: from a feature list to a runni
 Everything downstream is only as good as the inputs collected here. A subagent with a vague feature list, a missing API key, or an unreachable database will either stop and wait or invent something. Spend the effort up front.
 
 ## 1. Gather inputs
+
+Two optional flags in `$ARGUMENTS`; remove them before using the rest as the seed:
+- `--host railway|generic` (default `railway`). With `generic`, skip every Railway provisioning and deploy step below (the `use-railway` provisioning of the database and the Railway deploy target in section 4, the "Railway via `Procfile`" deploy step in section 5) and tell the user they deploy to their own host; if mobile = yes, ask them for the public HTTPS URL of that host instead.
+- `--ai-model <openrouter model id>` (default `openai/gpt-4o-mini`).
+
+Pass both values to `fastapi-template:fastapi-template` wherever this skill or its subagents use it (section 5 step 1, section 7): the template is applied as if run with `--host <host> --ai-model <model>`, and the Plan prompt carries both values verbatim.
 
 Use `$ARGUMENTS` as the seed if given. Ask for everything below in as few rounds as possible (AskUserQuestion, grouping related questions). Skip anything the user already stated.
 

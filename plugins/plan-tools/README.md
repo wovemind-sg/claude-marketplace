@@ -11,7 +11,7 @@ Bootstraps a brand-new FastAPI + Jinja2 + HTMX + Alpine.js web app end to end. G
 Usage:
 
 ```
-/plan-tools:create-webapp [optional one-line app idea]
+/plan-tools:create-webapp [--host railway|generic] [--ai-model <openrouter model id>] [optional one-line app idea]   # defaults railway, openai/gpt-4o-mini
 ```
 
 Requires the `fastapi-template` and `htmx-vs-alpine` plugins from this marketplace to be installed; the `capacitor-core` plugin too when mobile apps are wanted.

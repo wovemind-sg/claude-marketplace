@@ -1,6 +1,7 @@
 ---
 name: go-webapp-template
 description: Scaffolds a complete Go web application skeleton with server-side rendering (net/http + html/template), HTMX + Alpine.js, PostgreSQL via pgx with goose migrations, Redis caching, and OpenRouter AI — the Go counterpart of fastapi-template, with no Python anywhere. Always use this skill when the user wants to create a new Go web app, start a new Go server project, scaffold a golang backend with templates, set up a Go project structure, or bootstrap a full-stack app in Go. Invoke whenever the user says "new Go web app", "scaffold a Go project", "start a Go server", "Go + HTMX", "golang backend", "net/http app with templates", or anything about bootstrapping a Go web application from scratch. If the user asks for Python/FastAPI, use fastapi-template instead.
+argument-hint: "[--host railway|generic] [--ai-model <openrouter model id>]"
 ---
 
 ## Stack
@@ -15,10 +16,14 @@ Go port of the `fastapi-template` stack — same features, same env var names, s
 - **Auth/session state**: HMAC-signed cookies (`internal/auth`, keyed by `SESSION_SECRET`) — no session store
 - **Config**: `godotenv` + `.env.example`
 - **Logging**: `log/slog`
-- **Deploy**: Railway via `Procfile` + `railpack.json` (explicit `go build ... -o out ./cmd/server` build command)
+- **Deploy**: Railway via `Procfile` + `railpack.json` (explicit `go build ... -o out ./cmd/server` build command) (only when host is `railway`)
 - **Tooling**: Go only — `go test`, `gofmt`, `go vet`. No Python, no uv, no pytest.
 
 ## Generation Process
+
+Two optional flags in `$ARGUMENTS`; remove them before reading the rest of the arguments:
+- `--host railway|generic` (default `railway`). With `generic`, skip every part marked "only when host is `railway`": `Procfile`, `railpack.json`, the `internal/wake` package (see the "Host `generic`" note at the top of `references/go-files.md` for the edits in the files that import it), the Railway pre-deploy command `./out migrate up`, and Railway deploy instructions. The app still reads `PORT` and its connection strings from the environment. Migrations then run by hand (`./out migrate up` against the production `ENGINE_URL`) or in the host's release step.
+- `--ai-model <openrouter model id>` (default `openai/gpt-4o-mini`) — the value of `DefaultModel` in `internal/ai/ai.go`.
 
 1. Ask for **app name** (kebab-case) if not provided. It is also the Go module path (`module <app-name>`), so imports are `<app-name>/internal/...`. Derive `<App Name>` (display name in templates) as Title Case of the kebab name (`my-app` → `My App`) unless the user gives one.
 2. Confirm which optional features to include:
@@ -50,7 +55,7 @@ go mod tidy && gofmt -l . && go build ./... && go vet ./... && go test ./...
 ├── embed.go                  # //go:embed templates static migrations → app.Assets, app.Migrations
 ├── internal/
 │   ├── config/config.go      # godotenv load, MustEnv (fail at startup), DevMode, Env helpers
-│   ├── wake/
+│   ├── wake/                 # only when host is `railway`
 │   │   ├── wake.go           # Ping with retry + Waker (fresh-skip, shared wake) for a sleeping Railway DB/Redis
 │   │   └── wake_test.go
 │   ├── auth/cookies.go       # HMAC-signed cookies: Get/Set/Clear, IsAuthenticated, RequireAuth
@@ -77,8 +82,8 @@ go mod tidy && gofmt -l . && go build ./... && go vet ./... && go test ./...
 ├── static/css/app.css, static/js/app.js
 ├── go.mod                    # module <app-name>; go 1.26 (tidy may raise it)
 ├── Makefile
-├── Procfile                  # web: ./out
-├── railpack.json             # explicit build: go build -o out ./cmd/server
+├── Procfile                  # web: ./out (only when host is `railway`)
+├── railpack.json             # explicit build: go build -o out ./cmd/server (only when host is `railway`)
 ├── .env.example
 ├── .env                      # local only (gitignored)
 └── .gitignore
@@ -94,7 +99,7 @@ go mod tidy && gofmt -l . && go build ./... && go vet ./... && go test ./...
 
 **Startup / shutdown** (the lifespan equivalent) — in `run()`: connect pgxpool and ping (with retry), connect Redis and ping (with retry), log both. `signal.NotifyContext` + `srv.Shutdown` with a 10s timeout; `defer pool.Close()` / `defer cache.Close()`.
 
-**Wake before use** — Railway sleeps idle Postgres/Redis services, so a startup ping is not enough. `wake.Ping` (retry `DB_PING_RETRIES`/`REDIS_PING_RETRIES` times, `*_PING_INTERVAL` seconds apart) runs at startup and in `migrate` before goose touches the DB. On the request path the `wakeDeps` middleware wraps the whole mux (every route except `/static/`, including route middleware) and calls a `wake.Waker`: it pings only when the last result is older than 10s (a failed loop is remembered for 10s too, so requests fail fast instead of each retrying), and concurrent requests share one retry loop. A DB that stays down → 500; a down Redis only logs and continues (nil `Pool`/`Cache` are skipped). Anything that uses the DB/Redis outside a request (goroutines, workers) keeps its own `wake.New(...)` and calls `Wake` before each job or tick.
+**Wake before use** (only when host is `railway`; with `generic`, startup and `migrate` ping once and there is no `wakeDeps` middleware) — Railway sleeps idle Postgres/Redis services, so a startup ping is not enough. `wake.Ping` (retry `DB_PING_RETRIES`/`REDIS_PING_RETRIES` times, `*_PING_INTERVAL` seconds apart) runs at startup and in `migrate` before goose touches the DB. On the request path the `wakeDeps` middleware wraps the whole mux (every route except `/static/`, including route middleware) and calls a `wake.Waker`: it pings only when the last result is older than 10s (a failed loop is remembered for 10s too, so requests fail fast instead of each retrying), and concurrent requests share one retry loop. A DB that stays down → 500; a down Redis only logs and continues (nil `Pool`/`Cache` are skipped). Anything that uses the DB/Redis outside a request (goroutines, workers) keeps its own `wake.New(...)` and calls `Wake` before each job or tick.
 
 **Request logging middleware** — always wrap the mux with `logRequests`: a status-capturing `ResponseWriter`, log `METHOD /path -> status (Nms)`. In dev, add `Cache-Control: no-store` to `/static/` responses.
 
@@ -106,7 +111,7 @@ go mod tidy && gofmt -l . && go build ./... && go vet ./... && go test ./...
 
 **DB access** — `*pgxpool.Pool` is passed in `server.Deps`, never a package global. One Go process serves all requests, so the pool is sized once (`MaxConns=20`, `MaxConnLifetime=5m`, `HealthCheckPeriod=30s`) — there is no gunicorn-style per-worker split. Queries are plain SQL strings scanned with `pgx.CollectRows`/`pgx.RowToStructByPos`; add `sqlc` only when the query count makes hand-scanning painful.
 
-**Migrations** — goose SQL files only (`-- +goose Up` / `-- +goose Down`), embedded via `app.Migrations` and run by the server binary itself: `make migrate-up` locally; in prod the Railway pre-deploy command (`./out migrate up`, set by the user in the dashboard) runs on every deploy, before the new version takes traffic (the deploy image has only the binary — no `make`, no goose CLI). `make migrate-create name=add_users` writes a timestamped file through `goose.Create`.
+**Migrations** — goose SQL files only (`-- +goose Up` / `-- +goose Down`), embedded via `app.Migrations` and run by the server binary itself: `make migrate-up` locally; in prod the Railway pre-deploy command (`./out migrate up`, set by the user in the dashboard) runs on every deploy, before the new version takes traffic (the deploy image has only the binary — no `make`, no goose CLI). `make migrate-create name=add_users` writes a timestamped file through `goose.Create`. With `--host generic` there is no Railway pre-deploy command: run `./out migrate up` by hand or in the host's release step.
 
 **AI caching** — `ai.Invoke` hashes the exact request JSON (sha256) and goes through `cache.Cached[*ai.Response]` in namespace `ai-model` with no TTL. The cached value decodes straight back into `*Response`, so there is no dict-vs-object split to handle (unlike the Python version).
 
@@ -125,5 +130,6 @@ After generating, remind the user to:
 - Delete the example `internal/db/items.go` and `migrations/00001_create_items.sql`, then `make migrate-create name=<first_table>` and write real SQL
 - Replace `templates/prompts/example.txt` with real prompt templates
 - Run `make migrate-up` after adding migrations
-- With a database: in Railway, open the service → Settings → Deploy → Pre-deploy Command and set `./out migrate up` before the first deploy (this skill uses no `railway.json` / config-as-code)
+- With a database and host `railway`: in Railway, open the service → Settings → Deploy → Pre-deploy Command and set `./out migrate up` before the first deploy (this skill uses no `railway.json` / config-as-code)
+- With a database and host `generic`: run `./out migrate up` by hand or in the host's release step on every deploy
 - Run `make dev` to start the dev server

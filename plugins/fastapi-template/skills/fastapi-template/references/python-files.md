@@ -214,6 +214,8 @@ def is_authenticated(request: Request) -> bool:
 IsAuthenticatedDependency = Annotated[bool, Depends(is_authenticated)]
 ```
 
+The ping retries (the `_DB_PING_*` / `_REDIS_PING_*` settings and the retry loops in `get_db_session` and `get_redis`) are only when host is `railway`. With `--host generic`, drop them and the imports only they use (`asyncio`, `time`, `logger`, `text`, `OperationalError`): `get_db_session` is just `with Session(DB_ENGINE) as session: yield session`, and `get_redis` is just `return request.app.state.redis`.
+
 ---
 
 ## `app/ai.py`
@@ -286,6 +288,8 @@ async def get_ai_json_response(*messages, **kwargs) -> dict:
         content = content[start : end + 1]
     return json.loads(content)
 ```
+
+Write the `--ai-model` value as the `model` default in `invoke_ai_model` (`openai/gpt-4o-mini` when the flag is not given).
 
 ---
 

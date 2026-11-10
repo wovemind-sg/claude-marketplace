@@ -42,15 +42,16 @@ Or use the command, which keeps working and sends the push once the condition is
 
 ## Settings and environment variables
 
-Set the plugin's `server` setting with `/plugin configure ntfy@wovemind` (or the
+Set the plugin's `server` and `topic` settings with `/plugin configure ntfy@wovemind` (or the
 dialog shown when the plugin is enabled):
 
 | Setting | Default | What it does |
 |---|---|---|
 | `server` | `https://ntfy.sh` | The ntfy server every notification is published to. Point it at your own instance if you self-host. |
+| `topic` | `claude` | The topic notifications go to unless you name another one in a request. |
 
-The default only takes effect after you save the dialog once; until then the
-skill and command fall back to `https://ntfy.sh` themselves.
+The defaults only take effect after you save the dialog once; until then the
+skill and command fall back to `https://ntfy.sh` and `claude` themselves.
 
 No environment variables are used. One file is:
 
@@ -73,15 +74,14 @@ ntfy-send --help   # self-check: prints usage and exits 0
 | Default | Change it with |
 |---|---|
 | Server `https://ntfy.sh` | the `server` setting |
-| Topic `claude` | name another topic in your request, or `-o <topic>` with `ntfy-send` |
+| Topic `claude` | the `topic` setting; for one message, name another topic in your request, or `-o <topic>` with `ntfy-send` |
 | `/ntfy:notify-me` sends at priority 4 (high) | name a priority in the command, e.g. `urgent` |
 
 On the public ntfy.sh, anyone who subscribes to a topic name receives its
 messages, and `claude` is an easy name to guess. Treat the topic like a
-password: on ntfy.sh, name a long random topic in your requests, or run your
-own server with access control. The `plan-tools` and `compliance-audit` alerts
-use the `claude` topic unless you name another one when you start them, so
-send those to a server you control.
+password: if you use ntfy.sh, set the `topic` setting to a long random name
+(the `plan-tools` and `compliance-audit` alerts use it too), or run your own
+server with access control.
 
 ## Example
 

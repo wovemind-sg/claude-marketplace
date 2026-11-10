@@ -27,16 +27,20 @@ browser) gets a push notification. No accounts, no SDKs — plain HTTP.
 - **Auth token** (optional): if `~/.ntfy` exists, it holds one line, a
   `tk_...` access token for a server that requires auth. Public ntfy.sh needs
   none.
-- **Topic**: `claude` by default. A topic is the channel name notifications
+- **Topic**: `${user_config.topic}` — the plugin's `topic` setting. If that
+  value still contains the text `user_config`, the setting was never saved:
+  use `claude`. A topic is the channel name notifications
   go to (anyone subscribed to that topic on this server gets the message —
-  treat it like a password). Use `claude` unless the user names a different
-  topic for a specific purpose (e.g. `ci-alerts`).
+  treat it like a password). Use this default topic unless the user names a
+  different topic for a specific purpose (e.g. `ci-alerts`). Wherever this
+  file or `references/options.md` shows `<topic>`, use
+  the topic chosen here.
 
 The simplest way to send is the `ntfy-send` script this plugin puts on the
 `PATH` (it adds the token header itself when `~/.ntfy` exists):
 
 ```bash
-ntfy-send -s ${user_config.server} "message" [-t title] [-p priority] [-T tags] [-o topic]
+ntfy-send -s ${user_config.server} -o <topic> "message" [-t title] [-p priority] [-T tags]
 ```
 
 For raw `curl` (needed for the options below), add the auth header only when
@@ -45,7 +49,7 @@ call time — never print it, log it, or paste it into a file/command where
 it'd be echoed back to the user:
 
 ```bash
-curl -H "Authorization: Bearer $(cat ~/.ntfy)" -d "message" ${user_config.server}/claude
+curl -H "Authorization: Bearer $(cat ~/.ntfy)" -d "message" ${user_config.server}/<topic>
 ```
 
 ## Sending a basic notification
@@ -53,7 +57,7 @@ curl -H "Authorization: Bearer $(cat ~/.ntfy)" -d "message" ${user_config.server
 ```bash
 curl -H "Authorization: Bearer $(cat ~/.ntfy)" \
      -d "Backup finished successfully" \
-     ${user_config.server}/claude
+     ${user_config.server}/<topic>
 ```
 
 `-d` is the message body. That alone is enough for a working notification —
@@ -79,7 +83,7 @@ curl -H "Authorization: Bearer $(cat ~/.ntfy)" \
      -H "Priority: high" \
      -H "Tags: warning,rotating_light" \
      -d "CI pipeline failed on main branch" \
-     ${user_config.server}/claude
+     ${user_config.server}/<topic>
 ```
 
 Reach for **high/urgent priority + a tag** when the message is actionable or

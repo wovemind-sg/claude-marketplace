@@ -1,7 +1,7 @@
 {
   "name": "ntfy",
   "description": "Send push notifications to phone/desktop via ntfy.sh or a self-hosted ntfy instance over its HTTP API.",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "author": {"name": "Wovemind"},
   "license": "MIT",
   "userConfig": {
@@ -10,6 +10,12 @@
       "title": "ntfy server",
       "description": "URL of the ntfy server to publish to, e.g. https://ntfy.sh or your self-hosted instance.",
       "default": "https://ntfy.sh"
+    },
+    "topic": {
+      "type": "string",
+      "title": "ntfy topic",
+      "description": "Default topic notifications are sent to. On public ntfy.sh anyone who knows the topic name receives its messages, so pick a long random name there.",
+      "default": "claude"
     }
   }
 }

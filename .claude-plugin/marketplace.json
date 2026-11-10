@@ -1,0 +1,453 @@
+{
+  "name": "wovemind",
+  "description": "Open-source Claude Code plugins: skills, agents and hooks for web, mobile and AI app development.",
+  "version": "1.0.0",
+  "owner": {
+    "name": "Wovemind"
+  },
+  "plugins": [
+    {
+      "name": "singapore-lta",
+      "source": "./plugins/singapore-lta",
+      "description": "Query Singapore's Land Transport Authority (LTA) DataMall API for real-time bus arrivals, traffic incidents, car park availability, train service alerts, station crowd density, taxi availability, EV charging points, and more.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "development",
+      "tags": [
+        "transport",
+        "singapore",
+        "api",
+        "lta",
+        "real-time"
+      ]
+    },
+    {
+      "name": "supabase-python",
+      "source": "./plugins/supabase-python",
+      "description": "FastAPI with Supabase and SQLAlchemy/SQLModel",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "development",
+      "tags": [
+        "supabase",
+        "python",
+        "fastapi",
+        "sqlmodel"
+      ]
+    },
+    {
+      "name": "htmx-vs-alpine",
+      "source": "./plugins/htmx-vs-alpine",
+      "description": "Guides Claude to choose between HTMX and Alpine.js for client-side interactivity in server-rendered web applications.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "development",
+      "tags": [
+        "htmx",
+        "alpine",
+        "frontend",
+        "server-rendered",
+        "hypermedia"
+      ]
+    },
+    {
+      "name": "fastapi-template",
+      "source": "./plugins/fastapi-template",
+      "description": "Scaffolds a complete FastAPI + Jinja2 + HTMX + Alpine.js web app skeleton with PostgreSQL/Alembic, Redis caching, OpenRouter AI, uv, and Railway Procfile.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "development",
+      "tags": [
+        "fastapi",
+        "python",
+        "jinja2",
+        "htmx",
+        "alpinejs",
+        "postgresql",
+        "alembic",
+        "redis",
+        "openrouter",
+        "uv",
+        "railway",
+        "template",
+        "scaffold"
+      ]
+    },
+    {
+      "name": "go-webapp-template",
+      "source": "./plugins/go-webapp-template",
+      "description": "Scaffolds a complete Go (net/http + html/template) + HTMX + Alpine.js web app skeleton with PostgreSQL/pgx + goose migrations, Redis caching, OpenRouter AI, and Railway Procfile. Go counterpart of fastapi-template, no Python. Includes fastapi-go-migration: migrate an existing fastapi-template project to this stack in place.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "development",
+      "tags": [
+        "go",
+        "golang",
+        "net-http",
+        "html-template",
+        "htmx",
+        "alpinejs",
+        "postgresql",
+        "pgx",
+        "goose",
+        "redis",
+        "openrouter",
+        "railway",
+        "template",
+        "scaffold",
+        "migration",
+        "fastapi",
+        "port"
+      ]
+    },
+    {
+      "name": "plan-tools",
+      "source": "./plugins/plan-tools",
+      "description": "Plan-driven workflow tools: bootstrap a new web or mobile app end to end, split implementation plans into context-sized resumable sessions, and drive them to PRs.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "development",
+      "tags": [
+        "planning",
+        "context",
+        "sessions",
+        "workflow",
+        "create-webapp",
+        "create-app",
+        "fastapi",
+        "expo",
+        "react-native",
+        "scaffold"
+      ]
+    },
+    {
+      "name": "ntfy",
+      "source": "./plugins/ntfy",
+      "description": "Send push notifications to phone/desktop via a self-hosted ntfy instance over its HTTP API.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "development",
+      "tags": [
+        "ntfy",
+        "notifications",
+        "push",
+        "alerts",
+        "webhook"
+      ]
+    },
+    {
+      "name": "evolution-api",
+      "source": "./plugins/evolution-api",
+      "description": "Complete Evolution API endpoint reference for WhatsApp client code — instances, messages, webhooks, groups, chats, profiles, and error flows.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "development",
+      "tags": [
+        "whatsapp",
+        "evolution-api",
+        "messaging",
+        "api",
+        "webhooks",
+        "bots"
+      ]
+    },
+    {
+      "name": "whatsapp-safety",
+      "source": "./plugins/whatsapp-safety",
+      "description": "Guides agents to interact with WhatsApp via Evolution API without getting the number flagged, banned, or rate-limited — warm-up, human pacing, message spinning, consent, safe groups, and incident response.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "development",
+      "tags": [
+        "whatsapp",
+        "evolution-api",
+        "messaging",
+        "safety",
+        "anti-ban",
+        "rate-limiting",
+        "automation"
+      ]
+    },
+    {
+      "name": "sg-card-benefits",
+      "source": "./plugins/sg-card-benefits",
+      "description": "Monitor Singapore credit/debit card benefits and T&Cs for changes — structured extraction, normalization, and semantic diffing across all major SG issuers.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "productivity",
+      "tags": [
+        "singapore",
+        "credit-cards",
+        "miles",
+        "cashback",
+        "monitoring",
+        "change-detection"
+      ]
+    },
+    {
+      "name": "user-flows",
+      "source": "./plugins/user-flows",
+      "description": "Extract a deduplicated inventory of user flows from an application codebase into user-flows.md, as groundwork for generating automated tests.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "development",
+      "tags": [
+        "user-flows",
+        "testing",
+        "e2e",
+        "test-generation",
+        "qa"
+      ]
+    },
+    {
+      "name": "product-experience-strategist",
+      "source": "./plugins/product-experience-strategist",
+      "description": "Expert product strategy, UX/UI and business development skill for designing, reviewing and improving digital products and end-to-end user flows.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "development",
+      "tags": [
+        "product-strategy",
+        "ux",
+        "ui",
+        "design-review",
+        "onboarding",
+        "growth",
+        "monetization",
+        "accessibility"
+      ]
+    },
+    {
+      "name": "claude-notify",
+      "source": "./plugins/claude-notify",
+      "description": "Send desktop notifications via the claude-notifier CLI when a task finishes or Claude needs user attention.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "productivity",
+      "tags": [
+        "notifications",
+        "desktop",
+        "alerts",
+        "claude-notifier"
+      ]
+    },
+    {
+      "name": "python-arq",
+      "source": "./plugins/python-arq",
+      "description": "Complete reference for the arq Python library (v0.28) — async job queues with asyncio and Redis: enqueueing, workers, retries, cron, results, and error flows.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "development",
+      "tags": [
+        "arq",
+        "python",
+        "asyncio",
+        "redis",
+        "job-queue",
+        "background-tasks",
+        "cron",
+        "workers"
+      ]
+    },
+    {
+      "name": "launch-video",
+      "source": "./plugins/launch-video",
+      "description": "Turn an app repo into a launch/promo video: AI presenter intro/outro, real screen recordings, voice-over, and captions, for Android apps or web apps.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "productivity",
+      "tags": [
+        "video",
+        "launch-video",
+        "promo",
+        "demo",
+        "voice-over",
+        "captions",
+        "elevenlabs",
+        "ffmpeg",
+        "maestro",
+        "playwright"
+      ]
+    },
+    {
+      "name": "flagd",
+      "source": "./plugins/flagd",
+      "description": "Complete reference for flagd, the OpenFeature feature-flag evaluation engine — flag definitions & JSON Logic targeting, fractional rollouts, deployment (Docker/k8s/systemd), sync sources, gRPC/OFREP APIs, and per-language OpenFeature providers.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "development",
+      "tags": [
+        "flagd",
+        "openfeature",
+        "feature-flags",
+        "ofrep",
+        "rollout",
+        "targeting",
+        "kubernetes",
+        "grpc"
+      ]
+    },
+    {
+      "name": "openfeature",
+      "source": "./plugins/openfeature",
+      "description": "Complete reference for OpenFeature, the CNCF vendor-neutral feature-flag standard — spec concepts, providers, hooks, events, evaluation context, OFREP, CLI, MCP server and ecosystem, with deep-dive references for the Go, .NET (C#) and Python SDKs.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "development",
+      "tags": [
+        "openfeature",
+        "feature-flags",
+        "go",
+        "dotnet",
+        "csharp",
+        "python",
+        "ofrep",
+        "flagd",
+        "providers",
+        "hooks"
+      ]
+    },
+    {
+      "name": "explain",
+      "source": "./plugins/explain",
+      "description": "Explain code and concepts in the current project, building only on topics the user already knows plus what earlier explanations covered, with ASCII diagrams and a per-topic learning log in ~/.explain_skill/.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "productivity",
+      "tags": [
+        "learning",
+        "explain",
+        "onboarding",
+        "go",
+        "dotnet",
+        "csharp",
+        "diagrams"
+      ]
+    },
+    {
+      "name": "ui-change-guard",
+      "source": "./plugins/ui-change-guard",
+      "description": "Pre-push safety review for UX/UI changes in web and native/mobile apps (htmx/Alpine, React, React Native, SwiftUI, Compose, Flutter, Capacitor) — removed form fields the backend depends on, redesigned pages that lost functionality, performance regressions, broken htmx/Alpine wiring, a11y/security regressions, weakened tests. SAFE / UNSAFE verdict with issue list, PR-body engineer handoff, and an engineer-review skill.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "development",
+      "tags": [
+        "ui",
+        "ux",
+        "design",
+        "review",
+        "pre-push",
+        "regression",
+        "htmx",
+        "alpine",
+        "accessibility",
+        "performance",
+        "react-native",
+        "swiftui",
+        "compose",
+        "flutter",
+        "capacitor",
+        "mobile"
+      ]
+    },
+    {
+      "name": "compliance-audit",
+      "source": "./plugins/compliance-audit",
+      "description": "Audits a product repo for legal and regulatory compliance gaps (privacy across EU/UK/US/Israel/Singapore, app store rules, EU digital acts, payments, AI, minors, licensing/SBOM, security baseline) and publishes a claude.ai Artifact report with findings ranked by legal risk, file:line evidence, fixes, owners and shared fix statuses, then implements the open cards as dependency-ordered, auto-merged PRs. Not legal advice.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "development",
+      "tags": [
+        "compliance",
+        "legal",
+        "privacy",
+        "gdpr",
+        "ccpa",
+        "coppa",
+        "app-store",
+        "google-play",
+        "licensing",
+        "sbom",
+        "security",
+        "ai-act",
+        "audit"
+      ]
+    },
+    {
+      "name": "ui-audit",
+      "source": "./plugins/ui-audit",
+      "description": "Visual UI-change audit for pull requests: before/after screenshots and motion clips of every screen that really changed (web via Playwright with mobile emulation; Capacitor and Expo via simulators), unintended changes flagged, published as a Claude artifact or to Cloudflare Pages behind a password, and linked from the PR.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "development",
+      "tags": [
+        "ui",
+        "screenshots",
+        "visual-regression",
+        "playwright",
+        "pull-request",
+        "capacitor",
+        "expo",
+        "audit"
+      ]
+    },
+    {
+      "name": "session-overview",
+      "source": "./plugins/session-overview",
+      "description": "Side pane (/sessions) listing every open Claude Code session on the machine, grouped by project, with its goal and state.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "productivity",
+      "tags": [
+        "sessions",
+        "mod",
+        "pane",
+        "overview"
+      ]
+    }
+  ]
+}

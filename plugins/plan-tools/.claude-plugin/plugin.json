@@ -1,0 +1,17 @@
+{
+  "name": "plan-tools",
+  "description": "Plan-driven workflow tools: bootstrap a new web or mobile app end to end, split implementation plans into context-sized resumable sessions, and drive them to PRs.",
+  "version": "2.2.0",
+  "author": {
+    "name": "Wovemind"
+  },
+  "license": "MIT",
+  "userConfig": {
+    "designer_ui_review": {
+      "type": "boolean",
+      "title": "Designer UI review",
+      "description": "Run the ui-change-guard designer review (/ui-change-guard:review-ui-change) before finalize-pr raises a PR.",
+      "default": false
+    }
+  }
+}

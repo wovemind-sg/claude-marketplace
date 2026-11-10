@@ -1,0 +1,109 @@
+# go-webapp-template
+
+Scaffolds a complete Go web application skeleton — the Go counterpart of `fastapi-template`, with the same features, env var names and frontend, and no Python anywhere.
+
+## Stack
+
+- **Server**: Go `net/http` + `html/template` (server-side rendering)
+- **Client**: HTMX 2.x + Alpine.js 3.x
+- **Database**: PostgreSQL via pgx/v5 + goose SQL migrations (embedded, run by the server binary)
+- **AI**: OpenRouter + `text/template` prompt templates + Redis caching
+- **Cache**: Redis via go-redis/v9 + generic `Cached[T]` helper
+- **Auth/session state**: HMAC-signed cookies (`internal/auth`), no session store
+- **Logging**: `log/slog`
+- **Deploy**: Railway (Procfile + `railpack.json` with an explicit `go build -o out ./cmd/server`)
+
+## Install
+
+```
+/plugin install go-webapp-template --marketplace wovemind-sg/claude-marketplace
+```
+
+## Usage
+
+Invoke the skill by asking Claude to scaffold a new Go web app:
+
+```
+/go-webapp-template:go-webapp-template create a new app called my-app
+```
+
+Or just describe what you want:
+
+> "Scaffold a new Go web app with HTMX for a task management tool"
+
+## Generated Structure
+
+```
+<app-name>/
+├── cmd/server/main.go       # serve, or `migrate up|down|status|create <name>`
+├── embed.go                 # embeds templates/, static/, migrations/
+├── internal/
+│   ├── config/
+│   ├── wake/                # ping-with-retry for a sleeping Railway DB/Redis
+│   ├── auth/                # signed cookies
+│   ├── db/                  # pgxpool, goose, example queries
+│   ├── cache/
+│   ├── ai/
+│   └── server/              # routes, middleware, errors, rendering, tests
+├── migrations/
+├── templates/
+│   ├── base.html
+│   ├── index.html
+│   └── prompts/
+├── static/
+├── go.mod
+├── Makefile
+├── Procfile
+├── .env.example
+└── .gitignore
+```
+
+## Required Environment Variables
+
+| Variable | Description |
+|---|---|
+| `ENGINE_URL` | PostgreSQL connection string |
+| `REDIS_CONNECTION_STRING` | Redis URL |
+| `SESSION_SECRET` | Random secret for HMAC-signing cookies (`internal/auth`) |
+| `OPENROUTER_API_KEY` | OpenRouter API key (if using AI) |
+| `DEV_MODE` | Set to `ON` for development |
+| `PORT` | Listen port (default `8000`; Railway sets it) |
+
+## Quick Start
+
+After scaffolding:
+
+```bash
+cd <app-name>
+cp .env.example .env
+# edit .env with real values
+go mod tidy
+make migrate-up   # apply migrations
+make dev          # start dev server at localhost:8000
+make test         # go test ./...
+```
+
+Deployed on Railway, set `./out migrate up` as the service's pre-deploy command in the Railway dashboard (Settings → Deploy → Pre-deploy Command) so it runs on every deploy. To run it by hand:
+
+```bash
+railway ssh --service "<service name>" -- ./out migrate up
+```
+
+## Migrating a fastapi-template project (`fastapi-go-migration`)
+
+The second skill in this plugin converts an existing project that was scaffolded with `fastapi-template` into this Go stack, in place, in the same repo:
+
+```
+/go-webapp-template:fastapi-go-migration
+```
+
+Or just say "migrate this app to Go" inside the project. What it does:
+
+1. **Inventory** — `scripts/inventory.py` (stdlib only) lists every route, model, Jinja construct, custom filter, env var, grown feature (arq, OAuth, email, …), and how tests/deploy start the app. Written to `.planning/inventory.md` so later sessions never need the Python source wholesale.
+2. **Baseline migration** — `scripts/baseline_ddl.py` (run with `uv run` while Python still exists) emits `migrations/00001_baseline.sql` from the SQLModel metadata with `CREATE … IF NOT EXISTS`: a no-op on the production DB Alembic already migrated, a full schema on a fresh one. `Down` is intentionally empty.
+3. **Plan** — a Plan subagent writes `.planning/SPEC.md` (sessions per router group, FuncMap for custom filters, cookie-signer check, unit-test port/delete list); every feature with no Go counterpart is resolved with you in one question; big repos go through `plan-tools:split-plan`.
+4. **Port** — session by session: `internal/db/<table>.go` → handlers → templates (Jinja2 → `html/template` per `references/templates.md`), with `go build/vet/test` and a Python-vs-Go route parity check (`inventory.py --go-routes`) after each.
+5. **Gates** — route parity, cookie vector test (existing sessions survive), render-every-page with `missingkey=error`, baseline applied twice, e2e suite green against the Go binary.
+6. **Cutover** — rewrite `tests/conftest.py` to run `./out`, tests-only `pyproject.toml`, `railpack.json` (Go provider plus an explicit `./cmd/server` build command, so Railway neither picks Python nor builds the root `embed.go` package), delete `app/`, `alembic/`, update CI/README/CLAUDE.md, and print the deploy checklist. The skill never deploys or touches the production DB.
+
+Requirements: Go ≥ 1.22, `uv`, a reachable Postgres for proving the baseline, Redis if the app uses it. Python Playwright e2e tests under `tests/` are kept (they are black-box HTTP tests); Python unit tests are ported to Go or deleted per file.

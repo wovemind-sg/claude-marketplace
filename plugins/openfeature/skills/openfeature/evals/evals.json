@@ -1,0 +1,56 @@
+{
+  "skill_name": "openfeature",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "I have a Go net/http service (Go 1.24, module github.com/acme/shop). Add OpenFeature feature flags to it using the flagd provider in RPC mode against a flagd at FLAGD_HOST/FLAGD_PORT. Requirements: (1) initialise the provider at startup and fail fast if it cannot connect; (2) a middleware that reads the X-User-Id header and makes it the targeting key for every flag evaluation in that request without passing context through every function by hand; (3) gate GET /checkout on the boolean flag `new-checkout` (old handler when off), logging the evaluation reason/variant at debug level; (4) graceful shutdown; (5) a unit test for the handler that does NOT need flagd running. Give me the code files.",
+      "expected_output": "Go code using github.com/open-feature/go-sdk/openfeature and go-sdk-contrib/providers/flagd/pkg: flagd.NewProvider(...) + openfeature.SetProviderAndWait; middleware using openfeature.WithTransactionContext(r.Context(), openfeature.NewEvaluationContext(userID, ...)); handler calling client.BooleanValueDetails(ctx, \"new-checkout\", false, openfeature.EvaluationContext{}) or Boolean; hooks.NewLoggingHook or logging of details.Reason/Variant; openfeature.Shutdown() on exit; test using memprovider.NewInMemoryProvider with InMemoryFlag variants.",
+      "files": [],
+      "assertions": [
+        "Imports the real SDK package github.com/open-feature/go-sdk/openfeature (not a made-up path such as github.com/open-feature/go-sdk/pkg/openfeature)",
+        "Registers the flagd provider with openfeature.SetProviderAndWait (or SetProviderWithContextAndWait) and treats a non-nil error as fatal at startup",
+        "Uses the flagd provider constructor flagd.NewProvider(...) from github.com/open-feature/go-sdk-contrib/providers/flagd/pkg with host/port options or the FLAGD_HOST/FLAGD_PORT env-var auto-read",
+        "Middleware puts the X-User-Id value into transaction context via openfeature.WithTransactionContext(ctx, openfeature.NewEvaluationContext(userID, ...)) (or MergeTransactionContext) rather than threading an EvaluationContext argument manually",
+        "Handler evaluates `new-checkout` with a client method whose signature matches the SDK (Boolean / BooleanValue / BooleanValueDetails with ctx, key, default, EvaluationContext)",
+        "Evaluation reason/variant are logged at debug level, either via hooks.NewLoggingHook from go-sdk/openfeature/hooks or by logging BooleanValueDetails fields (Reason, Variant)",
+        "Calls openfeature.Shutdown() (or ShutdownWithContext) during graceful shutdown",
+        "Unit test uses memprovider.NewInMemoryProvider with memprovider.InMemoryFlag (State, DefaultVariant, Variants) so no flagd is needed",
+        "Does not invent APIs: no client.GetBooleanValue, no openfeature.NewProvider, no flagd.FlagdProvider{} struct literal, no ctx-less evaluation calls"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "ASP.NET Core 8 minimal API (C#). Wire in OpenFeature with dependency injection: the flag backend speaks OFREP at the URL in the OFREP_ENDPOINT env var with a bearer token in OFREP_TOKEN. Add a hook that logs every evaluation. Add GET /pricing that reads the string flag `pricing-tier` (default \"basic\") with the signed-in user's name as targeting key and their `plan` claim as a context attribute, and returns the tier. Then write an xUnit test for the pricing logic that runs without any network using an in-memory flag set. Show Program.cs, the test, and the NuGet packages to add.",
+      "expected_output": "Program.cs with builder.Services.AddOpenFeature(fb => fb.AddHook(...LoggingHook...).AddProvider(sp => new OfrepProvider(new OfrepOptions(...){Headers=...})) or AddOfrepProvider(...)); IFeatureClient injected into the endpoint; EvaluationContext.Builder().SetTargetingKey(name).Set(\"plan\", plan).Build(); await client.GetStringValueAsync(\"pricing-tier\", \"basic\", ctx); packages OpenFeature, OpenFeature.Hosting, OpenFeature.Providers.Ofrep; test using InMemoryProvider with Flag<string> variants, either via Api.Instance.SetProviderAsync or an isolated Api, asserting the tier.",
+      "files": [],
+      "assertions": [
+        "Adds the OpenFeature.Hosting package for DI and does NOT tell the user to add the deprecated OpenFeature.DependencyInjection package",
+        "Uses builder.Services.AddOpenFeature(fb => ...) and does not call the obsolete AddHostedFeatureLifecycle()",
+        "Registers the OFREP provider from OpenFeature.Providers.Ofrep (OfrepProvider / OfrepOptions or AddOfrepProvider) with the base URL and an Authorization: Bearer header taken from environment variables",
+        "Adds the built-in LoggingHook (OpenFeature.Hooks) through the builder (AddHook) or an equivalent custom Hook subclass with the correct BeforeAsync/AfterAsync/ErrorAsync/FinallyAsync signatures",
+        "The /pricing endpoint injects IFeatureClient (not Api.Instance.GetClient()) and calls GetStringValueAsync(\"pricing-tier\", \"basic\", ctx) or GetStringDetailsAsync",
+        "Evaluation context is built with EvaluationContext.Builder().SetTargetingKey(...).Set(\"plan\", ...).Build()",
+        "The xUnit test uses InMemoryProvider with a Flag<string> (variants dictionary + default variant) and needs no network",
+        "If the test uses Api.Instance, it awaits SetProviderAsync before evaluating (or uses an isolated Api / the DI container); it does not evaluate before the provider is set",
+        "Does not invent APIs: no GetStringValue without Async, no OpenFeature.SetProvider static, no EvaluationContext constructor with a dictionary, no Flag<string> without variants"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "We upgraded our FastAPI service from openfeature-sdk 0.9.x to 0.10.0 (flagd provider, openfeature-provider-flagd 0.5.x). Since then every flag evaluates to the default at startup with reason ERROR, and sometimes for the first few requests. Relevant code:\n\n```python\nfrom openfeature import api\nfrom openfeature.contrib.provider.flagd import FlagdProvider\nfrom openfeature.evaluation_context import EvaluationContext\n\napi.set_provider(FlagdProvider(host=\"flagd\", port=8013))\nclient = api.get_client()\nclient.set_evaluation_context(EvaluationContext(attributes={\"service\": \"orders\"}))\n\nSHOW_BANNER = client.get_boolean_value(\"show-banner\", False)\n\n@app.get(\"/orders\")\nasync def orders(request: Request):\n    user = request.headers.get(\"X-User-Id\")\n    if client.get_boolean_value(\"new-orders-page\", False, EvaluationContext(user)):\n        ...\n```\n\nWhat changed, what is wrong with this code, and how should it look? We also want the user id applied to all evaluations in the request without passing it everywhere.",
+      "expected_output": "Explains that 0.10.0 made api.set_provider non-blocking (init in background thread) so evaluations right after it return defaults with PROVIDER_NOT_READY; fix with api.set_provider_and_wait(...) in a lifespan/startup hook or a PROVIDER_READY handler; SHOW_BANNER evaluated once at import is wrong (static + before ready); client.set_evaluation_context does not exist — set client.context or pass context per call; use ContextVarsTransactionContextPropagator + api.set_transaction_context in FastAPI middleware for the user id; check get_boolean_details().error_code; optionally get_boolean_value_async; api.shutdown() on lifespan exit.",
+      "files": [],
+      "assertions": [
+        "Identifies that in openfeature-sdk 0.10.0 api.set_provider() became non-blocking (initialization runs in a background thread) so evaluations made immediately after it return the default with error code PROVIDER_NOT_READY",
+        "Recommends api.set_provider_and_wait(...) (or waiting on a PROVIDER_READY event handler) during application startup, e.g. in a FastAPI lifespan/startup handler",
+        "Points out that evaluating SHOW_BANNER at import/module level is wrong (runs before the provider is ready and never re-evaluates) and moves evaluation into request handling",
+        "States that client.set_evaluation_context(...) does not exist in the Python SDK and gives a working alternative (client.context = EvaluationContext(...), or api.set_evaluation_context for global, or per-call context)",
+        "Shows request-scoped targeting via api.set_transaction_context_propagator(ContextVarsTransactionContextPropagator()) at startup plus api.set_transaction_context(EvaluationContext(targeting_key=user_id, ...)) in a FastAPI middleware, so handlers need not pass the user id",
+        "Recommends inspecting details (client.get_boolean_details(...).error_code / .reason) or a PROVIDER_ERROR handler to confirm the diagnosis instead of guessing",
+        "Uses correct import paths and names: from openfeature import api; from openfeature.contrib.provider.flagd import FlagdProvider; from openfeature.transaction_context import ContextVarsTransactionContextPropagator; EvaluationContext(targeting_key=..., attributes=...)",
+        "Mentions api.shutdown() on application shutdown",
+        "Does not invent APIs (no api.wait_for_ready, no client.set_context, no FlagdProvider(url=...), no await api.set_provider)"
+      ]
+    }
+  ]
+}

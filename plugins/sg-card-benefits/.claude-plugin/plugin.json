@@ -1,0 +1,8 @@
+{
+  "name": "sg-card-benefits",
+  "description": "Monitor Singapore credit/debit card benefits and T&Cs for changes — structured extraction, normalization, and semantic diffing across all major SG issuers.",
+  "author": {
+    "name": "Wovemind"
+  },
+  "license": "MIT"
+}

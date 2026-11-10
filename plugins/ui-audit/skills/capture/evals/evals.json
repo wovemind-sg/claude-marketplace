@@ -1,0 +1,14 @@
+{
+  "skill_name": "capture",
+  "evals": [
+    {"id": 0, "name": "first-run-full-audit",
+     "prompt": "I just opened PR #7 from commits c1..c4 (base c0, head c4) on this tiny static site. Review the UI changes for me: show reviewers before/after screenshots of what visibly changed, flag any changes nobody meant to make, and include a short clip or stills for any motion/transition change. This audit will be repeated on later commits, so leave the repo in a state that makes the next run cheap (but do not commit).",
+     "expected_output": "Audit lists exactly home (desktop, mobile), about (desktop, mobile) and settings (mobile); about and settings are unintended ripples, home is intentional; a clip exists for the nav dropdown transition; audit page has no horizontal scroll at 390px; .ui-audit config and manifest exist."},
+    {"id": 1, "name": "incremental-after-new-commit",
+     "prompt": "Audit PR #7 (c0..c4), then edit about.html text, commit as c5, and update the same audit re-capturing only what could be affected while keeping earlier findings.",
+     "expected_output": "Run 2 captures only the about screen; home and settings items from run 1 remain in the audit; about is intentional; run history lists two runs."},
+    {"id": 2, "name": "head-only-and-no-change",
+     "prompt": "Head-only audit of c4 (no before/after, everything needs review), then run the audit again with no new commits.",
+     "expected_output": "Run 1 captures head only, no diffs, all items needs_review; run 2 stops with a no-changes-since-last-audit message and builds nothing."}
+  ]
+}

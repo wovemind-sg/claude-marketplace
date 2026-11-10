@@ -1,0 +1,17 @@
+{
+  "name": "compliance-audit",
+  "description": "Audits a product repo (FastAPI/Go backends, Postgres, Redis, Railway, native iOS/Android incl. Capacitor, web/SaaS) for legal and regulatory compliance gaps: privacy (GDPR/UK, US states, Israel, Singapore), app store rules, EU digital acts (DSA, AI Act, CRA, EAA), payments, AI features, minors, open-source licensing/SBOM and security baseline. Publishes a claude.ai Artifact report with findings ranked by legal risk — each explaining the rule, file:line evidence, the fix and the owner — plus shared In progress / Done / Won't fix statuses. An apply skill then implements the open cards one PR at a time, in dependency order, until merged. Not legal advice.",
+  "version": "2.2.0",
+  "author": {
+    "name": "Wovemind"
+  },
+  "license": "MIT",
+  "userConfig": {
+    "default_base_branch": {
+      "type": "string",
+      "title": "Default base branch",
+      "description": "Branch that apply opens PRs against when --base is not given. Leave empty to use the repository's default branch.",
+      "default": ""
+    }
+  }
+}

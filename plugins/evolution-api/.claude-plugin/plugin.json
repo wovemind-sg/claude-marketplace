@@ -1,0 +1,9 @@
+{
+  "name": "evolution-api",
+  "description": "Complete Evolution API endpoint reference for WhatsApp client code — instances, messages, webhooks, groups, chats, profiles, and error flows.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Wovemind"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,35 @@
+{
+  "skill_name": "fastapi-go-migration",
+  "evals": [
+    {
+      "id": 1,
+      "name": "full-migration",
+      "prompt": "This is my shoplist app (FastAPI, scaffolded from fastapi-template). Migrate it to Go — same routes, same templates, same Railway setup. Postgres is at postgresql://admin:P0stgress1243@localhost:5432/postgres (no psql on this machine: use `docker exec -i postgres psql -U admin ...`; create scratch DBs as you need) and Redis at redis://localhost:6379. Do the whole thing; commit on a branch when done.",
+      "expected_output": "Repo on branch go-migration: cmd/server, internal/{config,auth,db,cache,ai,server}, migrations/00001_baseline.sql (IF NOT EXISTS, empty Down), templates converted to html/template with the double-quoted tojson fixed, all 12 routes present, cookies_test.go with Python vector, railpack.json with provider golang and an explicit build command go build -o out ./cmd/server, Procfile web: ./out, no railway.json, deploy checklist tells the user to set pre-deploy `./out migrate up` in the Railway dashboard, tests/conftest.py spawning ./out, app/ alembic/ deleted, go build/vet/test pass.",
+      "files": [
+        "fixture/shoplist"
+      ],
+      "assertions": []
+    },
+    {
+      "id": 2,
+      "name": "db-only-slice",
+      "prompt": "Port this FastAPI app to Go. We never used AI or Redis in it, so the Go version should not have them either. Postgres: postgresql://admin:P0stgress1243@localhost:5432/postgres (use `docker exec -i postgres psql -U admin` — no local psql). Commit on a branch when done.",
+      "expected_output": "Same as eval 1 but no internal/ai, no internal/cache, no OPENROUTER_API_KEY/REDIS_CONNECTION_STRING in main.go or .env.example, go.mod without go-redis; api/summary ported uncached.",
+      "files": [
+        "fixture/shoplist-noai"
+      ],
+      "assertions": []
+    },
+    {
+      "id": 3,
+      "name": "arq-stop-and-ask",
+      "prompt": "rewrite the backend of this app in go please. keep everything working including the background jobs. db is postgresql://admin:P0stgress1243@localhost:5432/postgres (psql only via `docker exec -i postgres psql -U admin`), redis redis://localhost:6379. commit on a branch when done",
+      "expected_output": "Before porting the arq worker the agent asks the user (asynq vs goroutine+Redis list vs plain goroutine, and queue draining); the chosen approach is implemented in run() as a goroutine; purchase handler enqueues; cron becomes a Ticker; rest as eval 1.",
+      "files": [
+        "fixture/shoplist-arq"
+      ],
+      "assertions": []
+    }
+  ]
+}

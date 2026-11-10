@@ -1,0 +1,7 @@
+.vscode
+**/*.pyc
+
+.planning/
+ui-audit-workspace/
+.impeccable/
+__pycache__/

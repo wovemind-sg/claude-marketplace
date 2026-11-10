@@ -1,0 +1,9 @@
+{
+  "name": "ui-change-guard",
+  "description": "Pre-push safety review for UX/UI changes in web and native/mobile apps (htmx/Alpine, React, React Native, SwiftUI, Compose, Flutter, Capacitor): catches removed form fields the backend depends on, redesigned pages that lost functionality, performance regressions, broken htmx/Alpine wiring, accessibility and security regressions, and weakened tests. Returns a SAFE / UNSAFE verdict with the list of issues. Optional push guard (install/uninstall) runs the review before every git push.",
+  "version": "1.2.0",
+  "author": {
+    "name": "Wovemind"
+  },
+  "license": "MIT"
+}

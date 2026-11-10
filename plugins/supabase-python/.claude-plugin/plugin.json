@@ -1,0 +1,7 @@
+{
+  "name": "supabase-python",
+  "description": "FastAPI with Supabase and SQLAlchemy/SQLModel.",
+  "version": "1.0.0",
+  "author": {"name": "Wovemind"},
+  "license": "MIT"
+}

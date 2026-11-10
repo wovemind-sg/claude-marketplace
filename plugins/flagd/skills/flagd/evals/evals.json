@@ -1,0 +1,53 @@
+{
+  "skill_name": "flagd",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "We use flagd. Write me a flags.flagd.json with three flags: (1) `new-checkout` boolean, rolled out to 20% of users by targetingKey but always on for anyone with an @acme.io email; (2) `pricing-tier` string with variants basic/pro/enterprise chosen by the `plan` context attribute, default basic; (3) `min-app-version-gate` boolean that is on only when context `appVersion` is >= 2.3.0 semver. Then show the curl command to verify flag 1 for user u-123 with email bob@acme.io against a local flagd.",
+      "expected_output": "A single valid flagd JSON file using $schema, fractional with weights summing to 100 (or equivalent), ends_with on email, sem_ver >= operator, targeting returning variant names; plus a correct curl to :8013 Connect (flagd.evaluation.v2.Service/ResolveBoolean) or :8016 OFREP with the right ports and body.",
+      "files": [],
+      "assertions": [
+        "flags.flagd.json is valid JSON with top-level `flags` and all three keys new-checkout, pricing-tier, min-app-version-gate",
+        "new-checkout targeting uses the `fractional` operator with weights giving ~20% to the on variant (e.g. [\"on\",20],[\"off\",80])",
+        "new-checkout checks email with `ends_with` on `@acme.io` before the fractional split, returning variant \"on\"",
+        "pricing-tier defaultVariant is basic and targeting maps context `plan` to a variant NAME (basic/pro/enterprise), not to a value",
+        "min-app-version-gate uses `sem_ver` with operator `>=` against `appVersion` and value 2.3.0",
+        "All targeting rules return variant names (strings that are keys of `variants`), never raw true/false values",
+        "curl targets a correct flagd endpoint and port: :8016 /ofrep/v1/evaluate/flags/new-checkout or :8013 /flagd.evaluation.v2.Service/ResolveBoolean (v1 acceptable), POST with JSON body",
+        "curl body includes targetingKey u-123 and email bob@acme.io in the evaluation context",
+        "File includes the $schema https://flagd.dev/schema/v0/flags.json line"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "I have a FastAPI service and want self-hosted feature flags with OpenFeature. Set up flagd next to it in docker-compose (flags in ./flags), and write the Python code to init the flagd provider in RPC mode, evaluate a boolean flag `beta-dashboard` for a user in a request handler, and read flagd host/port from env. Also explain briefly when I'd switch to in-process mode.",
+      "expected_output": "docker-compose with ghcr.io/open-feature/flagd image, start --uri file:..., port 8013 exposed; pip install openfeature-sdk openfeature-provider-flagd; FlagdProvider(host=..., port=8013) via api.set_provider; get_client().get_boolean_value with EvaluationContext(targeting_key=...); mentions FLAGD_HOST/FLAGD_PORT; correct in-process explanation (sync :8015 / offline file).",
+      "files": [],
+      "assertions": [
+        "docker-compose uses image ghcr.io/open-feature/flagd with `start --uri file:...` pointing at a mounted ./flags file and exposes port 8013",
+        "Python uses the real packages: openfeature-sdk (`from openfeature import api`) and openfeature-provider-flagd (`from openfeature.contrib.provider.flagd import FlagdProvider`)",
+        "Provider is registered via api.set_provider(FlagdProvider(...)) with host/port coming from environment (explicit os.environ reads or documented FLAGD_HOST/FLAGD_PORT auto-read)",
+        "Request handler evaluates `beta-dashboard` with client.get_boolean_value(...) passing an EvaluationContext that includes targeting_key",
+        "Answer explains in-process mode correctly: provider pulls flag config over the sync service (port 8015) or from a local file and evaluates locally; motivates by latency / no per-call network hop",
+        "Provides a sample flags file for beta-dashboard consistent with flagd schema (state, variants, defaultVariant)",
+        "If port numbers for OFREP/management are given, they are correct (OFREP 8016, management 8014, sync 8015)",
+        "Does not invent nonexistent APIs (wrong module paths, wrong class names, FlagdProvider(url=...))"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Our Java service's flagd in-process provider connects fine (PROVIDER_READY fires) but every flag evaluates to the code default with reason DEFAULT or FLAG_NOT_FOUND. flagd runs with two --uri file sources and we added `metadata.flagSetId: \"payments\"` to one file last week. What's wrong and how do I fix it?",
+      "expected_output": "Diagnoses selector/flag-set mismatch: in-process provider must set selector `flagSetId=payments` (FLAGD_SOURCE_SELECTOR / .selector()) or flags without matching flagSetId are filtered; mentions checking curl :8015/v1/flags with Flagd-Selector header, reason DEFAULT vs FLAG_NOT_FOUND distinction, and the migrating-to-flag-sets guide.",
+      "files": [],
+      "assertions": [
+        "Diagnoses the root cause as flag-set / selector mismatch: after adding metadata.flagSetId the flags belong to flag set `payments` and the in-process provider's selector must match (flags in the other file stay in the default/null set)",
+        "Gives the concrete fix for the Java provider: FlagdOptions.builder().selector(\"flagSetId=payments\") or env FLAGD_SOURCE_SELECTOR=flagSetId=payments",
+        "Explains the distinction between reason DEFAULT (flag found, no targeting match / null default) and FLAG_NOT_FOUND (flag not in the selected set)",
+        "Gives a verification command against the sync endpoint, e.g. curl -H 'Flagd-Selector: flagSetId=payments' http://localhost:8015/v1/flags or grpcurl FetchAllFlags with selector",
+        "Mentions that flags from the second file (without flagSetId) will not be visible under the payments selector, and offers adding the same flagSetId to both files (or a second provider) as the remedy",
+        "Does not misattribute the problem to RPC-mode settings, port 8013, or targeting rules",
+        "All cited ports are correct: 8013 evaluation, 8014 management, 8015 sync, 8016 OFREP (OFREP on 8014 fails)"
+      ]
+    }
+  ]
+}

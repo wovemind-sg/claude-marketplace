@@ -1,0 +1,9 @@
+{
+  "name": "launch-video",
+  "description": "Turn an app repo into a launch/promo video: AI presenter intro/outro, real screen recordings, voice-over, and captions.",
+  "version": "1.2.0",
+  "author": {
+    "name": "Wovemind"
+  },
+  "license": "MIT"
+}

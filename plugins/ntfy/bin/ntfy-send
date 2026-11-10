@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# ntfy-send -s <server> <message> [-t title] [-p priority] [-T tags] [-o topic]
+#
+# -s server    ntfy server URL, required (e.g. https://ntfy.sh)
+# message      any string, required
+# -t title     any string
+# -p priority  1|min, 2|low, 3|default, 4|high, 5|urgent
+# -T tags      comma-separated, e.g. warning,skull (see https://docs.ntfy.sh/emojis/)
+# -o topic     default: claude
+#
+# If ~/.ntfy exists, its contents are sent as a Bearer token (self-hosted servers
+# with auth); otherwise no auth header is sent (public ntfy.sh needs none).
+# Options may come before or after the message.
+set -euo pipefail
+
+server=""
+topic="claude"
+token_file="$HOME/.ntfy"
+message=""
+title=""
+priority=""
+tags=""
+
+usage() { echo "usage: ntfy-send -s <server> <message> [-t title] [-p priority] [-T tags] [-o topic]" >&2; exit "${1:-1}"; }
+
+[ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ] && usage 0
+
+while [ $# -gt 0 ]; do
+  OPTIND=1
+  while getopts "s:t:p:T:o:" opt; do
+    case "$opt" in
+      s) server="$OPTARG" ;;
+      t) title="$OPTARG" ;;
+      p) priority="$OPTARG" ;;
+      T) tags="$OPTARG" ;;
+      o) topic="$OPTARG" ;;
+      *) usage ;;
+    esac
+  done
+  shift $((OPTIND - 1))
+  if [ $# -gt 0 ]; then
+    [ -z "$message" ] || usage
+    message="$1"; shift
+  fi
+done
+
+[ -n "$server" ] && [ -n "$message" ] || usage
+
+args=(-sS)
+[ -f "$token_file" ] && args+=(-H "Authorization: Bearer $(cat "$token_file")")
+[ -n "$title" ] && args+=(-H "Title: $title")
+[ -n "$priority" ] && args+=(-H "Priority: $priority")
+[ -n "$tags" ] && args+=(-H "Tags: $tags")
+
+curl "${args[@]}" -d "$message" "${server%/}/$topic"
+echo

@@ -1,0 +1,9 @@
+{
+  "name": "fastapi-template",
+  "description": "Scaffolds a complete FastAPI + Jinja2 + HTMX + Alpine.js web application skeleton with PostgreSQL, Alembic, Redis, and OpenRouter AI",
+  "version": "1.0.1",
+  "author": {
+    "name": "Wovemind"
+  },
+  "license": "MIT"
+}

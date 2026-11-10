@@ -1,0 +1,65 @@
+{
+  "skill_name": "audit",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Run a compliance audit on this repo before we launch. It's a FastAPI SaaS on Railway with Postgres, Stripe subscriptions, and an OpenAI-powered chat assistant users talk to. Customers are consumers in the EU and US. We're two founders.",
+      "expected_output": "Artifact report covering GDPR (DSAR/erasure endpoints, cookie consent, DPA and sub-processor list including Railway, OpenAI and Stripe, transfers), EU AI Act Art. 50 chatbot disclosure with the 2026-08-02 date, auto-renewal disclosures and EU withdrawal for Stripe subscriptions, US state privacy thresholds as Notes for a micro entity, security baseline and licence scan.",
+      "files": [],
+      "assertions": [
+        "An Artifact report is published using the report template, and no file is written into the audited repo",
+        "Every finding card has a plain-English 'What the rule says', 'What we found' with file:line, 'What to do' and an Owner, written in full sentences",
+        "Artifact is published with the db 'status' and 'answers' rules and user capabilities so statuses and planning answers persist",
+        "Every finding card has a data-risk value from 1 to 10, and cards whose fix needs decisions carry a .pq list of planning questions",
+        "Report opens with the disclaimer that it is a generated audit and not legal advice",
+        "Every Blocker cites a law or store rule and either a file:line or an explicit 'not found in <where looked>'",
+        "A finding covers EU AI Act Art. 50 transparency (users must be told they are interacting with an AI system)",
+        "Deadlines table contains 2026-08-02 (AI Act transparency obligations)",
+        "A finding covers DPA / sub-processor disclosure naming Railway, OpenAI and Stripe",
+        "Findings cover data-subject access/erasure (DSAR, account deletion/export endpoints) and cookie consent",
+        "A finding covers subscription auto-renewal disclosures and cancellation/withdrawal",
+        "'Needs a lawyer' section is present and non-empty",
+        "Profile lists questions asked and marks defaults as '(assumed)'; no more than two question rounds were used",
+        "No source files in the repo were modified; no secret values appear in the report"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Are we ready to ship our Capacitor app to the App Store and Google Play? It uses RevenueCat for subscriptions and the camera for scanning, it's for consumers in all our markets, and kids might use it. Check compliance.",
+      "expected_output": "Artifact report covering Apple privacy manifest and App Privacy labels, Google Data safety, in-app plus web account deletion, camera usage strings, COPPA / age screen and children's codes, DSA trader status, Android target API 36 deadline 2026-08-31, restore purchases and subscription disclosures, licence attribution.",
+      "files": [],
+      "assertions": [
+        "An Artifact report is published using the report template, and no file is written into the audited repo",
+        "Report contains the not-legal-advice disclaimer",
+        "Every Blocker cites a law or store rule and either a file:line or an explicit 'not found in <where looked>'",
+        "A finding covers the iOS privacy manifest (PrivacyInfo.xcprivacy) and App Privacy / Google Data safety declarations",
+        "A finding covers account deletion available in-app and via a web URL (Apple 5.1.1(v), Google Play account deletion policy)",
+        "A finding covers camera permission usage strings (NSCameraUsageDescription / Android CAMERA declaration)",
+        "A finding covers COPPA or children's privacy with an age screen / neutral age gate, because minors may use the app",
+        "A finding covers EU DSA trader status in App Store Connect / Play Console",
+        "Deadlines table contains 2026-08-31 (Google Play target API 36)",
+        "A finding covers subscriptions via RevenueCat: restore purchases and auto-renewal disclosures",
+        "'Needs a lawyer' section is present and non-empty",
+        "No source files in the repo were modified"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Quick legal/compliance check on our internal Go API with Redis. B2B, EU customers only, the only personal data is employee emails. Anything we need to fix?",
+      "expected_output": "Short Artifact report: mostly 'Checked and fine', GDPR basics (DPA with customers, RoPA, sub-processors), security baseline for Go and Redis, licence scan of Go modules; no app-store, AI, payments or minors modules loaded, with skip reasons in the Profile.",
+      "files": [],
+      "assertions": [
+        "An Artifact report is published using the report template, and no file is written into the audited repo",
+        "Report contains the not-legal-advice disclaimer",
+        "Profile shows app-stores, ai-features, payments and minors modules as skipped with a reason",
+        "Findings cover a DPA with customers and a record of processing activities (RoPA)",
+        "Security-baseline findings refer to the Go backend and Redis (e.g. Redis auth/TLS, secrets handling)",
+        "Profile Licences row includes licence scan results for Go modules (or states how to get them if go-licenses is missing)",
+        "'Checked and fine' section is present and non-empty",
+        "'Needs a lawyer' section is present and non-empty",
+        "No Blocker is raised without a file:line or explicit 'not found in <where looked>'",
+        "No source files in the repo were modified"
+      ]
+    }
+  ]
+}

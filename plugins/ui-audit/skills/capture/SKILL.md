@@ -85,7 +85,8 @@ Why: capturing everything is slow and noisy; capturing too little hides ripples.
 2. Read `references/ripple-reasoning.md`. For each `shared_changed` entry (`needs_ripple_review`) and each unmapped UI file, reason about extra screens the graph misses. Add them with a one-line reason and record it in the manifest `ripple_notes`; add new files to `shared`/`deps` so the next run needs no reasoning.
 3. Mark which captured screens are "intentionally touched" (their own deps changed) versus "ripple" (reached only through shared files or your reasoning): this drives classification in step 5.
 4. Reuse: a screen that is not affected and whose old cards you want to keep goes in `reused_screens`, with `dep_hashes` carrying its current `new_hashes` value. The build keeps old cards only for those screens and only when the stored `dep_hash` equals that value; everything else old is dropped. There is no `removed` list: a state you do not re-capture and do not reuse simply disappears.
-5. Decide motion: if the diff touches transitions, animations, keyframes, gestures or ripple reasoning flags it, plan a clip for the affected interaction (details in `references/web.md`).
+5. New or renamed screens: a screen in config that has no previous cards and is not reused (added or renamed since the last audit) is captured against the PR's original base, not `BASE`: the first run's `base_sha` in `history.json` `runs`, else the merge-base with the PR base branch. Against `BASE` its pixels look unchanged, so the PR's real changes on that page would get no cards. Select it even when `affected_screens` does not list it.
+6. Decide motion: if the diff touches transitions, animations, keyframes, gestures or ripple reasoning flags it, plan a clip for the affected interaction (details in `references/web.md`).
 
 ### 4. Capture
 Why: pixels are the evidence. Base and head must be captured under identical conditions or the diff is noise.

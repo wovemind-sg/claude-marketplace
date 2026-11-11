@@ -152,6 +152,7 @@ def dedupe(items):
         else:
             f = first[k]
             f["also_at"] = f.get("also_at", []) + [i.get("route") or i["screen"], *i.get("also_at", [])]
+            f["merged_screens"] = f.get("merged_screens", []) + [i["screen"]]
     return out
 
 
@@ -159,7 +160,7 @@ def add_redirects(items, redirects):
     for r in redirects:
         txt = f"{r['route']} (redirects to {r['to']})"
         for i in items:
-            if i["screen"] == r["to"] and txt not in i.get("also_at", []):
+            if r["to"] in (i["screen"], *i.get("merged_screens", [])) and txt not in i.get("also_at", []):
                 i["also_at"] = i.get("also_at", []) + [txt]
 
 
@@ -430,6 +431,10 @@ def selftest():
         build(spec([a], redirects=[{"screen": "old", "route": "/old", "to": "about"}]), o7)
         d = json.load(open(os.path.join(o7, "history.json")))
         assert d["items"][0]["also_at"] == ["/old (redirects to about)"] and "Also at: /old" in open(os.path.join(o7, "report.md")).read()
+        # redirect to a screen that was deduped away lands on the card it merged into
+        o7b = os.path.join(t, "o7b")
+        build(spec([a, {**full("home", "intentional"), "route": "/home", "head_hash": "H"}], redirects=[{"screen": "old", "route": "/old", "to": "home"}]), o7b)
+        assert json.load(open(os.path.join(o7b, "history.json")))["items"][0]["also_at"] == ["/home", "/old (redirects to home)"]
         assert 'position:absolute' not in h.split('.slider .top{')[1].split('}')[0] and 'grid-area:1/1' in h
         # stale media: re-capturing home lists the old home files
         old = next(i for i in json.load(open(os.path.join(out, "history.json")))["items"] if i["screen"] == "home")

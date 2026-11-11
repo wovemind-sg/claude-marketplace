@@ -1,0 +1,137 @@
+{
+  "_doc": "Per-directory rules. Placeholders {repo_url}, {owner}, {repo} are substituted in listed_check. A listed_check url returning 200 with `contains` (case-insensitive; empty = any 200) means listed. Requirement ids are the checks in scripts/preflight.py.",
+  "directories": [
+    {
+      "id": "composio",
+      "name": "composio-community/awesome-claude-plugins",
+      "channel": "pr",
+      "target": "composio-community/awesome-claude-plugins",
+      "file": "README.md",
+      "entry": "one link line in the best-fit category section",
+      "listed_check": [{"url": "https://raw.githubusercontent.com/composio-community/awesome-claude-plugins/HEAD/README.md", "contains": "{owner}/{repo}"}],
+      "requirements": ["repo.public"],
+      "per_plugin": false,
+      "limits": {},
+      "bots_allowed": true
+    },
+    {
+      "id": "ccplugins",
+      "name": "ccplugins/awesome-claude-code-plugins",
+      "channel": "pr",
+      "target": "ccplugins/awesome-claude-code-plugins",
+      "file": "README.md",
+      "listed_check": [{"url": "https://raw.githubusercontent.com/ccplugins/awesome-claude-code-plugins/HEAD/README.md", "contains": "{owner}/{repo}"}],
+      "requirements": ["repo.public"],
+      "per_plugin": false,
+      "limits": {},
+      "bots_allowed": true
+    },
+    {
+      "id": "aitmpl",
+      "name": "aitmpl.com (davila7/claude-code-templates)",
+      "channel": "pr",
+      "target": "davila7/claude-code-templates",
+      "path_pattern": "cli-tool/components/plugins/<category>/<name>/source.json",
+      "source_fields": ["repo", "path", "commit", "license", "author"],
+      "commit_length": 40,
+      "one_component_per_pr": true,
+      "never_commit": ["docs/components.json", "dashboard/public/"],
+      "listed_check": [{"url": "https://www.aitmpl.com/marketplace.json", "contains": "{owner}/{repo}"}],
+      "requirements": ["repo.public", "plugin.name_matches_folder", "plugin.symlinks", "plugin.license"],
+      "per_plugin": true,
+      "limits": {},
+      "bots_allowed": true
+    },
+    {
+      "id": "anthropic",
+      "name": "Anthropic plugin directory",
+      "channel": "web",
+      "target": "https://claude.ai/directory/manage",
+      "form": "Submit new > Plugin bundle (one plugin per submission)",
+      "listed_check": [
+        {"url": "https://raw.githubusercontent.com/anthropics/claude-plugins-community/HEAD/.claude-plugin/marketplace.json", "contains": "{owner}/{repo}"},
+        {"url": "https://raw.githubusercontent.com/anthropics/claude-plugins-official/HEAD/.claude-plugin/marketplace.json", "contains": "{owner}/{repo}"}
+      ],
+      "requirements": ["repo.public", "plugin.readme_words", "plugin.license", "plugin.ds_store", "plugin.symlinks", "plugin.npx_pinned", "plugin.name_reserved", "plugin.name_unique"],
+      "per_plugin": true,
+      "limits": {"per_day": 10, "per": "org per 24h", "min_readme_words": 40},
+      "bots_allowed": true
+    },
+    {
+      "id": "claudemarketplaces",
+      "name": "claudemarketplaces.com",
+      "channel": "web",
+      "target": "https://claudemarketplaces.com/submit",
+      "listed_check": [{"url": "https://claudemarketplaces.com/plugins/{owner}-{repo}", "contains": ""}],
+      "requirements": ["repo.public"],
+      "per_plugin": false,
+      "limits": {"tier": "free only"},
+      "bots_allowed": true
+    },
+    {
+      "id": "claudepluginhub",
+      "name": "claudepluginhub.com",
+      "channel": "web",
+      "target": "https://claudepluginhub.com/tools/submit-plugin",
+      "listed_check": [{"url": "https://claudepluginhub.com/plugins/{owner}-{repo}", "contains": ""}],
+      "requirements": ["repo.public", "repo.validate"],
+      "per_plugin": false,
+      "limits": {},
+      "bots_allowed": true
+    },
+    {
+      "id": "tonsofskills",
+      "name": "tonsofskills.com (jeremylongshore/tons-of-skills-marketplace)",
+      "channel": "issue+pr",
+      "target": "jeremylongshore/tons-of-skills-marketplace",
+      "issue_template": "plugin-submission.yml",
+      "file": "sources.yaml",
+      "disclose_ai": true,
+      "listed_check": [{"url": "https://raw.githubusercontent.com/jeremylongshore/tons-of-skills-marketplace/HEAD/sources.yaml", "contains": "{owner}/{repo}"}],
+      "requirements": ["repo.public", "repo.license", "repo.validate"],
+      "per_plugin": false,
+      "limits": {},
+      "bots_allowed": true
+    },
+    {
+      "id": "awesome-claude-code",
+      "name": "hesreallyhim/awesome-claude-code",
+      "channel": "human-link",
+      "target": "hesreallyhim/awesome-claude-code",
+      "issue_template": "recommend-resource.yml",
+      "fields": ["display_name", "category", "link", "author_name", "author_link", "description"],
+      "category": "Lists & Collections",
+      "prefillable_not": ["checklist"],
+      "listed_check": [
+        {"url": "https://raw.githubusercontent.com/hesreallyhim/awesome-claude-code/HEAD/README.md", "contains": "{owner}/{repo}"},
+        {"url": "https://raw.githubusercontent.com/hesreallyhim/awesome-claude-code/HEAD/THE_RESOURCES_TABLE_NEW.csv", "contains": "{owner}/{repo}"}
+      ],
+      "requirements": ["repo.public"],
+      "per_plugin": false,
+      "limits": {"min_age_days": 14, "or_min_stars": 100, "description_chars": [10, 500]},
+      "bots_allowed": false
+    },
+    {
+      "id": "claude-plugins-dev",
+      "name": "claude-plugins.dev",
+      "channel": "auto-index",
+      "target": "https://claude-plugins.dev",
+      "listed_check": [{"url": "https://claude-plugins.dev/plugins/{owner}/{repo}", "contains": ""}],
+      "requirements": [],
+      "per_plugin": false,
+      "limits": {},
+      "bots_allowed": true
+    },
+    {
+      "id": "awesomeclaudeplugins",
+      "name": "awesomeclaudeplugins.com",
+      "channel": "auto-index",
+      "target": "https://awesomeclaudeplugins.com",
+      "listed_check": [{"url": "https://awesomeclaudeplugins.com/plugins/{owner}-{repo}", "contains": ""}],
+      "requirements": [],
+      "per_plugin": false,
+      "limits": {},
+      "bots_allowed": true
+    }
+  ]
+}

@@ -72,7 +72,8 @@ for f in \
   plugins/ui-audit/skills/capture/scripts/build_report.py \
   plugins/compliance-audit/skills/audit/scripts/detect_signals.py \
   plugins/compliance-audit/skills/audit/scripts/license_scan.py \
-  plugins/compliance-audit/skills/apply/scripts/parse_cards.py; do
+  plugins/compliance-audit/skills/apply/scripts/parse_cards.py \
+  plugins/marketplace-promote/skills/promote/scripts/preflight.py; do
   python3 "$f" --selftest || break
 done
 ```

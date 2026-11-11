@@ -448,6 +448,22 @@
         "pane",
         "overview"
       ]
+    },
+    {
+      "name": "marketplace-promote",
+      "source": "./plugins/marketplace-promote",
+      "description": "Get a Claude Code plugin marketplace listed in plugin directories: pre-flight checks per directory, PRs through gh, web forms driven up to final submit, and a status report.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "productivity",
+      "tags": [
+        "marketplace",
+        "promotion",
+        "directories",
+        "publishing"
+      ]
     }
   ]
 }

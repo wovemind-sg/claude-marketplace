@@ -1,0 +1,9 @@
+{
+  "name": "marketplace-promote",
+  "description": "Gets a Claude Code plugin marketplace listed in plugin directories: pre-flight checks against each directory's rules, PRs and issues through gh, web forms driven up to final submit, and a status report.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Wovemind"
+  },
+  "license": "MIT"
+}

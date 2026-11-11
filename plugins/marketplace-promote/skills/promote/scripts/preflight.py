@@ -7,7 +7,9 @@ Usage:
 
 Output (--json): {"repo": {...}, "directories": [{id, name, channel, target, status, problems[], links[],
 eligible_from?}], "plugins": [{name, path, problems[]}]}. A problem is {plugin, file, rule, fix}.
-Status: listed | pending | ready | blocked | closed | not-yet-eligible. Only `gh` read calls and anonymous
+Status: listed | pending | rejected | ready | blocked | closed | not-yet-eligible. Per-plugin directories add
+plugins {name: listed|pending|rejected|ready|blocked} and plugin_links; listing_unknown marks sites whose listing cannot be
+checked anonymously. Only `gh` read calls and anonymous
 GETs are made. owner/repo come from `git remote get-url origin`. Python 3 stdlib only.
 """
 import datetime as dt
@@ -98,7 +100,7 @@ def mcp_servers(pdir, pjson):
 
 
 # ---- checks ----
-def check_plugin(root, entry):
+def check_plugin(root, entry, min_words):
     name = entry.get("name", "?")
     src = entry.get("source")
     if not isinstance(src, str) or not src.startswith("./"):
@@ -110,8 +112,8 @@ def check_plugin(root, entry):
     P = []
     readme = next((os.path.join(pdir, f) for f in os.listdir(pdir) if f.lower() == "readme.md"), None) if os.path.isdir(pdir) else None
     n = words_outside_code(open(readme, encoding="utf-8", errors="replace").read()) if readme else 0
-    if n < 40:
-        P.append(prob("plugin.readme_words", f"README has {n} words outside code blocks; write at least 40.", name, rel(readme or os.path.join(pdir, "README.md"))))
+    if n < min_words:
+        P.append(prob("plugin.readme_words", f"README has {n} words outside code blocks; write at least {min_words}.", name, rel(readme or os.path.join(pdir, "README.md"))))
     has_license = pj.get("license") or any(f.upper().startswith("LICENSE") for f in os.listdir(pdir)) if os.path.isdir(pdir) else False
     if not has_license:
         P.append(prob("plugin.license", "Add a LICENSE file in the plugin folder or a `license` field in plugin.json.", name, rel(pj_path)))
@@ -154,36 +156,91 @@ def subst(s, o, r):
     return s.replace("{repo_url}", f"https://github.com/{o}/{r}").replace("{owner}", o).replace("{repo}", r)
 
 
-def listed_links(d, o, r):
+def match_token(text, needle):
+    # whole-token match so acme/mp does not match acme/mp-extra or other-acme/mp
+    return bool(needle) and bool(re.search(r"(?<![\w.-])" + re.escape(needle) + r"(?:\.git)?(?![\w.-])", text, re.I))
+
+
+def fetch_checks(d, o, r):
+    """[(url, text or None)] for each listed_check; text None unless HTTP 200."""
     out = []
     for c in d.get("listed_check", []):
         url = subst(c["url"], o, r)
         status, text = http_get(url)
-        needle = subst(c.get("contains", ""), o, r)
-        # whole-token match so acme/mp does not match acme/mp-extra or other-acme/mp
-        if status == 200 and re.search(r"(?<![\w.-])" + re.escape(needle) + r"(?![\w.-])", text, re.I):
-            out.append(url)
+        out.append((url, text if status == 200 else None, subst(c.get("contains", ""), o, r)))
     return out
 
 
-def pending_links(d, o, r, state):
-    links = [e["url"] for e in (state.get("submissions", {}).get(d["id"]) or []) if e.get("url")]
+def listed_links(d, o, r, fetched):
+    # an empty `contains` would count any 200 as listed, so it never matches
+    return [u for u, t, needle in fetched if t is not None and match_token(t, needle)]
+
+
+def plugin_listed(fetched, o, r, name):
+    """True when a fetched marketplace.json has an entry named `name` that mentions owner/repo."""
+    for _, t, _ in fetched:
+        try:
+            items = json.loads(t or "")["plugins"]
+        except (ValueError, KeyError, TypeError):
+            continue
+        if any(isinstance(e, dict) and e.get("name") == name and match_token(json.dumps(e), f"{o}/{r}") for e in items):
+            return True
+    return False
+
+
+GH_ITEM = re.compile(r"github\.com/[^/]+/[^/]+/(pull|issues)/\d+")
+
+
+def rejected(url):
+    """Closed-unmerged PR / issue closed as not completed. Web-form URLs have no queryable state."""
+    m = GH_ITEM.search(url)
+    if not m:
+        return False
+    pr = m.group(1) == "pull"
+    j = gh_json(["pr" if pr else "issue", "view", url, "--json", "state" if pr else "state,stateReason"]) or {}
+    return j.get("state") == "CLOSED" and (pr or j.get("stateReason") != "COMPLETED")
+
+
+def tracked(d, o, r, state):
+    """[(url, plugin or None)] from the state file plus open PRs/issues found via gh search."""
+    items = [(e["url"], e.get("plugin")) for e in (state.get("submissions", {}).get(d["id"]) or []) if e.get("url")]
     if d["channel"] in ("pr", "issue+pr") and d.get("bots_allowed", True):
         for kind in ("prs", "issues"):
             found = gh_json(["search", kind, "--author", "@me", "--repo", d["target"], f"https://github.com/{o}/{r}",
-                             "--state", "open", "--json", "url"]) or []
-            links += [x["url"] for x in found]
-    return list(dict.fromkeys(links))
+                             "--state", "open", "--json", "url,title"]) or []
+            items += [(x["url"], x.get("title", "")) for x in found]  # title stands in for plugin; see claim()
+    return items
 
 
-def directory_status(d, o, r, info, problems, plugin_problems, plugin_count, state, now):
+def claim(plugin, hint):
+    # state entries carry the plugin name; search hits only a title, which must name the plugin
+    return bool(hint) and (hint == plugin or match_token(hint, plugin))
+
+
+def split_links(items):
+    """-> (pending urls, rejected urls); one gh call per distinct url."""
+    pend, rej = [], []
+    for u in dict.fromkeys(u for u, _ in items):
+        (rej if rejected(u) else pend).append(u)
+    return pend, rej
+
+
+def directory_status(d, o, r, info, problems, plugin_problems, plugin_names, state, now):
     out = {"id": d["id"], "name": d["name"], "channel": d["channel"], "target": d["target"], "problems": [], "links": []}
-    links = listed_links(d, o, r)
-    if links:
-        return {**out, "status": "listed", "links": links}
-    links = pending_links(d, o, r, state)
-    if links:
-        return {**out, "status": "pending", "links": links}
+    if d.get("listing_unknown"):
+        out["listing_unknown"] = True
+    fetched = fetch_checks(d, o, r)
+    per_plugin = d.get("per_plugin") and plugin_names
+    if not per_plugin:
+        links = listed_links(d, o, r, fetched)
+        if links:
+            return {**out, "status": "listed", "links": links}
+    items = tracked(d, o, r, state)
+    if not per_plugin and items:
+        pend, rej = split_links(items)
+        if pend:
+            return {**out, "status": "pending", "links": pend}
+        return {**out, "status": "rejected", "links": rej}
     if d["channel"] in ("pr", "issue+pr"):
         t = gh_json(["api", f"repos/{d['target']}"]) or {}
         if t and (not t.get("has_pull_requests", True) or (d["channel"] == "issue+pr" and not t.get("has_issues", True))):
@@ -197,10 +254,27 @@ def directory_status(d, o, r, info, problems, plugin_problems, plugin_count, sta
     reqs = set(d.get("requirements", []))
     repo_p = [p for p in problems if p["rule"] in reqs]
     plug_p = [p for p in plugin_problems if p["rule"] in reqs]
-    bad = {p["plugin"] for p in plug_p}
-    # per-plugin directories only lose the failing plugins; the rest can still go
-    blocked = bool(repo_p) or (plug_p and (not d.get("per_plugin") or len(bad) >= plugin_count))
-    return {**out, "status": "blocked" if blocked else "ready", "problems": repo_p + plug_p}
+    if not per_plugin:
+        return {**out, "status": "blocked" if repo_p or plug_p else "ready", "problems": repo_p + plug_p}
+    per, plinks, links = {}, {}, []
+    for n in plugin_names:
+        mine = [(u, h) for u, h in items if claim(n, h)]
+        pend, rej = split_links(mine)
+        plinks[n] = pend + rej
+        links += plinks[n]
+        if plugin_listed(fetched, o, r, n):
+            per[n] = "listed"
+        elif pend:
+            per[n] = "pending"
+        elif rej:
+            per[n] = "rejected"
+        elif repo_p or any(p["plugin"] == n for p in plug_p):
+            per[n] = "blocked"
+        else:
+            per[n] = "ready"
+    vals = set(per.values())
+    status = next((s for s in ("ready", "pending", "rejected", "blocked") if s in vals), "listed")
+    return {**out, "status": status, "problems": repo_p + plug_p, "links": links, "plugins": per, "plugin_links": plinks}
 
 
 def run(root, state_file=None, now=None):
@@ -213,17 +287,18 @@ def run(root, state_file=None, now=None):
     entries = mp.get("plugins", [])
     names = [e.get("name") for e in entries]
     repo_p = check_repo(root, o, r, info)
+    dirs = json.load(open(RULES, encoding="utf-8"))["directories"]
+    min_words = max(d.get("limits", {}).get("min_readme_words", 0) for d in dirs)
     plugins, plugin_p = [], []
     for e in entries:
-        P = check_plugin(root, e)
+        P = check_plugin(root, e, min_words)
         if P is None:
             continue
         if names.count(e.get("name")) > 1:
             P.append(prob("plugin.name_unique", f"Plugin name '{e.get('name')}' appears more than once in marketplace.json.", e.get("name"), ".claude-plugin/marketplace.json"))
         plugins.append({"name": e.get("name"), "path": e["source"], "problems": P})
         plugin_p += P
-    dirs = json.load(open(RULES, encoding="utf-8"))["directories"]
-    res = [directory_status(d, o, r, info, repo_p, plugin_p, len(plugins), state, now) for d in dirs]
+    res = [directory_status(d, o, r, info, repo_p, plugin_p, [p["name"] for p in plugins], state, now) for d in dirs]
     return {"repo": {"owner": o, "repo": r, "url": f"https://github.com/{o}/{r}",
                      "created_at": (info or {}).get("created_at"), "stars": (info or {}).get("stargazers_count"),
                      "problems": repo_p},
@@ -284,10 +359,51 @@ def selftest():
         http_get = lambda u: (200, "see https://github.com/acme/mp") if "composio" in u else (404, "")
         out = run(tmp)
         assert {x["id"]: x for x in out["directories"]}["composio"]["status"] == "listed"
+        http_get = lambda u: (404, "")
         st = os.path.join(tmp, "state.json")
-        w("state.json", json.dumps({"submissions": {"anthropic": [{"url": "https://x/1"}]}}))
-        out = run(tmp, st)
-        assert {x["id"]: x for x in out["directories"]}["anthropic"]["status"] == "pending"
+        views = {}
+        base = gh_json
+        gh_json = lambda a: views.get(a[2], {}) if a[0] in ("pr", "issue") else base(a)
+        names = [e["name"] for e in entries]
+        pr1, pr2 = "https://github.com/x/y/pull/1", "https://github.com/x/y/pull/2"
+
+        def D(i, state_obj):
+            w("state.json", json.dumps({"submissions": state_obj}))
+            return {x["id"]: x for x in run(tmp, st)["directories"]}[i]
+        # per-plugin status: one pending plugin does not hide the rest
+        a = D("anthropic", {"anthropic": [{"url": "https://claude.ai/x", "plugin": "good"}]})
+        assert a["status"] == "ready" and a["plugins"]["good"] == "pending" and a["plugins"]["short"] == "blocked" and a["plugins"]["mism"] == "ready", a
+        a = D("anthropic", {"anthropic": [{"url": "https://claude.ai/x", "plugin": n} for n in ("good", "mism")]})
+        assert a["status"] == "pending", a  # no plugin left to offer; the rest are blocked
+        a = D("aitmpl", {"aitmpl": [{"url": pr1, "plugin": n} for n in names]})
+        assert a["status"] == "pending" and set(a["plugins"].values()) == {"pending"}, a
+        # rejected: closed-unmerged PR, issue closed not planned; web URLs stay pending; open stays pending
+        views[pr1] = {"state": "CLOSED"}
+        views[pr2] = {"state": "OPEN"}
+        a = D("aitmpl", {"aitmpl": [{"url": pr1, "plugin": "good"}, {"url": pr2, "plugin": "npx"}]})
+        assert a["plugins"]["good"] == "rejected" and a["plugins"]["npx"] == "pending" and a["status"] == "ready", a
+        assert a["plugin_links"]["good"] == [pr1], a
+        a = D("composio", {"composio": [{"url": pr1}]})
+        assert a["status"] == "rejected" and a["links"] == [pr1], a
+        a = D("composio", {"composio": [{"url": pr1}, {"url": pr2}]})
+        assert a["status"] == "pending" and a["links"] == [pr2], a
+        views[pr1] = {"state": "MERGED"}
+        assert D("composio", {"composio": [{"url": pr1}]})["status"] == "pending"
+        iss = "https://github.com/x/y/issues/3"
+        views[iss] = {"state": "CLOSED", "stateReason": "COMPLETED"}
+        assert D("tonsofskills", {"tonsofskills": [{"url": iss}]})["status"] == "pending"
+        views[iss] = {"state": "CLOSED", "stateReason": "NOT_PLANNED"}
+        assert D("tonsofskills", {"tonsofskills": [{"url": iss}]})["status"] == "rejected"
+        assert D("claudemarketplaces", {"claudemarketplaces": [{"url": "https://claudemarketplaces.com/s/1"}]})["status"] == "pending"
+        # an empty `contains` never counts a bare HTTP 200 as listed
+        http_get = lambda u: (200, "https://github.com/acme/mp")
+        assert D("claude-plugins-dev", {})["status"] == "ready"
+        # per-plugin listing: entry name must match and mention owner/repo
+        mkt = json.dumps({"plugins": [{"name": "good", "source": {"url": "https://github.com/acme/mp.git"}},
+                                      {"name": "npx", "source": {"url": "https://github.com/other/mp.git"}}]})
+        http_get = lambda u: (200, mkt) if "aitmpl" in u else (404, "")
+        a = D("aitmpl", {})
+        assert a["plugins"]["good"] == "listed" and a["plugins"]["npx"] == "ready", a
     finally:
         shutil.rmtree(tmp)
     print("preflight selftest ok")

@@ -6,11 +6,11 @@ argument-hint: "[repo path] [--check]"
 
 # Promote a plugin marketplace
 
-Gets the marketplace repository at `[repo path]` (default: the current directory) listed in plugin directories. With `--check`, run pre-flight only: create nothing anywhere, publish the report and stop.
+Gets the marketplace repository at `[repo path]` (default: the current directory) listed in plugin directories. With `--check`, run pre-flight only: submit nothing to any directory (no PR, issue, fork or form); the only writes are the local state file (`artifact_url`) and the private report Artifact. Publish the report and stop.
 
 Rules for the whole run:
 - Never put tokens, cookies or passwords in a command, log, state file or report. The owner signs in to websites themselves in the headed browser.
-- Never submit anything that is in the state file or already open (`pending`). Skip `listed`, `pending`, `closed`, `blocked` and `not-yet-eligible` directories, but show them in the report.
+- Never submit anything that is in the state file or already open (`pending`). Skip `listed`, `pending`, `rejected`, `closed`, `blocked` and `not-yet-eligible` directories, but show them in the report. A `rejected` submission (closed-unmerged PR or issue closed as not planned) is reported with its link and never resubmitted automatically.
 - Rules per directory live in `${CLAUDE_PLUGIN_ROOT}/skills/promote/directories.json`. Do not hard-code any owner, repo or plugin name in commands.
 - Write all report text in normal English, whatever style the chat uses.
 
@@ -23,9 +23,9 @@ python3 -I "${CLAUDE_PLUGIN_ROOT}/skills/promote/scripts/preflight.py" "<repo pa
 
 `<owner>-<repo>` comes from the `repo` object in the output (run once without `--state` if you need it first). If `CLAUDE_PLUGIN_DATA` is empty, use a scratch directory and tell the owner the state will not survive.
 
-Output: `repo` {owner, repo, url, created_at, stars, problems[]}, `directories[]` {id, name, channel, target, status, problems[], links[], eligible_from?}, `plugins[]` {name, path, problems[]}. A problem is {plugin, file, rule, fix}. Status is one of `listed`, `pending`, `ready`, `blocked`, `closed`, `not-yet-eligible`.
+Output: `repo` {owner, repo, url, created_at, stars, problems[]}, `directories[]` {id, name, channel, target, status, problems[], links[], eligible_from?}, `plugins[]` {name, path, problems[]}. A problem is {plugin, file, rule, fix}. Status is one of `listed`, `pending`, `rejected`, `ready`, `blocked`, `closed`, `not-yet-eligible`. A directory with `listing_unknown: true` cannot be checked anonymously (bot-blocked site): say "listing unknown" in the report next to its status instead of leaving it out.
 
-For per-plugin directories (`aitmpl`, `anthropic`) a `ready` status can still carry problems: those plugins are named in `problems[].plugin`. Skip exactly those plugins for that directory and report each problem with its fix.
+For per-plugin directories (`aitmpl`, `anthropic`) the entry also has `plugins` {name: `listed|pending|rejected|ready|blocked`} and `plugin_links` {name: urls}. The directory is `ready` while any plugin is `ready`. Only `ready` plugins may be offered or submitted; show every other plugin's status in the report (`rejected` with its link, `blocked` with its problems and fixes). Web-form submissions have no queryable state and stay `pending`.
 
 State file shape: `{"submissions": {"<directory id>": [{"url": "...", "plugin": "..."}]}, "artifact_url": "..."}`. Create or update it with a small `python3 -I -c` snippet. Write it right after each PR or issue is created and after each confirmed web submit, so an interrupted run never duplicates.
 
@@ -33,7 +33,7 @@ If `--check` was given, go to step 6.
 
 ## 2. Pick what to submit
 
-Directories with status `ready`, by channel: `pr` (composio, ccplugins, aitmpl), `issue+pr` (tonsofskills), `web` (anthropic, claudemarketplaces, claudepluginhub), `human-link` (awesome-claude-code, only when eligible).
+Directories with status `ready` (for `aitmpl` and `anthropic`, only their `ready` plugins), by channel: `pr` (composio, ccplugins, aitmpl), `issue+pr` (tonsofskills), `web` (anthropic, claudemarketplaces, claudepluginhub), `human-link` (awesome-claude-code, only when eligible).
 
 ## 3. Draft PRs and issues
 
@@ -45,8 +45,8 @@ Entry text comes from `.claude-plugin/marketplace.json` (marketplace description
 
 Ask the owner once with AskUserQuestion, all in one round:
 1. Approve or edit all drafts (show them in full).
-2. Which aitmpl plugins to submit (suggest 3; later runs offer the rest).
-3. Which Anthropic directory plugins to submit (at most 10 per 24 hours, only ones not already in the state file).
+2. Which aitmpl plugins to submit (only `ready` ones; suggest 3; later runs offer the rest).
+3. Which Anthropic directory plugins to submit (at most 10 per 24 hours, only `ready` ones).
 
 Then for each approved item: branch, commit, `gh pr create` or `gh issue create`, and record the URL in the state file immediately.
 

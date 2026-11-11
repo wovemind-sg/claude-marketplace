@@ -86,3 +86,20 @@ test('the pane refresh re-reads stars and hidden types saved by another session'
   expect(stateNow('starred')).toEqual(['a', 'b'])
   expect(stateNow('hiddenTypes')).toEqual(['bg'])
 })
+
+test('the pane refresh survives a non-array or rejecting store and keeps the last stars', async ($, on) => {
+  const stateNow = memState(on)
+  const data: Record<string, unknown> = { starred: ['a'], hiddenTypes: ['bg'] }
+  let fail = false
+  // a throwing getter makes the live store.get handler reject
+  const store = new Proxy(data, { get: (t, k) => { if (fail) throw new Error('store down'); return t[k as string] } })
+  world($, on, store, true)
+  await $.session.start({ cwd: '/p', surface: 'terminal', isInteractive: false })
+  Object.assign(data, { starred: 'oops', hiddenTypes: { x: 1 } })
+  await $.command.run({ command: 'sessions', args: '' })
+  expect(stateNow('starred')).toEqual(['a'])
+  expect(stateNow('hiddenTypes')).toEqual(['bg'])
+  fail = true
+  await $.command.run({ command: 'sessions', args: '' })
+  expect(stateNow('starred')).toEqual(['a'])
+})

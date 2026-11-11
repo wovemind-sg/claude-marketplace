@@ -269,16 +269,16 @@ export const register: Register = on => {
       await loadSaved($) // start from what other sessions saved, not this pane's up-to-3s-old copy
       const h = await read($, hiddenTypes)
       const next = h.includes(t) ? h.filter(x => x !== t) : [...h, t]
+      await $.store.set('hiddenTypes', next) // store first: a refresh between the two would otherwise revert the atom
       await update($, hiddenTypes, () => next)
-      await $.store.set('hiddenTypes', next)
     }
 
     const toggleStar = async (id: string) => {
       await loadSaved($)
       const cur = await read($, starred)
       const next = cur.includes(id) ? cur.filter(x => x !== id) : [...cur, id]
+      await $.store.set('starred', next) // store first: a refresh between the two would otherwise revert the atom
       await update($, starred, () => next)
-      await $.store.set('starred', next)
     }
 
     const shown = groups.flatMap(g => g.rows)

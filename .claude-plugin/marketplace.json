@@ -339,7 +339,7 @@
       },
       "license": "MIT",
       "category": "libraries",
-      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/flagd#readme",
+      "homepage": "https://flagd.dev/",
       "repository": "https://github.com/wovemind-sg/claude-marketplace",
       "tags": [
         "flagd",
@@ -361,7 +361,7 @@
       },
       "license": "MIT",
       "category": "libraries",
-      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/openfeature#readme",
+      "homepage": "https://openfeature.dev/",
       "repository": "https://github.com/wovemind-sg/claude-marketplace",
       "tags": [
         "openfeature",

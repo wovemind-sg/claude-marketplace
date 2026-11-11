@@ -207,9 +207,9 @@ const openPane = async ($: any, focus: boolean) => {
 
 // Other open sessions may have changed these; re-read on session.start and on every pane refresh.
 const loadSaved = async ($: any) => {
-  const saved = await $.store.get('hiddenTypes')
+  const saved = await $.store.get('hiddenTypes').catch(() => undefined)
   if (Array.isArray(saved)) await update($, hiddenTypes, () => saved as string[])
-  const savedStars = await $.store.get('starred')
+  const savedStars = await $.store.get('starred').catch(() => undefined)
   if (Array.isArray(savedStars)) await update($, starred, () => savedStars as string[])
 }
 
@@ -266,6 +266,7 @@ export const register: Register = on => {
     }
 
     const toggle = async (t: string) => {
+      await loadSaved($) // start from what other sessions saved, not this pane's up-to-3s-old copy
       const h = await read($, hiddenTypes)
       const next = h.includes(t) ? h.filter(x => x !== t) : [...h, t]
       await update($, hiddenTypes, () => next)
@@ -273,6 +274,7 @@ export const register: Register = on => {
     }
 
     const toggleStar = async (id: string) => {
+      await loadSaved($)
       const cur = await read($, starred)
       const next = cur.includes(id) ? cur.filter(x => x !== id) : [...cur, id]
       await update($, starred, () => next)

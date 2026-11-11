@@ -1,14 +1,39 @@
 {
   "skill_name": "capture",
+  "fixture": "evals/fixture/make_fixture.sh <dir> [port]: git repo, branch pr = c0 (base) .. c4 (head), branch followup = c5. The prompts refer to the repo as the fixture repo.",
   "evals": [
     {"id": 0, "name": "first-run-full-audit",
-     "prompt": "I just opened PR #7 from commits c1..c4 (base c0, head c4) on this tiny static site. Review the UI changes for me: show reviewers before/after screenshots of what visibly changed, flag any changes nobody meant to make, and include a short clip or stills for any motion/transition change. This audit will be repeated on later commits, so leave the repo in a state that makes the next run cheap (but do not commit).",
-     "expected_output": "Audit lists exactly home (desktop, mobile), about (desktop, mobile) and settings (mobile); about and settings are unintended ripples, home is intentional; a clip exists for the nav dropdown transition; audit page has no horizontal scroll at 390px; .ui-audit config and manifest exist."},
-    {"id": 1, "name": "incremental-after-new-commit",
-     "prompt": "Audit PR #7 (c0..c4), then edit about.html text, commit as c5, and update the same audit re-capturing only what could be affected while keeping earlier findings.",
-     "expected_output": "Run 2 captures only the about screen; home and settings items from run 1 remain in the audit; about is intentional; run history lists two runs."},
+     "prompt": "This repo is a tiny static site. PR #7 is commits c1..c4 (base c0, head c4); the PR body is in PR_BODY.md. Review the UI changes: show reviewers before/after screenshots of what visibly changed and flag changes nobody meant to make. This audit will be repeated on later commits, so leave .ui-audit in the working tree (do not commit).",
+     "expected_output": "Audit page where: verify and verify-alias are one card with 'Also at'; old-verify is not captured and shows 'redirects to verify'; client-signup is not captured and appears in Config suggestions; the Changes section lists unknown phone and unknown email on both login and the schedule deep link, each with a card whose recipe fills and submits the form; every card shows 'Captured at <head sha8>'; meta default view is side (report.default_view); no horizontal scroll at 390px.",
+     "assertions": [
+       "verify and verify-alias are a single card; the card shows 'Also at' with the other route",
+       "old-verify has no card of its own and the page shows it as redirecting to verify",
+       "client-signup was not captured (no card) and is listed under Config suggestions as files deleted, remove from config",
+       "Config suggestions also suggest merging the redirect (old-verify into verify) and the duplicate (verify-alias into verify)",
+       "The Changes section lists the unknown-phone and unknown-email errors on the login page and on the schedule deep-link page (four combinations), each linked to a card",
+       "Each of those cards comes from a state whose recipe fills the form and submits it (not a bare URL), and the phone and email states are separate cards",
+       "Every card shows 'Captured at' with the head sha (first 8 characters)",
+       "The page's default view is side by side (config report.default_view), and it has a Default view picker",
+       "No card reason quotes text that is missing from the head code (no unflagged stale quotes)"
+     ]},
+    {"id": 1, "name": "incremental-after-rename-and-text-change",
+     "prompt": "This repo is a tiny static site. Audit PR #7 (c1..c4, base c0, PR body in PR_BODY.md). Then run `git checkout followup` (commit c5 renames the schedule screen to schedule-link in the config and rewords the unknown-account error) and update the same audit for c5, keeping the audit directory from the first run so history carries over. Do not commit.",
+     "expected_output": "After run 2 the page has no card for the old 'schedule' screen; every card shows its commit sha; cards from run 1 are kept only when marked reused with unchanged files; no card quotes the removed string 'No account found.' as current text (such a card is needs_review); the history lists two runs.",
+     "assertions": [
+       "After run 2 there is no card for the screen named schedule (renamed to schedule-link) and its old media is listed as stale or removed",
+       "Every card shows 'Captured at <sha8>'; cards captured in run 1 and kept say 'reused, files unchanged' and belong to screens whose files did not change between c4 and c5",
+       "No kept card is for a screen whose files changed in c5 (login, schedule-link, form.js users are re-captured at c5)",
+       "No card reason presents 'No account found.' as the current text: either the reason uses the new wording or the card is needs_review with the Needs review prefix",
+       "Card reasons were written from the c5 commit message and current page text, not carried over from run 1",
+       "The run history lists two runs"
+     ]},
     {"id": 2, "name": "head-only-and-no-change",
-     "prompt": "Head-only audit of c4 (no before/after, everything needs review), then run the audit again with no new commits.",
-     "expected_output": "Run 1 captures head only, no diffs, all items needs_review; run 2 stops with a no-changes-since-last-audit message and builds nothing."}
+     "prompt": "This repo is a tiny static site, PR #7 is commits c1..c4 (base c0). Run a head-only audit of c4 (no before/after, everything needs review), then run the audit again with no new commits. Do not commit.",
+     "expected_output": "Run 1 captures head only, no diffs, all items needs_review; run 2 stops with a no-changes-since-last-audit message and builds nothing.",
+     "assertions": [
+       "Run 1 produced cards with no base image and every card is needs_review",
+       "Run 2 stopped with a message that nothing changed since the last audit and did not rebuild or republish the page",
+       "The manifest top-level last_audited_sha is the head sha after run 1"
+     ]}
   ]
 }

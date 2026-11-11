@@ -279,11 +279,19 @@ def directory_status(d, o, r, info, problems, plugin_problems, plugin_names, sta
 
 def run(root, state_file=None, now=None):
     root = os.path.abspath(root)
+    if not os.path.isdir(root):
+        sys.exit("preflight: not a directory: " + root)
     o, r = origin(root)
-    state = (read_json(state_file) if state_file else None) or {}
+    mp = read_json(os.path.join(root, ".claude-plugin", "marketplace.json"))
+    if not isinstance(mp, dict):
+        sys.exit("preflight: missing or invalid .claude-plugin/marketplace.json in " + root)
+    state = {}
+    if state_file and os.path.exists(state_file):  # a missing state file means a first run
+        state = read_json(state_file)
+        if not isinstance(state, dict) or not isinstance(state.get("submissions", {}), dict):
+            sys.exit("preflight: invalid state file (want {\"submissions\": {...}}): " + state_file)
     now = now or dt.date.today()
     info = gh_json(["api", f"repos/{o}/{r}"])
-    mp = read_json(os.path.join(root, ".claude-plugin", "marketplace.json")) or {}
     entries = mp.get("plugins", [])
     names = [e.get("name") for e in entries]
     repo_p = check_repo(root, o, r, info)
@@ -404,6 +412,21 @@ def selftest():
         http_get = lambda u: (200, mkt) if "aitmpl" in u else (404, "")
         a = D("aitmpl", {})
         assert a["plugins"]["good"] == "listed" and a["plugins"]["npx"] == "ready", a
+        # bad inputs fail clearly (SystemExit), a missing state file is a first run
+        def dies(*args):
+            try:
+                run(*args)
+            except SystemExit as e:
+                assert isinstance(e.code, str), e
+                return True
+        bad = os.path.join(tmp, "bad.json")
+        open(bad, "w").write("{oops")
+        assert dies(tmp, bad) and dies(os.path.join(tmp, "nope"))
+        open(bad, "w").write("[]")
+        assert dies(tmp, bad)
+        assert run(tmp, os.path.join(tmp, "absent.json"))["repo"]["owner"] == "acme"
+        os.rename(os.path.join(tmp, ".claude-plugin/marketplace.json"), os.path.join(tmp, "mp.bak"))
+        assert dies(tmp)
     finally:
         shutil.rmtree(tmp)
     print("preflight selftest ok")

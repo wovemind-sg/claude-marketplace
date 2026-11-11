@@ -7,7 +7,7 @@ Usage:
 
 Output (--json): {"repo": {...}, "directories": [{id, name, channel, target, status, problems[], links[],
 eligible_from?}], "plugins": [{name, path, problems[]}]}. A problem is {plugin, file, rule, fix}.
-Status: listed | pending | rejected | ready | blocked | closed | not-yet-eligible. Per-plugin directories add
+Status: listed | not-listed | pending | rejected | ready | blocked | closed | not-yet-eligible. Per-plugin directories add
 plugins {name: listed|pending|rejected|ready|blocked} and plugin_links; listing_unknown marks sites whose listing cannot be
 checked anonymously. Only `gh` read calls and anonymous
 GETs are made. owner/repo come from `git remote get-url origin`. Python 3 stdlib only.
@@ -235,6 +235,8 @@ def directory_status(d, o, r, info, problems, plugin_problems, plugin_names, sta
         links = listed_links(d, o, r, fetched)
         if links:
             return {**out, "status": "listed", "links": links}
+    if d["channel"] == "auto-index":  # report-only: never submitted
+        return {**out, "status": "not-listed"}
     items = tracked(d, o, r, state)
     if not per_plugin and items:
         pend, rej = split_links(items)
@@ -405,7 +407,7 @@ def selftest():
         assert D("claudemarketplaces", {"claudemarketplaces": [{"url": "https://claudemarketplaces.com/s/1"}]})["status"] == "pending"
         # an empty `contains` never counts a bare HTTP 200 as listed
         http_get = lambda u: (200, "https://github.com/acme/mp")
-        assert D("claude-plugins-dev", {})["status"] == "ready"
+        assert D("claude-plugins-dev", {})["status"] == "not-listed"
         # per-plugin listing: entry name must match and mention owner/repo
         mkt = json.dumps({"plugins": [{"name": "good", "source": {"url": "https://github.com/acme/mp.git"}},
                                       {"name": "npx", "source": {"url": "https://github.com/other/mp.git"}}]})

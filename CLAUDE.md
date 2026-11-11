@@ -77,7 +77,7 @@ for f in \
 done
 ```
 
-Validate passes for the whole marketplace (only warning: `sg-card-benefits` has no `version`, on purpose). Adding a script with `--selftest`: also add it to `.github/workflows/validate.yml`.
+Validate passes for the whole marketplace (only warning: `sg-card-benefits` has no `version`, on purpose). Validator checks `plugin.json`, skill/agent/command frontmatter, `hooks/hooks.json` for syntax + schema errors. Adding a script with `--selftest`: also add it to `.github/workflows/validate.yml`.
 
 Test locally (inside session):
 

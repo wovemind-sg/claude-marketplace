@@ -51,6 +51,7 @@ playwright-cli -s=head-desktop run-code "async page => {
 }"
 ```
    Add `web.freeze_css` from config to the injected style. Never freeze when the item is a motion capture (see below).
+   After each default `goto`, record where the page ended up and what it says: `playwright-cli -s=S eval "location.href"` (the value is under `### Result`) for redirect detection, and `eval "document.body.innerText"` saved to `<state>.txt` next to the PNG, used for reasons in step 5.
 3. Dynamic regions: masks are applied at diff time from config, not by editing the page. If a region is hard to mask (random content), stub it first (`page.route`, fixed clock via `page.clock.install({time: ...})`, fixed `Math.random`).
 4. Full-page screenshot (the default, base and head alike). Changes at the bottom of a page or inside a scrolling sheet are invisible in a viewport shot, and `screenshot` has no full-page flag, so use `run-code`. It grows the viewport by the document's hidden height plus the hidden overflow of every `overflow:auto|scroll` element (a fixed modal sheet scrolls on its own, so `fullPage` alone would miss it). It re-measures after each resize (up to 5 passes, so `vh`-sized elements and nested scrollers are covered), caps the height at 16000 CSS px, shoots, and restores the viewport:
 ```bash
@@ -103,6 +104,7 @@ Use the class, attribute and key names from config. Verify once per session: `pl
 
 For each screen, loop its `states`. `default` is the page after load. Other states replay the recipe steps (manifest `recipes`, else config `steps`) before screenshotting:
 
+- Recipes start from a page (the screen's route or a starting page named in the recipe) and use `fill`/`click` through the real UI, so a state reached by a form is captured by submitting that form.
 - hover: `playwright-cli -s=S hover <ref-or-selector>` (skipped on touch viewports, use tap/click there)
 - open menu/modal: click the trigger and `wait_for` the panel selector
 - error: trigger via the recipe (invalid input submit) or `page.route` returning an error

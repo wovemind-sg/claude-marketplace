@@ -28,11 +28,14 @@ stored dep_hash equals meta.dep_hashes[screen] and its key is not re-captured; e
 and its media listed in stale_media. The run is appended to the history list.
 Dedupe: new items with the same (platform, viewport, head_hash, changed_pct) become one card (the first in sort
 order); the others' route (or screen) goes in its "also_at", and each redirect adds "<route> (redirects to <to>)"
-to the target screen's cards.
+to the target screen's cards; a redirect whose target has no card is listed with the config suggestions.
+redirects and config_suggestions are kept in history.json and merged with the next run's (deduped by (screen, to) /
+text); a carried redirect is dropped when its screen is re-captured. A change item also matches a card through its
+"merged_screens" (screens deduped into it).
 Quote check (new items only): every "straight" or “curly” quoted string in an item's reason must appear in the
 screen's manifest deps (<repo>/.ui-audit/manifest.json, --repo default .) at meta.head_sha, or anywhere in the repo at
-head (git grep -F) when the screen has no deps or there is no manifest. A missing quote makes the item needs_review and
-prefixes its reason with 'Needs review: "X" not in current code. '.
+head (git grep -F) when the screen has no deps or there is no manifest. A missing quote turns an intentional item into
+needs_review (unintended stays unintended) and prefixes its reason with 'Needs review: "X" not in current code. '.
 Self-check (exit 1, nothing written, all problems on stderr): a card whose captured_sha != meta.head_sha that is
 not a valid reuse; a change whose items match no card (screen, plus viewport/state when given) and has no not_captured.
 The page and report.md list the changes ("Changes in this PR") and config_suggestions (only when non-empty).
@@ -157,11 +160,26 @@ def dedupe(items):
 
 
 def add_redirects(items, redirects):
+    """Add each redirect to its target's cards; returns the notes for redirects whose target has no card."""
+    lost = []
     for r in redirects:
         txt = f"{r['route']} (redirects to {r['to']})"
-        for i in items:
-            if r["to"] in (i["screen"], *i.get("merged_screens", [])) and txt not in i.get("also_at", []):
+        hit = [i for i in items if r["to"] in (i["screen"], *i.get("merged_screens", []))]
+        for i in hit:
+            if txt not in i.get("also_at", []):
                 i["also_at"] = i.get("also_at", []) + [txt]
+        if not hit:
+            lost.append(f"{txt}: no card, the target is unchanged")
+    return lost
+
+
+def carry(prev, spec, redone):
+    """Redirects and config suggestions survive incremental runs; a redirect is dropped when its screen is re-captured."""
+    new = spec.get("redirects") or []
+    seen = {(r["screen"], r["to"]) for r in new}
+    reds = [r for r in prev.get("redirects", []) if r["screen"] not in redone and (r["screen"], r["to"]) not in seen] + new
+    sugg = list(dict.fromkeys(prev.get("config_suggestions", []) + (spec.get("config_suggestions") or [])))
+    return reds, sugg
 
 
 def quote_check(items, meta, repo):
@@ -180,13 +198,14 @@ def quote_check(items, meta, repo):
         qs = [a or b for a, b in QUOTE.findall(i.get("reason") or "")]
         missing = [q for q in qs if not found(q, i["screen"])] if head else []
         if missing:
-            i["classification"] = "needs_review"
+            if i["classification"] == "intentional":  # never lower unintended
+                i["classification"] = "needs_review"
             i["reason"] = "".join(f'Needs review: "{q}" not in current code. ' for q in missing) + i["reason"]
 
 
 def covers(ci, card):
     """A change item matches a card on screen, plus viewport/state when the change item gives them."""
-    return ci.get("screen") == card["screen"] and all(ci.get(k) in (None, card[k]) for k in ("viewport", "state"))
+    return ci.get("screen") in (card["screen"], *card.get("merged_screens", [])) and all(ci.get(k) in (None, card[k]) for k in ("viewport", "state"))
 
 
 def self_check(items, meta, changes=()):
@@ -316,15 +335,16 @@ def build(spec_path, out, password=None, repo="."):
         fail("report refused:\n" + "\n".join(problems))
     new = dedupe(all_new)
     items = [i for i in merged if i.get("reused")] + new
-    add_redirects(items, spec.get("redirects") or [])
+    reds, sugg = carry(prev, spec, {i["screen"] for i in all_new})
+    lost = add_redirects(items, reds)
     os.makedirs(out, exist_ok=True)
     # Prefix new media dirs with the run number so they never collide with kept items.
     run_no = len(prev.get("runs", [])) + 1
     for n, i in enumerate(new):
         copy_media(i, f"r{run_no}-{n}", spec_dir, out)
     items.sort(key=key)
-    json.dump({"meta": meta, "items": items, "runs": runs}, open(hist_p, "w"), indent=1)
-    sugg = spec.get("config_suggestions") or []
+    json.dump({"meta": meta, "items": items, "runs": runs, "redirects": reds, "config_suggestions": sugg}, open(hist_p, "w"), indent=1)
+    sugg = sugg + lost  # shown with the suggestions so an unmatched redirect is never silent
     data = json.dumps({"meta": meta, "items": items, "runs": runs, "changes": changes, "config_suggestions": sugg}).replace("</", "<\\/")
     title = " - ".join(["UI audit", *([meta["project"]] if meta.get("project") else []), f"PR {meta['pr']}" if meta.get("pr") else "PR -"])
     subs = {"__TITLE__": html.escape(title), "__DATA__": data}  # one pass: a project/summary containing a placeholder must not be re-substituted
@@ -359,10 +379,10 @@ def selftest():
             Image.new("RGB", (40, 30), "white").save(os.path.join(t, n))
         open(os.path.join(t, "c.webm"), "wb").write(b"x")
 
-        def spec(items, redirects=(), **m):
+        def spec(items, redirects=(), config_suggestions=(), **m):
             p = os.path.join(t, "spec.json")
             meta = {"pr": 1, "head_sha": "abcdef123456", "base_sha": "111111aaaaaa", "baseline_mode": "base+head", "dep_hashes": {"about": "dh", "home": "dh"}, **m}
-            json.dump({"meta": meta, "items": items, "redirects": list(redirects)}, open(p, "w"))
+            json.dump({"meta": meta, "items": items, "redirects": list(redirects), "config_suggestions": list(config_suggestions)}, open(p, "w"))
             return p
         full = lambda s, c: dict(screen=s, platform="web", viewport="desktop", state="default", classification=c, reason="r", base_img="b.png", head_img="h.png", diff_img="d.png", changed_pct=1.5, dep_hash="dh")
         out = os.path.join(t, "out")
@@ -435,6 +455,21 @@ def selftest():
         o7b = os.path.join(t, "o7b")
         build(spec([a, {**full("home", "intentional"), "route": "/home", "head_hash": "H"}], redirects=[{"screen": "old", "route": "/old", "to": "home"}]), o7b)
         assert json.load(open(os.path.join(o7b, "history.json")))["items"][0]["also_at"] == ["/home", "/old (redirects to home)"]
+        # unmatched redirect shows in report.md; carried in history; dropped when its screen is re-captured
+        o7c = os.path.join(t, "o7c")
+        build(spec([a], redirects=[{"screen": "old", "route": "/old", "to": "gone"}], config_suggestions=["s1"]), o7c)
+        assert "/old (redirects to gone): no card" in open(os.path.join(o7c, "report.md")).read()
+        build(spec([a], config_suggestions=["s2", "s1"], reused_screens=[]), o7c)
+        d = json.load(open(os.path.join(o7c, "history.json")))
+        assert d["redirects"] == [{"screen": "old", "route": "/old", "to": "gone"}] and d["config_suggestions"] == ["s1", "s2"], d
+        build(spec([{**a, "screen": "old"}]), o7c)
+        assert json.load(open(os.path.join(o7c, "history.json")))["redirects"] == []
+        # a merged-away screen is covered by the surviving card's merged_screens after being reused
+        o7d = os.path.join(t, "o7d")
+        build(spec([a, {**full("home", "intentional"), "route": "/home", "head_hash": "H"}]), o7d)
+        p = spec([], reused_screens=["about", "home"], dep_hashes={"about": "dh", "home": "dh"})
+        sp = json.load(open(p)); sp["changes"] = [{"id": "c", "text": "home copy", "items": [{"screen": "home"}]}]; json.dump(sp, open(p, "w"))
+        build(p, o7d)
         assert 'position:absolute' not in h.split('.slider .top{')[1].split('}')[0] and 'grid-area:1/1' in h
         # stale media: re-capturing home lists the old home files
         old = next(i for i in json.load(open(os.path.join(out, "history.json")))["items"] if i["screen"] == "home")
@@ -457,6 +492,10 @@ def selftest():
         g("init", "-q"); g("add", "."); g("commit", "-qm", "x")
         sha = g("rev-parse", "HEAD")
 
+        def qb2(s, c, reason):
+            build(spec([{**full(s, c), "reason": reason}], head_sha=sha), os.path.join(t, "oq1"), repo=rp)
+            return json.load(open(os.path.join(t, "oq1", "history.json")))["items"][0]
+
         def qb(s, reason):
             build(spec([{**full(s, "intentional"), "reason": reason}], head_sha=sha), os.path.join(t, "oq1"), repo=rp)
             return json.load(open(os.path.join(t, "oq1", "history.json")))["items"][0]
@@ -466,6 +505,7 @@ def selftest():
         assert i["classification"] == "needs_review" and i["reason"].startswith('Needs review: "Only elsewhere" not in current code. Shows')
         assert qb("login", 'Shows "Only elsewhere" now')["classification"] == "intentional"  # no deps: whole repo
         assert qb("login", 'Shows "Nowhere text"')["classification"] == "needs_review"
+        assert qb2("about", "unintended", 'Shows "Nowhere text"')["classification"] == "unintended"
         # change coverage
         def chg(changes, **kw):
             p = spec([full("about", "intentional")])

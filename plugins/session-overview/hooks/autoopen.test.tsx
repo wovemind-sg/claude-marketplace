@@ -1,9 +1,11 @@
 import { expect, mock, test } from 'claude-code/testing'
 
 // Answers the nouns openPane touches; records every ui.open.
-const world = ($: any, on: any, store: Record<string, unknown> = {}) => {
+const world = ($: any, on: any, store: Record<string, unknown> = {}, live = false) => {
   const opens: { focus?: boolean }[] = []
-  mock.store(on, store)
+  // live: read the object on every get (mock.store snapshots it), so a test can change it mid-run.
+  if (live) on('store.get', async (_$: any, e: any) => ({ value: store[e.key] }) as never)
+  else mock.store(on, store)
   mock.env(on, { HOME: '/H' })
   mock.clock(on)
   on('session.start', async (_$: any, e: any) => ({ cwd: e.cwd }))
@@ -56,7 +58,7 @@ const memState = (on: any) => {
     m.set(k(e), { value: e.value, version: v })
     return { value: { isSet: true, version: v } } as never
   })
-  return () => m.get('session-overview/starred')?.value
+  return (key = 'starred') => m.get(`session-overview/${key}`)?.value
 }
 
 test('session.start restores persisted stars and ignores a malformed value', async ($, on) => {
@@ -71,4 +73,33 @@ test('session.start leaves stars empty when the stored value is not an array', a
   world($, on, { starred: 'oops' })
   await $.session.start({ cwd: '/p', surface: 'terminal', isInteractive: false })
   expect(starsNow()).toBeUndefined() // nothing written: atom keeps its [] default
+})
+
+test('the pane refresh re-reads stars and hidden types saved by another session', async ($, on) => {
+  const stateNow = memState(on)
+  const store: Record<string, unknown> = { starred: ['a'], hiddenTypes: [] }
+  world($, on, store, true)
+  await $.session.start({ cwd: '/p', surface: 'terminal', isInteractive: false })
+  expect(stateNow('starred')).toEqual(['a'])
+  Object.assign(store, { starred: ['a', 'b'], hiddenTypes: ['bg'] })
+  await $.command.run({ command: 'sessions', args: '' })
+  expect(stateNow('starred')).toEqual(['a', 'b'])
+  expect(stateNow('hiddenTypes')).toEqual(['bg'])
+})
+
+test('the pane refresh survives a non-array or rejecting store and keeps the last stars', async ($, on) => {
+  const stateNow = memState(on)
+  const data: Record<string, unknown> = { starred: ['a'], hiddenTypes: ['bg'] }
+  let fail = false
+  // a throwing getter makes the live store.get handler reject
+  const store = new Proxy(data, { get: (t, k) => { if (fail) throw new Error('store down'); return t[k as string] } })
+  world($, on, store, true)
+  await $.session.start({ cwd: '/p', surface: 'terminal', isInteractive: false })
+  Object.assign(data, { starred: 'oops', hiddenTypes: { x: 1 } })
+  await $.command.run({ command: 'sessions', args: '' })
+  expect(stateNow('starred')).toEqual(['a'])
+  expect(stateNow('hiddenTypes')).toEqual(['bg'])
+  fail = true
+  await $.command.run({ command: 'sessions', args: '' })
+  expect(stateNow('starred')).toEqual(['a'])
 })

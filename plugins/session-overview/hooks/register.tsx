@@ -170,6 +170,7 @@ const openPane = async ($: any, focus: boolean) => {
     if (busy) return
     busy = true
     try {
+      await loadSaved($)
       const files = (await $.fs.list(`${home}/.claude/sessions`)).filter((f: { name: string }) => f.name.endsWith('.json'))
       const entries: Entry[] = []
       for (const f of files) {
@@ -204,13 +205,18 @@ const openPane = async ($: any, focus: boolean) => {
 }
 
 
+// Other open sessions may have changed these; re-read on session.start and on every pane refresh.
+const loadSaved = async ($: any) => {
+  const saved = await $.store.get('hiddenTypes').catch(() => undefined)
+  if (Array.isArray(saved)) await update($, hiddenTypes, () => saved as string[])
+  const savedStars = await $.store.get('starred').catch(() => undefined)
+  if (Array.isArray(savedStars)) await update($, starred, () => savedStars as string[])
+}
+
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     await $.command.register({ name: 'sessions', description: 'Show every open Claude Code session in a pane (`/sessions auto on|off` opens it on every new session)' })
-    const saved = await $.store.get('hiddenTypes')
-    if (Array.isArray(saved)) await update($, hiddenTypes, () => saved as string[])
-    const savedStars = await $.store.get('starred')
-    if (Array.isArray(savedStars)) await update($, starred, () => savedStars as string[])
+    await loadSaved($)
     // Also fires on /clear, so the pane comes back after it. Not focused: don't steal the prompt's keys.
     if (e.isInteractive && (await $.store.get('autoOpen')) === true) await openPane($, false).catch(() => undefined)
     return next(e)
@@ -260,17 +266,19 @@ export const register: Register = on => {
     }
 
     const toggle = async (t: string) => {
+      await loadSaved($) // start from what other sessions saved, not this pane's up-to-3s-old copy
       const h = await read($, hiddenTypes)
       const next = h.includes(t) ? h.filter(x => x !== t) : [...h, t]
+      await $.store.set('hiddenTypes', next) // store first: a refresh between the two would otherwise revert the atom
       await update($, hiddenTypes, () => next)
-      await $.store.set('hiddenTypes', next)
     }
 
     const toggleStar = async (id: string) => {
+      await loadSaved($)
       const cur = await read($, starred)
       const next = cur.includes(id) ? cur.filter(x => x !== id) : [...cur, id]
+      await $.store.set('starred', next) // store first: a refresh between the two would otherwise revert the atom
       await update($, starred, () => next)
-      await $.store.set('starred', next)
     }
 
     const shown = groups.flatMap(g => g.rows)

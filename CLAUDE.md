@@ -8,7 +8,7 @@ Claude Code auto-reads this file every session start. Core rules here; detailed 
 | `.claude/docs/components.md` | Adding/editing a skill, command, agent, hook, or MCP server (formats + examples) |
 | `.claude/docs/versioning.md` | Deciding how version resolves, or setting up release channels |
 | `.claude/docs/sources-distribution.md` | Marketplace entry with external `source` (GitHub, git URL, git-subdir, npm), or hosting/pinning/private repos/CI seeding |
-| `.claude/docs/review-checklist.md` | Before opening a pull request (checklist + best practices) |
+| `.claude/docs/review-checklist.md` | Writing a new plugin or skill (best practices), and before opening a pull request (checklist) |
 
 ---
 

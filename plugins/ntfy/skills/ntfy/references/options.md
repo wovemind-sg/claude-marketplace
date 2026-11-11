@@ -1,9 +1,10 @@
 # ntfy publish options — full reference
 
-All of these work as `-H "Header: value"` on the base `curl -H "Authorization:
-Bearer $(cat ~/.ntfy)" ... <server>/<topic>` call
-from SKILL.md, where `<server>` is the server URL SKILL.md resolved and the
-`Authorization` header is sent only when `~/.ntfy` exists. Header name and its short alias are both valid; use whichever
+All of these work as `-H "Header: value"` on the base raw `curl` call from
+SKILL.md, where `<server>` and `<topic>` are the values SKILL.md resolved.
+Every example starts with the same `{ [ -f ~/.ntfy ] && printf ... } | curl -H @-`
+prefix, which sends the `Authorization` header from stdin only when `~/.ntfy`
+exists. Header name and its short alias are both valid; use whichever
 reads clearer.
 
 | Feature | Header | Alias | Example |
@@ -31,8 +32,8 @@ Up to 3 per notification, via `X-Actions` (or `Actions`), semicolon-separated:
 
 **View** (opens a URL when tapped):
 ```bash
-curl -H "Authorization: Bearer $(cat ~/.ntfy)" \
-     -H "Actions: view, Open dashboard, https://example.com" \
+{ [ -f ~/.ntfy ] && printf 'Authorization: Bearer %s\n' "$(cat ~/.ntfy)"; } |
+  curl -H @- -H "Actions: view, Open dashboard, https://example.com" \
      -d "Deploy complete" <server>/<topic>
 ```
 
@@ -49,14 +50,15 @@ Append `clear=true` to any action to dismiss the notification once tapped.
 
 **External URL** (no upload, just a link ntfy fetches):
 ```bash
-curl -d "" -H "Attach: https://example.com/report.pdf" <server>/<topic>
+{ [ -f ~/.ntfy ] && printf 'Authorization: Bearer %s\n' "$(cat ~/.ntfy)"; } |
+  curl -H @- -d "" -H "Attach: https://example.com/report.pdf" <server>/<topic>
 ```
 
 **Local file upload** (PUT, not POST) — server stores it, capped at 15 MB,
 expires in 3 hours on ntfy.sh (self-hosted limits may differ):
 ```bash
-curl -T report.pdf -H "Authorization: Bearer $(cat ~/.ntfy)" \
-     -H "Filename: report.pdf" <server>/<topic>
+{ [ -f ~/.ntfy ] && printf 'Authorization: Bearer %s\n' "$(cat ~/.ntfy)"; } |
+  curl -H @- -T report.pdf -H "Filename: report.pdf" <server>/<topic>
 ```
 
 ## Scheduled / delayed delivery
@@ -65,7 +67,8 @@ curl -T report.pdf -H "Authorization: Bearer $(cat ~/.ntfy)" \
 days out:
 
 ```bash
-curl -H "Authorization: Bearer $(cat ~/.ntfy)" -H "In: 30m" \
+{ [ -f ~/.ntfy ] && printf 'Authorization: Bearer %s\n' "$(cat ~/.ntfy)"; } |
+  curl -H @- -H "In: 30m" \
      -d "Reminder: stand-up" <server>/<topic>
 ```
 
@@ -75,8 +78,8 @@ Useful when setting many fields at once, or building the payload
 programmatically instead of stacking headers:
 
 ```bash
-curl -X POST <server> \
-     -H "Authorization: Bearer $(cat ~/.ntfy)" \
+{ [ -f ~/.ntfy ] && printf 'Authorization: Bearer %s\n' "$(cat ~/.ntfy)"; } |
+  curl -H @- -X POST <server> \
      -H "Content-Type: application/json" \
      -d '{
        "topic": "<topic>",
@@ -96,7 +99,8 @@ server root, not `/<topic>`.
 Publish again with the same `X-Message-ID` to replace it. Delete with:
 
 ```bash
-curl -X DELETE <server>/<topic>/<message-id>
+{ [ -f ~/.ntfy ] && printf 'Authorization: Bearer %s\n' "$(cat ~/.ntfy)"; } |
+  curl -H @- -X DELETE <server>/<topic>/<message-id>
 ```
 
 Clear every message on a topic: `curl -X DELETE <server>/<topic>`

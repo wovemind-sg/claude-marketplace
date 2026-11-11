@@ -51,16 +51,20 @@ dialog shown when the plugin is enabled):
 | `topic` | `claude` | The topic notifications go to unless you name another one in a request. |
 
 The defaults only take effect after you save the dialog once; until then the
-skill and command fall back to `https://ntfy.sh` and `claude` themselves.
+skill and command fall back to `https://ntfy.sh` and `claude` themselves
+(except when `~/.ntfy` exists, see below).
 
 No environment variables are used. One file is:
 
 - **Auth token** (optional): if `~/.ntfy` exists, its one line (a `tk_...`
   access token generated with `ntfy token add` on the server) is sent as a
   Bearer token **to whatever `server` is configured, including the public
-  ntfy.sh**. If you keep a token for a self-hosted server in `~/.ntfy`, do not
-  point `server` at ntfy.sh or any other server you do not trust with that
-  token, or move the file away first.
+  ntfy.sh**. So while `~/.ntfy` exists, the skill and command send nothing
+  until you have saved the `server` setting once (to your own server, or to
+  `https://ntfy.sh` if that is where the token belongs); they ask you to run
+  `/plugin configure ntfy@wovemind` instead. Without `~/.ntfy` they fall back
+  to `https://ntfy.sh` as described above. Do not point `server` at a server
+  you do not trust with the token, or move the file away first.
 
 The plugin also puts `ntfy-send` on your `PATH`:
 

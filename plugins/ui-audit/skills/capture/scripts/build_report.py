@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build a self-contained UI audit page (index.html) and a short report.md.
 
-Usage: build_report.py --spec audit.json --out DIR [--password PW]   |   build_report.py --selftest
+Usage: build_report.py --spec audit.json --out DIR [--password PW] [--repo DIR]   |   build_report.py --selftest
 --password also writes OUT/_worker.js, a Cloudflare Pages worker that answers 401 unless the request carries
 Basic Auth (any username) with that password. Only the SHA-256 of the password is embedded, never the plaintext.
 
@@ -9,13 +9,17 @@ Spec JSON (paths are absolute or relative to the spec file):
 {
   "meta": {"pr": 12, "head_sha": "...", "base_sha": "...", "baseline_mode": "base+head" | "head-only",
            "project": "repo name", "incremental_from": "<sha>|null", "reused_screens": ["name", ...],
-           "dep_hashes": {"<screen>": "<dep_hash.py new_hashes value>"}, "summary": "short PR description"},
+           "dep_hashes": {"<screen>": "<dep_hash.py new_hashes value>"}, "summary": "short PR description",
+           "default_view": "slider|side|diff (default slider)"},
   "items": [{"screen", "platform", "viewport", "state", "classification": "intentional|unintended|needs_review",
              "reason": "one line", "route": "/path", "head_hash": "<diff_images.py hashes value>",
              "captured_sha": "defaults to meta.head_sha", "dep_hash": "<screen's dep hash when captured>",
              "base_img", "head_img", "diff_img", "changed_pct",
              "clips": ["a.webm"], "stills": {"start": "p.png", "mid": "p.png", "end": "p.png"}}],
-  "redirects": [{"screen": "old", "route": "/old", "to": "target-screen"}]
+  "redirects": [{"screen": "old", "route": "/old", "to": "target-screen"}],
+  "changes": [{"id": "c1", "text": "what changed in the PR", "items": [{"screen", "viewport", "state"}],
+               "not_captured": "why no card (omit when items has cards)"}],
+  "config_suggestions": ["merge old-verify into verify", ...]
 }
 base_img/diff_img/changed_pct are omitted for head-only items. Media is copied into OUT/media/.
 If OUT/history.json exists, a new item replaces only the old item with the same (screen, platform,
@@ -25,8 +29,13 @@ and its media listed in stale_media. The run is appended to the history list.
 Dedupe: new items with the same (platform, viewport, head_hash, changed_pct) become one card (the first in sort
 order); the others' route (or screen) goes in its "also_at", and each redirect adds "<route> (redirects to <to>)"
 to the target screen's cards.
+Quote check (new items only): every "straight" or “curly” quoted string in an item's reason must appear in the
+screen's manifest deps (<repo>/.ui-audit/manifest.json, --repo default .) at meta.head_sha, or anywhere in the repo at
+head (git grep -F) when the screen has no deps or there is no manifest. A missing quote makes the item needs_review and
+prefixes its reason with 'Needs review: "X" not in current code. '.
 Self-check (exit 1, nothing written, all problems on stderr): a card whose captured_sha != meta.head_sha that is
-not a valid reuse.
+not a valid reuse; a change whose items match no card (screen, plus viewport/state when given) and has no not_captured.
+The page and report.md list the changes ("Changes in this PR") and config_suggestions (only when non-empty).
 Prints JSON {index, report, items, runs, stale_media} on stdout;
 stale_media lists the media paths (relative to OUT) of dropped old items, for the publisher to delete.
 """
@@ -37,11 +46,14 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
 
 ORDER = {"unintended": 0, "needs_review": 1, "intentional": 2}
 CLASSES = list(ORDER)
+VIEWS = ("slider", "side", "diff")
+QUOTE = re.compile(r'"([^"]+)"|“([^”]+)”')
 
 
 def slug(s):
@@ -87,6 +99,13 @@ def copy_media(item, idx, spec_dir, out):
 def validate(spec):
     if not isinstance(spec, dict) or "items" not in spec or "meta" not in spec:
         fail("spec needs 'meta' and 'items'")
+    if spec["meta"].get("default_view") is None:
+        spec["meta"]["default_view"] = "slider"
+    if spec["meta"]["default_view"] not in VIEWS:
+        fail(f"bad default_view '{spec['meta']['default_view']}', use one of {', '.join(VIEWS)}")
+    for c in spec.get("changes") or []:
+        if not isinstance(c, dict) or not c.get("id") or not c.get("text"):
+            fail(f"change needs 'id' and 'text': {c}")
     for i in spec["items"]:
         for k in ("screen", "platform", "viewport", "classification", "head_img"):
             if not i.get(k):
@@ -144,10 +163,37 @@ def add_redirects(items, redirects):
                 i["also_at"] = i.get("also_at", []) + [txt]
 
 
-def self_check(items, meta):
+def quote_check(items, meta, repo):
+    """Mark an item needs_review when a quoted string of its reason is not in the code at head."""
+    head = meta.get("head_sha")
+    mp = os.path.join(repo, ".ui-audit", "manifest.json")
+    screens = (json.load(open(mp)) if os.path.isfile(mp) else {}).get("screens", {})
+    git = lambda *a: subprocess.run(["git", "-C", repo, *a], capture_output=True, text=True, errors="replace")
+
+    def found(q, screen):
+        deps = screens.get(screen, {}).get("deps")
+        if deps:
+            return any(q in git("show", f"{head}:{d}").stdout for d in deps)
+        return git("grep", "-qF", "-e", q, head).returncode == 0
+    for i in items:
+        qs = [a or b for a, b in QUOTE.findall(i.get("reason") or "")]
+        missing = [q for q in qs if not found(q, i["screen"])] if head else []
+        if missing:
+            i["classification"] = "needs_review"
+            i["reason"] = "".join(f'Needs review: "{q}" not in current code. ' for q in missing) + i["reason"]
+
+
+def covers(ci, card):
+    """A change item matches a card on screen, plus viewport/state when the change item gives them."""
+    return ci.get("screen") == card["screen"] and all(ci.get(k) in (None, card[k]) for k in ("viewport", "state"))
+
+
+def self_check(items, meta, changes=()):
     """List of problems; build refuses to write anything when non-empty."""
-    return [f"{i['screen']}/{i['viewport']}/{i['state']} captured at {str(i['captured_sha'])[:8]}, not head {str(meta.get('head_sha'))[:8]}"
-            for i in items if not i.get("reused") and i["captured_sha"] != meta.get("head_sha")]
+    p = [f"{i['screen']}/{i['viewport']}/{i['state']} captured at {str(i['captured_sha'])[:8]}, not head {str(meta.get('head_sha'))[:8]}"
+         for i in items if not i.get("reused") and i["captured_sha"] != meta.get("head_sha")]
+    return p + [f"change {c['id']} ({c['text']}) has no card and no not_captured reason"
+                for c in changes if not c.get("not_captured") and not any(covers(ci, i) for ci in c.get("items") or [] for i in items)]
 
 
 PAGE = r"""<!doctype html>
@@ -175,8 +221,10 @@ button[aria-pressed=true]{outline:2px solid var(--fg)}
 .empty{color:var(--muted)}#summary{overflow-wrap:anywhere;max-height:30vh;overflow-y:auto;white-space:pre-line}ul{padding-left:1.2em}
 </style></head><body>
 <h1>UI audit</h1><div class="meta" id="meta"></div><p id="summary" hidden></p>
-<div class="bar"><select id="fp" aria-label="Platform"></select><select id="fv" aria-label="Viewport"></select><select id="fc" aria-label="Classification"></select></div>
+<div id="changes" hidden><h2>Changes in this PR</h2><ul id="chl"></ul></div>
+<div class="bar"><select id="fp" aria-label="Platform"></select><select id="fv" aria-label="Viewport"></select><select id="fc" aria-label="Classification"></select><select id="fm" aria-label="Default view"></select></div>
 <div id="items"></div>
+<div id="sugg" hidden><h2>Config suggestions</h2><ul id="sgl"></ul></div>
 <h2>Run history</h2><ul id="runs"></ul>
 <script id="data" type="application/json">__DATA__</script>
 <script>
@@ -188,6 +236,13 @@ if(m.summary){$('#summary').textContent=m.summary;$('#summary').hidden=false}
 function fill(id,label,key){const v=[...new Set(D.items.map(i=>i[key]))];$(id).innerHTML=`<option value="">${label}: all</option>`+v.map(x=>`<option>${E(x)}</option>`).join('')}
 fill('#fp','Platform','platform');fill('#fv','Viewport','viewport');fill('#fc','Classification','classification');
 ['#fp','#fv','#fc'].forEach(s=>$(s).onchange=render);
+const VN={slider:'Slider',side:'Side by side',diff:'Diff overlay'};
+$('#fm').innerHTML=Object.entries(VN).map(([k,l])=>`<option value="${k}">Default view: ${l}</option>`).join('');
+let stored=null;try{stored=localStorage.getItem('ui-audit-view')}catch(e){}
+$('#fm').value=VN[stored]?stored:m.default_view;
+$('#fm').onchange=()=>{try{localStorage.setItem('ui-audit-view',$('#fm').value)}catch(e){}render()};
+if((D.changes||[]).length){$('#changes').hidden=false;$('#chl').innerHTML=D.changes.map(c=>`<li>${E(c.text)}: ${c.not_captured?`Not captured: ${E(c.not_captured)}`:(c.items||[]).map(x=>E([x.screen,x.viewport,x.state].filter(Boolean).join(' / '))).join('; ')}</li>`).join('')}
+if((D.config_suggestions||[]).length){$('#sugg').hidden=false;$('#sgl').innerHTML=D.config_suggestions.map(x=>`<li>${E(x)}</li>`).join('')}
 const img=(p,a)=>`<img src="${E(p)}" alt="${E(a)}" loading="lazy">`;
 function body(i,mode){
  if(headOnly||!i.base_img)return `<p class="meta">Head only: no baseline captured, nothing to compare.</p>${img(i.head_img,'head')}`;
@@ -200,7 +255,7 @@ function render(){
  const f={platform:$('#fp').value,viewport:$('#fv').value,classification:$('#fc').value};
  const list=D.items.filter(i=>Object.keys(f).every(k=>!f[k]||i[k]===f[k]));
  $('#items').innerHTML=list.length?'':'<p class="empty">No items match.</p>';
- list.forEach(i=>{const d=document.createElement('section');d.className='item';let mode='slider';
+ list.forEach(i=>{const d=document.createElement('section');d.className='item';let mode=$('#fm').value;
   const pct=i.changed_pct!=null?` · ${(+i.changed_pct).toFixed(2)}% changed`:'';
   d.innerHTML=`<h2>${E(i.screen)} <span class="tag ${i.classification}">${i.classification.replace('_',' ')}</span></h2><div class="meta">${E(i.platform)} · ${E(i.viewport)} · ${E(i.state)}${pct}</div><div class="meta">Captured at ${E((i.captured_sha||'').slice(0,8))}${i.reused?' · reused, files unchanged':''}</div>${(i.also_at||[]).length?`<div class="meta">Also at: ${i.also_at.map(E).join(', ')}</div>`:''}<p>${E(i.reason)}</p>`+
   `<div class="modes">${headOnly||!i.base_img?'':[['slider','Slider'],['side','Side by side'],['diff','Diff overlay']].map(([k,l])=>`<button data-m="${k}" aria-pressed="${k===mode}">${l}</button>`).join('')}<div class="zoom"><button data-z="-1" aria-label="Decrease image height">−</button><button data-z="0">Fit to screen</button><button data-z="1" aria-label="Increase image height">+</button></div></div><div class="view"></div>`+motion(i);
@@ -216,7 +271,7 @@ $('#runs').innerHTML=(D.runs||[]).slice().reverse().map(r=>`<li>${E((r.head_sha|
 </script></body></html>"""
 
 
-def report_md(meta, items, runs):
+def report_md(meta, items, runs, changes=(), suggestions=()):
     counts = {c: sum(i["classification"] == c for i in items) for c in CLASSES}
     L = [f"UI audit for PR {meta.get('pr', '-')} (head `{(meta.get('head_sha') or '')[:8]}`, mode {meta.get('baseline_mode')})", ""]
     if meta.get("summary"):
@@ -231,12 +286,19 @@ def report_md(meta, items, runs):
         L.append(f"  Captured at {str(i['captured_sha'])[:8]}" + (" · reused, files unchanged" if i.get("reused") else ""))
         if i.get("also_at"):
             L.append(f"  Also at: {', '.join(i['also_at'])}")
+    if changes:
+        L += ["", "## Changes in this PR"]
+        for c in changes:
+            where = f"Not captured: {c['not_captured']}" if c.get("not_captured") else "; ".join("/".join(x for x in (ci.get("screen"), ci.get("viewport"), ci.get("state")) if x) for ci in c.get("items") or [])
+            L.append(f"- {c['text']}: {where}")
+    if suggestions:
+        L += ["", "## Config suggestions"] + [f"- {x}" for x in suggestions]
     if len(runs) > 1:
         L += ["", f"Run history: {len(runs)} audits."]
     return "\n".join(L) + "\n"
 
 
-def build(spec_path, out, password=None):
+def build(spec_path, out, password=None, repo="."):
     spec = json.load(open(spec_path))
     validate(spec)
     spec_dir = os.path.dirname(os.path.abspath(spec_path))
@@ -244,12 +306,16 @@ def build(spec_path, out, password=None):
     hist_p = os.path.join(out, "history.json")
     prev = json.load(open(hist_p)) if os.path.isfile(hist_p) else {}
     key = lambda i: (ORDER[i["classification"]], i["screen"], i["viewport"])
-    new = dedupe(sorted(spec["items"], key=key))
-    items, runs, stale = merge_history(prev, new, meta)
-    add_redirects(items, spec.get("redirects") or [])
-    problems = self_check(items, meta)
+    all_new = sorted(spec["items"], key=key)
+    quote_check(all_new, meta, repo)
+    merged, runs, stale = merge_history(prev, all_new, meta)
+    changes = spec.get("changes") or []
+    problems = self_check(merged, meta, changes)  # before dedupe, so a change pointing at a merged-away card still counts as covered
     if problems:
         fail("report refused:\n" + "\n".join(problems))
+    new = dedupe(all_new)
+    items = [i for i in merged if i.get("reused")] + new
+    add_redirects(items, spec.get("redirects") or [])
     os.makedirs(out, exist_ok=True)
     # Prefix new media dirs with the run number so they never collide with kept items.
     run_no = len(prev.get("runs", [])) + 1
@@ -257,11 +323,12 @@ def build(spec_path, out, password=None):
         copy_media(i, f"r{run_no}-{n}", spec_dir, out)
     items.sort(key=key)
     json.dump({"meta": meta, "items": items, "runs": runs}, open(hist_p, "w"), indent=1)
-    data = json.dumps({"meta": meta, "items": items, "runs": runs}).replace("</", "<\\/")
+    sugg = spec.get("config_suggestions") or []
+    data = json.dumps({"meta": meta, "items": items, "runs": runs, "changes": changes, "config_suggestions": sugg}).replace("</", "<\\/")
     title = " - ".join(["UI audit", *([meta["project"]] if meta.get("project") else []), f"PR {meta['pr']}" if meta.get("pr") else "PR -"])
     subs = {"__TITLE__": html.escape(title), "__DATA__": data}  # one pass: a project/summary containing a placeholder must not be re-substituted
     open(os.path.join(out, "index.html"), "w").write(re.sub("__TITLE__|__DATA__", lambda m: subs[m.group()], PAGE))
-    open(os.path.join(out, "report.md"), "w").write(report_md(meta, items, runs))
+    open(os.path.join(out, "report.md"), "w").write(report_md(meta, items, runs, changes, sugg))
     if password:
         open(os.path.join(out, "_worker.js"), "w").write(WORKER.replace("__HASH__", hashlib.sha256(password.encode()).hexdigest()))
     elif os.path.exists(os.path.join(out, "_worker.js")):
@@ -375,6 +442,52 @@ def selftest():
         assert hashlib.sha256(b"s3cret-pw").hexdigest() in w and "s3cret-pw" not in w and "__HASH__" not in w
         build(spec([full("home", "intentional")]), out)
         assert not os.path.exists(os.path.join(out, "_worker.js"))
+        # quote check against a temp git repo with a manifest
+        rp = os.path.join(t, "repo")
+        os.makedirs(os.path.join(rp, ".ui-audit"))
+        open(os.path.join(rp, "about.html"), "w").write("<p>No account found.</p>")
+        open(os.path.join(rp, "other.html"), "w").write("<p>Only elsewhere</p>")
+        json.dump({"screens": {"about": {"deps": ["about.html"]}}}, open(os.path.join(rp, ".ui-audit", "manifest.json"), "w"))
+        g = lambda *a: subprocess.run(["git", "-C", rp, "-c", "user.name=t", "-c", "user.email=t@t", *a], check=True, capture_output=True, text=True).stdout.strip()
+        g("init", "-q"); g("add", "."); g("commit", "-qm", "x")
+        sha = g("rev-parse", "HEAD")
+
+        def qb(s, reason):
+            build(spec([{**full(s, "intentional"), "reason": reason}], head_sha=sha), os.path.join(t, "oq1"), repo=rp)
+            return json.load(open(os.path.join(t, "oq1", "history.json")))["items"][0]
+        assert qb("about", 'Shows "No account found." now')["classification"] == "intentional"
+        assert qb("about", 'Shows \u201cNo account found.\u201d now')["classification"] == "intentional"
+        i = qb("about", 'Shows "Only elsewhere" now')  # present in repo, but not in about's deps
+        assert i["classification"] == "needs_review" and i["reason"].startswith('Needs review: "Only elsewhere" not in current code. Shows')
+        assert qb("login", 'Shows "Only elsewhere" now')["classification"] == "intentional"  # no deps: whole repo
+        assert qb("login", 'Shows "Nowhere text"')["classification"] == "needs_review"
+        # change coverage
+        def chg(changes, **kw):
+            p = spec([full("about", "intentional")])
+            sp = json.load(open(p)); sp["changes"] = changes; sp.update(kw); json.dump(sp, open(p, "w"))
+            return p
+        o8 = os.path.join(t, "o8")
+        try:
+            build(chg([{"id": "c1", "text": "new empty state", "items": [{"screen": "about", "viewport": "mobile", "state": "empty"}]}]), o8)
+            raise AssertionError("expected SystemExit")
+        except SystemExit as e:
+            assert e.code == 1 and not os.path.exists(o8)
+        sg = ["merge old into about"]
+        build(chg([{"id": "c1", "text": "about copy", "items": [{"screen": "about", "viewport": "desktop", "state": "default"}]},
+                   {"id": "c2", "text": "email text", "items": [], "not_captured": "needs real SMTP"}], config_suggestions=sg), o8)
+        rm = open(os.path.join(o8, "report.md")).read()
+        assert "## Changes in this PR" in rm and "Not captured: needs real SMTP" in rm and "## Config suggestions" in rm and sg[0] in rm
+        hp = open(os.path.join(o8, "index.html")).read()
+        assert 'id="fm"' in hp and '"default_view": "slider"' in hp and "ui-audit-view" in hp
+        assert "## Config suggestions" not in open(os.path.join(out, "report.md")).read()
+        # default view: valid value kept, invalid fails
+        build(spec([full("about", "intentional")], default_view="diff"), os.path.join(t, "o9"))
+        assert '"default_view": "diff"' in open(os.path.join(t, "o9", "index.html")).read()
+        try:
+            build(spec([full("about", "intentional")], default_view="grid"), os.path.join(t, "o10"))
+            raise AssertionError("expected SystemExit")
+        except SystemExit as e:
+            assert e.code == 1
         # head-only
         out2 = os.path.join(t, "out2")
         build(spec([dict(screen="home", platform="web", viewport="mobile", classification="needs_review", reason="r", head_img="h.png")], baseline_mode="head-only"), out2)
@@ -387,11 +500,12 @@ if __name__ == "__main__":
     ap.add_argument("--spec")
     ap.add_argument("--out")
     ap.add_argument("--password")
+    ap.add_argument("--repo", default=".")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
     if a.selftest:
         selftest()
     elif a.spec and a.out:
-        print(json.dumps(build(a.spec, a.out, a.password)))
+        print(json.dumps(build(a.spec, a.out, a.password, a.repo)))
     else:
         ap.error("need --spec and --out (or --selftest)")

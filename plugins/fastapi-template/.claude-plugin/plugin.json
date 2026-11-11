@@ -1,9 +1,11 @@
 {
   "name": "fastapi-template",
   "description": "Scaffolds a complete FastAPI + Jinja2 + HTMX + Alpine.js web application skeleton with PostgreSQL, Alembic, Redis, and OpenRouter AI",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": {
     "name": "Wovemind"
   },
+  "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/fastapi-template#readme",
+  "repository": "https://github.com/wovemind-sg/claude-marketplace",
   "license": "MIT"
 }

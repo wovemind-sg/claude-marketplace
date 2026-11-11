@@ -1,9 +1,11 @@
 {
   "name": "go-webapp-template",
   "description": "Scaffolds a complete Go (net/http + html/template) + HTMX + Alpine.js web application skeleton with PostgreSQL (pgx) and goose migrations, Redis caching, OpenRouter AI, and Railway Procfile. No Python anywhere. Also migrates existing fastapi-template projects to this stack in place (fastapi-go-migration skill).",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "author": {
     "name": "Wovemind"
   },
+  "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/go-webapp-template#readme",
+  "repository": "https://github.com/wovemind-sg/claude-marketplace",
   "license": "MIT"
 }

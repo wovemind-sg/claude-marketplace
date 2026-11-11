@@ -1,7 +1,9 @@
 {
   "name": "supabase-python",
   "description": "FastAPI with Supabase and SQLAlchemy/SQLModel.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": {"name": "Wovemind"},
+  "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/supabase-python#readme",
+  "repository": "https://github.com/wovemind-sg/claude-marketplace",
   "license": "MIT"
 }

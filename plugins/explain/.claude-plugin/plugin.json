@@ -1,9 +1,11 @@
 {
   "name": "explain",
   "description": "Explain code and concepts in the current project, building only on what the user already knows well plus what earlier explanations covered. Keeps a per-topic learning log in ~/.explain_skill/.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": {
     "name": "Wovemind"
   },
+  "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/explain#readme",
+  "repository": "https://github.com/wovemind-sg/claude-marketplace",
   "license": "MIT"
 }

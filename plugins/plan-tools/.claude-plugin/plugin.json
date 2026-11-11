@@ -1,10 +1,12 @@
 {
   "name": "plan-tools",
   "description": "Plan-driven workflow tools: bootstrap a new web or mobile app end to end, split implementation plans into context-sized resumable sessions, and drive them to PRs.",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "author": {
     "name": "Wovemind"
   },
+  "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/plan-tools#readme",
+  "repository": "https://github.com/wovemind-sg/claude-marketplace",
   "license": "MIT",
   "dependencies": ["ntfy", "fastapi-template", "htmx-vs-alpine"],
   "userConfig": {

@@ -1,7 +1,9 @@
 {
   "name": "desktop-notify",
   "description": "Send desktop notifications via the claude-notifier CLI when a task finishes or Claude needs user attention.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": {"name": "Wovemind"},
+  "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/desktop-notify#readme",
+  "repository": "https://github.com/wovemind-sg/claude-marketplace",
   "license": "MIT"
 }

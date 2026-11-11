@@ -1,7 +1,9 @@
 {
   "name": "singapore-lta",
   "description": "Query Singapore's Land Transport Authority (LTA) DataMall API for transportation and traffic data.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": {"name": "Wovemind"},
+  "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/singapore-lta#readme",
+  "repository": "https://github.com/wovemind-sg/claude-marketplace",
   "license": "MIT"
 }

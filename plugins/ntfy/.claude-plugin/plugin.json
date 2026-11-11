@@ -1,8 +1,10 @@
 {
   "name": "ntfy",
   "description": "Send push notifications to phone/desktop via ntfy.sh or a self-hosted ntfy instance over its HTTP API.",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "author": {"name": "Wovemind"},
+  "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/ntfy#readme",
+  "repository": "https://github.com/wovemind-sg/claude-marketplace",
   "license": "MIT",
   "userConfig": {
     "server": {

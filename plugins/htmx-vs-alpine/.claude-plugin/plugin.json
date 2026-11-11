@@ -1,7 +1,9 @@
 {
   "name": "htmx-vs-alpine",
   "description": "Guides Claude to choose between HTMX and Alpine.js for client-side interactivity in server-rendered web applications.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": {"name": "Wovemind"},
+  "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/htmx-vs-alpine#readme",
+  "repository": "https://github.com/wovemind-sg/claude-marketplace",
   "license": "MIT"
 }

@@ -1,9 +1,11 @@
 {
   "name": "evolution-api",
   "description": "Complete Evolution API endpoint reference for WhatsApp client code — instances, messages, webhooks, groups, chats, profiles, and error flows.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": {
     "name": "Wovemind"
   },
+  "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/evolution-api#readme",
+  "repository": "https://github.com/wovemind-sg/claude-marketplace",
   "license": "MIT"
 }

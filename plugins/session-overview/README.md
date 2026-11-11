@@ -36,8 +36,8 @@ Run `/sessions auto on` to open the pane (unfocused) on every new session, inclu
 - Sessions are grouped by run directory; worktrees (`<repo>/.claude/worktrees/<name>`) appear under their repo with the worktree name. Home is shown as `~`.
 - Goal: a title you set with `/rename <title>`, else the session's AI title, else the first line of its first prompt, else the registry name.
 - State: `running`, `waiting` (with what it waits for, e.g. permission prompt), `idle` (finished, awaiting next prompt), `ended` (leftover registry entry whose process is gone).
-- One toggle button per session type (`cli`, `bg`, `sdk-cli`, ...) hides or shows that type; the choice is remembered across sessions.
-- A count at the top shows how many sessions need you; projects with a waiting or running session are listed first. ◆ waiting, ● running, ○ idle, ✕ ended. A dim "today" after the title marks a session active today; click the ☆ before a title to star it (★, saved across restarts) and starred sessions lead their project; this session's title is bold and tagged "(this one)".
+- One toggle button per session type (`cli`, `bg`, `sdk-cli`, ...) hides or shows that type; the choice is remembered across restarts and shown in every open session within a few seconds.
+- A count at the top shows how many sessions need you; projects with a waiting or running session are listed first. ◆ waiting, ● running, ○ idle, ✕ ended. A dim "today" after the title marks a session active today; click the ☆ before a title to star it (★, saved across restarts and shown in every open session within a few seconds) and starred sessions lead their project; this session's title is bold and tagged "(this one)".
 - Click a session running in tmux to switch this tmux client to it (`tmux switch-client`); sessions outside tmux, and ended ones, are not clickable.
 - Toggles have hotkeys `1`-`9` (type order, shown on each button). They work while the pane has the keyboard: `/sessions` opens it focused, otherwise click it or press ctrl+x tab. Arrows scroll a tree taller than the pane; Esc returns to the prompt.
 

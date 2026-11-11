@@ -54,7 +54,10 @@ def analyze(manifest, repo, since, head="HEAD"):
         new_hashes[n] = dep_hash(repo, head, s.get("deps", []), miss)
         if miss:
             missing_deps[n] = miss
-    all_missing = sorted(n for n in missing_deps if len(missing_deps[n]) == len(screens[n]["deps"]))
+    # a screen is deleted when all its own (non-shared) deps are missing; surviving shared css/js must not hide it
+    def own(n):
+        return [d for d in screens[n]["deps"] if d not in shared] or screens[n]["deps"]
+    all_missing = sorted(n for n in missing_deps if all(d in missing_deps[n] for d in own(n)))
     return {"since": since, "head": head, "changed_files": changed, "affected_screens": affected,
             "shared_changed": shared_changed, "unmapped_changed_files": unmapped,
             "new_hashes": new_hashes, "missing_deps": missing_deps, "all_deps_missing": all_missing}
@@ -96,7 +99,12 @@ def selftest():
         run("rm", "-q", "gone.html"); run("commit", "-qm", "rm")
         r = analyze(m, d, base)
         assert r["missing_deps"] == {"gone": ["gone.html"], "part": ["gone.html"], "b": ["b.html"]}, r
-        assert r["all_deps_missing"] == ["gone"], r
+        assert r["all_deps_missing"] == ["b", "gone"], r  # b: own page renamed away, shared css remains
+        write("p.html", "p"); run("add", "."); run("commit", "-qm", "p")
+        m["screens"]["pg"] = {"deps": ["p.html", "style.css"]}
+        assert "pg" not in analyze(m, d, base)["all_deps_missing"]
+        run("rm", "-q", "p.html"); run("commit", "-qm", "rmp")
+        assert "pg" in analyze(m, d, base)["all_deps_missing"]
     print(json.dumps({"selftest": "ok"}))
 
 

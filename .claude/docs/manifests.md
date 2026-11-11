@@ -81,7 +81,7 @@ Each `plugins` array entry may include any `plugin.json` field, plus marketplace
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `name` | string | ✅ | Plugin identifier (kebab-case). Public-facing. |
-| `source` | string\|object | ✅ | Where to fetch plugin (see [Plugin Sources](#plugin-sources)). |
+| `source` | string\|object | ✅ | Where to fetch plugin (see [sources-distribution.md](sources-distribution.md)). |
 | `description` | string | — | Shown in marketplace UI. |
 | `version` | string | — | Pins plugin. `plugin.json` version always takes precedence if set. |
 | `author` | object | — | `name` required, `email` optional. |
@@ -92,8 +92,6 @@ Each `plugins` array entry may include any `plugin.json` field, plus marketplace
 | `skills`, `commands`, `agents`, `hooks`, `mcpServers`, `lspServers` | string\|array\|object | — | Custom paths or inline config for components. |
 
 **Avoid version conflicts**: never set `version` in both `plugin.json` and marketplace entry. `plugin.json` value always wins silently, can mask `marketplace.json` version.
-
----
 
 ---
 

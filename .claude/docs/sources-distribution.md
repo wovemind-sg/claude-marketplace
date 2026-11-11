@@ -77,8 +77,6 @@ Uses sparse checkout to minimise bandwidth.
 
 ---
 
----
-
 ## Distribution
 
 ### Hosting on GitHub (recommended)

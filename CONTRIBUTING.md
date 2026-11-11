@@ -55,7 +55,7 @@ Pull requests run the same validation and the scripts' `--selftest` checks
 
 ## Before you open the pull request
 
-Go through the [Review Checklist](CLAUDE.md#review-checklist); the pull
+Go through the [Review Checklist](.claude/docs/review-checklist.md); the pull
 request template repeats it. Never commit secrets, tokens or personal paths;
 read them from environment variables or plugin settings and document them in
 the README.

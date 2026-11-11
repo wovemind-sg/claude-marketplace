@@ -53,7 +53,10 @@ def run_validate(path):
     """(ok, detail); ok None when `claude` is missing."""
     if not shutil.which("claude"):
         return None, "claude CLI not on PATH"
-    r = subprocess.run(["claude", "plugin", "validate", "."], cwd=path, capture_output=True, text=True)
+    try:
+        r = subprocess.run(["claude", "plugin", "validate", "."], cwd=path, capture_output=True, text=True, timeout=300)
+    except subprocess.TimeoutExpired:
+        return False, "claude plugin validate timed out after 300s"
     return r.returncode == 0, (r.stdout + r.stderr).strip()[-500:]
 
 
@@ -72,7 +75,7 @@ def read_json(path):
 
 def origin(path):
     r = subprocess.run(["git", "remote", "get-url", "origin"], cwd=path, capture_output=True, text=True)
-    m = re.search(r"github\.com[:/]([^/\s]+)/([^/\s]+?)(\.git)?\s*$", r.stdout)
+    m = re.search(r"github\.com[:/]([^/\s]+)/([^/\s]+?)(\.git)?/?\s*$", r.stdout)
     if not m:
         sys.exit("preflight: no github.com `origin` remote in " + path)
     return m.group(1), m.group(2)
@@ -156,7 +159,9 @@ def listed_links(d, o, r):
     for c in d.get("listed_check", []):
         url = subst(c["url"], o, r)
         status, text = http_get(url)
-        if status == 200 and subst(c.get("contains", ""), o, r).lower() in text.lower():
+        needle = subst(c.get("contains", ""), o, r)
+        # whole-token match so acme/mp does not match acme/mp-extra or other-acme/mp
+        if status == 200 and re.search(r"(?<![\w.-])" + re.escape(needle) + r"(?![\w.-])", text, re.I):
             out.append(url)
     return out
 
@@ -273,6 +278,9 @@ def selftest():
         assert d["composio"]["status"] == "ready" and d["aitmpl"]["status"] == "ready" and d["aitmpl"]["problems"], d["aitmpl"]
         out = run(tmp, now=dt.date(2026, 11, 26))
         assert {x["id"]: x for x in out["directories"]}["awesome-claude-code"]["status"] == "ready"
+        http_get = lambda u: (200, "see https://github.com/acme/mp-extra") if "composio" in u else (404, "")
+        out = run(tmp)
+        assert {x["id"]: x for x in out["directories"]}["composio"]["status"] == "ready"
         http_get = lambda u: (200, "see https://github.com/acme/mp") if "composio" in u else (404, "")
         out = run(tmp)
         assert {x["id"]: x for x in out["directories"]}["composio"]["status"] == "listed"

@@ -5,7 +5,7 @@ Gets a Claude Code plugin marketplace listed in plugin directories and awesome l
 ## Install
 
 ```
-/plugin install marketplace-promote --marketplace wovemind-sg/claude-marketplace
+/plugin install marketplace-promote@wovemind
 ```
 
 ## Requirements

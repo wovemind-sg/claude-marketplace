@@ -33,13 +33,13 @@ If `--check` was given, go to step 6.
 
 ## 2. Pick what to submit
 
-Directories with status `ready`, by channel: `pr` (composio, aitmpl), `issue+pr` (tonsofskills), `web` (anthropic, claudemarketplaces, claudepluginhub), `human-link` (awesome-claude-code, only when eligible).
+Directories with status `ready`, by channel: `pr` (composio, ccplugins, aitmpl), `issue+pr` (tonsofskills), `web` (anthropic, claudemarketplaces, claudepluginhub), `human-link` (awesome-claude-code, only when eligible).
 
 ## 3. Draft PRs and issues
 
 Entry text comes from `.claude-plugin/marketplace.json` (marketplace description, each plugin's description), trimmed to the directory's limits. Fork each target repository with `gh repo fork --clone` into a scratch directory, never into the owner's repo.
 
-- composio: one link line in the best-fit category section of `README.md`. Read the file, choose the category by the plugins' descriptions, copy the style of the neighbouring lines.
+- composio, ccplugins: one link line in the best-fit category section of `README.md`. Read the file, choose the category by the plugins' descriptions, copy the style of the neighbouring lines.
 - aitmpl: one PR per plugin (`one_component_per_pr`). Create `cli-tool/components/plugins/<category>/<name>/source.json` with `repo`, `path`, `commit`, `license`, `author` (see `directories.json`). `commit` is the 40-character `git rev-parse HEAD` of the pushed default branch (check `git status` and `git log origin/HEAD..` first; if the work is not pushed, stop and say so). `license` must match the LICENSE at that commit. Never commit `docs/components.json` or `dashboard/public/`.
 - tonsofskills: first an issue from template `plugin-submission.yml`, then a PR adding one entry to `sources.yaml` that references the issue. State in both that the submission was prepared with AI assistance.
 

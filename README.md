@@ -62,6 +62,7 @@ Inside a session, run `/reload-plugins` afterwards so the session picks up the n
 - **launch-video**: turns an app repository into a launch video with a presenter, screen recordings, voice-over and captions.
 - **explain**: explains code and concepts in the current project, building on what you already know.
 - **session-overview**: a side pane (`/sessions`) listing every open Claude Code session on the machine, grouped by project.
+- **marketplace-promote**: gets your plugin marketplace listed in plugin directories and awesome lists, with pre-flight checks, PRs, prefilled web forms and a status report.
 
 ## Licence
 

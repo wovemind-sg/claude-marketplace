@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Pixel-diff two trees of screenshots (<screen>/<viewport>/<state>.png).
 
-Prints JSON: added, removed, changed (with changed_pct, bbox, overlay), unchanged.
+Prints JSON: added, removed, changed (with changed_pct, bbox, overlay), unchanged,
+hashes ({path: sha256 of shape + RGBA pixels} for every head PNG).
 --mask is a JSON file path or inline JSON: {"<screen>": [[x, y, w, h], ...]} of regions to ignore.
 """
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -29,6 +31,11 @@ def list_pngs(root):
 
 def load(p):
     return np.asarray(Image.open(p).convert("RGBA"), dtype=np.int16)
+
+
+def pixel_hash(p):
+    a = load(p)
+    return hashlib.sha256(str(a.shape).encode() + a.tobytes()).hexdigest()
 
 
 def compare(b_path, h_path, regions, threshold, overlay_path):
@@ -65,7 +72,8 @@ def compare(b_path, h_path, regions, threshold, overlay_path):
 def run(base, head, out, threshold=0.1, min_pct=0.01, masks=None):
     masks = masks or {}
     bs, hs = list_pngs(base), list_pngs(head)
-    rep = {"added": sorted(hs - bs), "removed": sorted(bs - hs), "changed": [], "unchanged": []}
+    rep = {"added": sorted(hs - bs), "removed": sorted(bs - hs), "changed": [], "unchanged": [],
+           "hashes": {rel: pixel_hash(os.path.join(head, rel)) for rel in sorted(hs)}}
     for rel in sorted(bs & hs):
         screen = rel.split(os.sep)[0]
         r = compare(os.path.join(base, rel), os.path.join(head, rel), masks.get(screen, []),
@@ -111,6 +119,9 @@ def selftest():
         assert sz["size_mismatch"] == [[100, 80], [100, 90]] and sz["bbox"] == [0, 80, 100, 10], sz
         assert 0 < sz["changed_pct"] < 100 and os.path.exists(sz["overlay"]), sz
         assert len(r["unchanged"]) == 3, r
+        hs = r["hashes"]
+        assert len(hs) == 6 and hs["same/desktop/default.png"] == hs["new/desktop/default.png"], hs
+        assert hs["chg/desktop/default.png"] != hs["same/desktop/default.png"], hs
         assert r["added"] == ["new/desktop/default.png"] and r["removed"] == ["gone/desktop/default.png"], r
     print(json.dumps({"selftest": "ok"}))
 

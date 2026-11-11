@@ -19,7 +19,7 @@ All or nothing: if any step here fails, do not publish; use the fallback (sectio
 - New target `cloudflare`, or old `cloudflare` and new `artifact`: after the build, download the media of kept items that is missing under `AUDIT_DIR`, i.e. every media path (`base_img`, `head_img`, `diff_img`, `clips`, `stills`) of the items in the merged `AUDIT_DIR/history.json`. Artifact source: `Artifact` action `read` with `paths` (at most 256 per call) and `out_dir: AUDIT_DIR`. Cloudflare source: `curl -fsS [-u "ui-audit:$OLD_PW"] $OLD_URL/<path> --create-dirs -o AUDIT_DIR/<path>`. Why: a Pages deploy is a full snapshot, and a new artifact starts empty. Replaced items are no longer referenced, so they are not downloaded.
 
 ## 4. Publish to artifact
-Build: `python3 -I "${CLAUDE_SKILL_DIR}/scripts/build_report.py" --spec audit.json --out AUDIT_DIR`.
+Build: `python3 -I "${CLAUDE_SKILL_DIR}/scripts/build_report.py" --spec audit.json --out AUDIT_DIR --repo REPO`. Exit 1 means the self-check failed (SKILL.md step 6): do not publish.
 
 First publish for a PR (also when switching from Cloudflare: pass all restored media). Call `Artifact` with:
 - `file_path`: `AUDIT_DIR/index.html`
@@ -46,7 +46,7 @@ Pre-check (non-interactive, never `wrangler login`). Publish only if all hold, o
 Password: `gh repo view --json isPrivate -q .isPrivate` (if it fails or prints anything but `false`, treat the repo as private; never fail open). Private repo: `PW=$(git -C REPO rev-parse HEAD | cut -c1-12)`, the first 12 characters of the audited HEAD sha (not `--short=12`, which can return more). It changes every audit. Public repo: no password, no `_worker.js` (the audit is as public as the repo).
 
 Steps, in this order:
-1. Build, with `--password "$PW"` on a private repo: `python3 -I "${CLAUDE_SKILL_DIR}/scripts/build_report.py" --spec audit.json --out AUDIT_DIR --password "$PW"`.
+1. Build, with `--password "$PW"` on a private repo: `python3 -I "${CLAUDE_SKILL_DIR}/scripts/build_report.py" --spec audit.json --out AUDIT_DIR --repo REPO --password "$PW"`.
 2. Download kept media (section 3).
 3. Delete each `stale_media` path under `AUDIT_DIR` (`rm -f`), so replaced screenshots are not re-uploaded.
 4. Deploy from the scratchpad dir (outside the repo, so wrangler does not pick up the repo's `functions/` or `wrangler.toml`): `SHA=$(git -C REPO rev-parse HEAD)`, then `cd` to the scratchpad and `npx --yes wrangler@4 pages deploy AUDIT_DIR --project-name PROJECT --branch pr-N --commit-hash $SHA`. If it says the project does not exist (first use): `npx --yes wrangler@4 pages project create PROJECT --production-branch <default branch> --force`, then deploy again. `--force` is needed: without it current wrangler hands `project create` to Workers, which fails on `_worker.js` and leaves a `wrangler.jsonc` and `.wrangler/` in the cwd that break the next `pages deploy`; delete those if they appear.

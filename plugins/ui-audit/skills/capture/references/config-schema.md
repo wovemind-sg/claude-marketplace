@@ -59,6 +59,7 @@ Field notes:
 - `dark_mode`: omit until dark mode has been offered; `false` records that the app has no dark theme or the user declined, so it is not asked again. `method` is how dark is switched on, see `web.md` "Dark mode": `media` (`prefers-color-scheme`, also what Tailwind's default `darkMode: 'media'` uses), `class` (add `class`, default `dark`, to `<html>`) or `attribute` (set `attribute`, default `data-theme`, to `value`, default `dark`); optional `storage` `{"key": "theme", "value": "dark"}` is written to localStorage first for apps that read the preference on load. Optional `screens[].dark: false` skips dark for a screen, `states[].themes: ["light"]` for a state.
 - `hosting.target`: `artifact` (default; absent also means artifact) or `cloudflare`. Preselected in the per-run publish question; `--publish` overrides it. See `hosting.md`.
 - `hosting.cloudflare_pages_project`: Cloudflare Pages project audits are deployed to (one per repo, a branch alias per PR). Lowercase letters, digits and hyphens, at most 58 characters. Needed only for `cloudflare`; asked and saved when missing. No secrets in the config: credentials come from `CLOUDFLARE_API_TOKEN` or `wrangler login`, and the password is the first 12 characters of the audited commit sha.
+- `report.default_view`: `slider` (default), `side` or `diff`: the comparison view the audit page opens with. The page has a picker that remembers the viewer's choice.
 - `diff`: defaults for `diff_images.py` `--threshold` (per-channel tolerance, fraction of 255) and `--min-changed-pct` (percent of pixels).
 - `native`: filled in by `references/native.md` (simulator/emulator names, app ids, build commands).
 
@@ -94,7 +95,7 @@ Field notes:
 Field notes:
 - `screens.<name>.deps`: repo-relative paths whose change can alter the screen (template/component, its styles, route handler or view model, i18n strings that the screen renders). Globs are not supported; list files. A file listed in more than one screen's deps and that is a global/layout/token file also belongs in `shared`.
 - `screens.<name>.hash` and `last_audited_sha`: the last audited state. Written from `dep_hash.py` output `new_hashes` plus the head sha, only after a successful audit of that screen at all its viewports.
-- `screens.<name>.recipes`: interaction steps per state, copied from config or discovered while exploring. Replay these; do not re-explore with snapshots on later runs.
+- `screens.<name>.recipes`: interaction steps per state, copied from config or discovered while exploring. A recipe may name a state that is not in config (added for a PR's visible changes, SKILL.md step 2b): the capture loop covers config states plus manifest recipe states. Replay these; do not re-explore with snapshots on later runs.
 - `screens.<name>.motion`: motion-bearing selectors found so far (transition, animation, gesture). A change to a file in that screen's deps triggers a clip for the listed trigger when the diff touches transition/animation properties.
 - `shared`: map of shared file to the screens it affects. `dep_hash.py` marks screens as affected and flags `needs_ripple_review`.
 - `ripple_notes`: why the model added or widened something, so the next run does not redo the reasoning. `widen` is `all-screens`, `listed` or `none`.

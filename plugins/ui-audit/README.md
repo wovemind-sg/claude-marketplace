@@ -31,6 +31,10 @@ Changing the target for a PR that already has an audit carries the earlier items
 
 Never pushes, and commits only your uncommitted work in step 0 when you say yes. `.ui-audit/` changes are left in the working tree for you or finalize-pr to commit. Images are never committed.
 
+## Upgrading to 4.0
+
+The first run after upgrading drops the cards of earlier audits, because they carry no reuse marks (screen, file hash and commit); later runs keep only cards whose screen is marked reused with an unchanged file hash. The build now checks that every card was captured at the audited commit, that every visible change of the PR has a card or a stated reason, and that text quoted in reasons exists in the current code. It lists config suggestions after the run (screens that redirect to another, screens whose files were deleted). Set `report.default_view` (`slider`, `side` or `diff`) in `.ui-audit/config.json` to choose the view the page opens in; the page also has a picker.
+
 ## Dark mode
 
 Web apps with a dark theme (detected from `prefers-color-scheme`, `.dark`/`[data-theme]` selectors or Tailwind `darkMode`) can opt in via a `dark_mode` object in `.ui-audit/config.json` (`false` = none or declined, not asked again). Each run then also captures every chosen state in dark (`<state>--dark`), diffs base vs head, and cross-checks light and dark: a screen that changed in one theme but not the other is flagged `needs_review` (hardcoded color or missing dark variant). Choose `light` only at the per-run question for quicker runs.

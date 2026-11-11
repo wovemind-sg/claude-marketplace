@@ -1,9 +1,11 @@
 {
   "name": "ui-audit",
   "description": "Captures before/after screenshots (and short clips for motion) of every screen a PR really changed, builds an audit page, publishes it as a Claude artifact or to Cloudflare Pages behind a password, and links it in the PR.",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "author": {
     "name": "Wovemind"
   },
+  "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/ui-audit#readme",
+  "repository": "https://github.com/wovemind-sg/claude-marketplace",
   "license": "MIT"
 }

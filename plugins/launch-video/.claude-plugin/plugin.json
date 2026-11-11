@@ -1,9 +1,11 @@
 {
   "name": "launch-video",
   "description": "Turn an app repo into a launch/promo video: AI presenter intro/outro, real screen recordings, voice-over, and captions.",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "author": {
     "name": "Wovemind"
   },
+  "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/launch-video#readme",
+  "repository": "https://github.com/wovemind-sg/claude-marketplace",
   "license": "MIT"
 }

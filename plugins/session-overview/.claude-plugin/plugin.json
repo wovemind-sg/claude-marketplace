@@ -1,8 +1,10 @@
 {
   "name": "session-overview",
   "description": "Side pane (/sessions) listing every open Claude Code session on the machine, grouped by project, with its goal and state.",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "author": {"name": "Wovemind"},
+  "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/session-overview#readme",
+  "repository": "https://github.com/wovemind-sg/claude-marketplace",
   "license": "MIT",
   "types": "./types/index.d.ts"
 }

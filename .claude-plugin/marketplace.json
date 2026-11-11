@@ -3,7 +3,8 @@
   "description": "Open-source Claude Code plugins: skills, agents and hooks for web, mobile and AI app development.",
   "version": "1.0.0",
   "owner": {
-    "name": "Wovemind"
+    "name": "Wovemind",
+    "url": "https://github.com/wovemind-sg"
   },
   "plugins": [
     {
@@ -14,7 +15,9 @@
         "name": "Wovemind"
       },
       "license": "MIT",
-      "category": "development",
+      "category": "singapore",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/singapore-lta#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
       "tags": [
         "transport",
         "singapore",
@@ -31,7 +34,9 @@
         "name": "Wovemind"
       },
       "license": "MIT",
-      "category": "development",
+      "category": "scaffolding",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/supabase-python#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
       "tags": [
         "supabase",
         "python",
@@ -47,7 +52,9 @@
         "name": "Wovemind"
       },
       "license": "MIT",
-      "category": "development",
+      "category": "scaffolding",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/htmx-vs-alpine#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
       "tags": [
         "htmx",
         "alpine",
@@ -64,7 +71,9 @@
         "name": "Wovemind"
       },
       "license": "MIT",
-      "category": "development",
+      "category": "scaffolding",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/fastapi-template#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
       "tags": [
         "fastapi",
         "python",
@@ -89,7 +98,9 @@
         "name": "Wovemind"
       },
       "license": "MIT",
-      "category": "development",
+      "category": "scaffolding",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/go-webapp-template#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
       "tags": [
         "go",
         "golang",
@@ -118,7 +129,9 @@
         "name": "Wovemind"
       },
       "license": "MIT",
-      "category": "development",
+      "category": "workflow",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/plan-tools#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
       "tags": [
         "planning",
         "context",
@@ -140,7 +153,9 @@
         "name": "Wovemind"
       },
       "license": "MIT",
-      "category": "development",
+      "category": "notifications",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/ntfy#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
       "tags": [
         "ntfy",
         "notifications",
@@ -157,7 +172,9 @@
         "name": "Wovemind"
       },
       "license": "MIT",
-      "category": "development",
+      "category": "libraries",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/evolution-api#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
       "tags": [
         "whatsapp",
         "evolution-api",
@@ -175,7 +192,9 @@
         "name": "Wovemind"
       },
       "license": "MIT",
-      "category": "development",
+      "category": "libraries",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/whatsapp-safety#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
       "tags": [
         "whatsapp",
         "evolution-api",
@@ -194,7 +213,9 @@
         "name": "Wovemind"
       },
       "license": "MIT",
-      "category": "productivity",
+      "category": "singapore",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/sg-card-benefits#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
       "tags": [
         "singapore",
         "credit-cards",
@@ -212,7 +233,9 @@
         "name": "Wovemind"
       },
       "license": "MIT",
-      "category": "development",
+      "category": "ui-quality",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/user-flows#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
       "tags": [
         "user-flows",
         "testing",
@@ -229,7 +252,9 @@
         "name": "Wovemind"
       },
       "license": "MIT",
-      "category": "development",
+      "category": "ui-quality",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/product-experience-strategist#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
       "tags": [
         "product-strategy",
         "ux",
@@ -249,7 +274,9 @@
         "name": "Wovemind"
       },
       "license": "MIT",
-      "category": "productivity",
+      "category": "notifications",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/desktop-notify#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
       "tags": [
         "notifications",
         "desktop",
@@ -265,7 +292,9 @@
         "name": "Wovemind"
       },
       "license": "MIT",
-      "category": "development",
+      "category": "libraries",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/python-arq#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
       "tags": [
         "arq",
         "python",
@@ -285,7 +314,9 @@
         "name": "Wovemind"
       },
       "license": "MIT",
-      "category": "productivity",
+      "category": "media",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/launch-video#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
       "tags": [
         "video",
         "launch-video",
@@ -307,7 +338,9 @@
         "name": "Wovemind"
       },
       "license": "MIT",
-      "category": "development",
+      "category": "libraries",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/flagd#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
       "tags": [
         "flagd",
         "openfeature",
@@ -327,7 +360,9 @@
         "name": "Wovemind"
       },
       "license": "MIT",
-      "category": "development",
+      "category": "libraries",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/openfeature#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
       "tags": [
         "openfeature",
         "feature-flags",
@@ -349,7 +384,9 @@
         "name": "Wovemind"
       },
       "license": "MIT",
-      "category": "productivity",
+      "category": "workflow",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/explain#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
       "tags": [
         "learning",
         "explain",
@@ -368,7 +405,9 @@
         "name": "Wovemind"
       },
       "license": "MIT",
-      "category": "development",
+      "category": "ui-quality",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/ui-change-guard#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
       "tags": [
         "ui",
         "ux",
@@ -396,7 +435,9 @@
         "name": "Wovemind"
       },
       "license": "MIT",
-      "category": "development",
+      "category": "compliance",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/compliance-audit#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
       "tags": [
         "compliance",
         "legal",
@@ -421,7 +462,9 @@
         "name": "Wovemind"
       },
       "license": "MIT",
-      "category": "development",
+      "category": "ui-quality",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/ui-audit#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
       "tags": [
         "ui",
         "screenshots",
@@ -441,7 +484,9 @@
         "name": "Wovemind"
       },
       "license": "MIT",
-      "category": "productivity",
+      "category": "workflow",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/session-overview#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
       "tags": [
         "sessions",
         "mod",

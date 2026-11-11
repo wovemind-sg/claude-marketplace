@@ -1,9 +1,11 @@
 {
   "name": "whatsapp-safety",
   "description": "Guides agents to interact with WhatsApp via Evolution API without getting the number flagged, banned, or rate-limited.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": {
     "name": "Wovemind"
   },
+  "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/whatsapp-safety#readme",
+  "repository": "https://github.com/wovemind-sg/claude-marketplace",
   "license": "MIT"
 }

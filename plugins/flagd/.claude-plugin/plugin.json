@@ -1,10 +1,11 @@
 {
   "name": "flagd",
   "description": "Complete reference for flagd, the OpenFeature feature-flag evaluation engine — flag definitions & JSON Logic targeting, fractional rollouts, deployment (Docker/k8s/systemd), sync sources, gRPC/OFREP APIs, and per-language OpenFeature providers.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": {
     "name": "Wovemind"
   },
   "homepage": "https://flagd.dev/",
+  "repository": "https://github.com/wovemind-sg/claude-marketplace",
   "license": "MIT"
 }

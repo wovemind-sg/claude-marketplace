@@ -1,7 +1,9 @@
 {
   "name": "product-experience-strategist",
   "description": "Expert product strategy, UX/UI and business development skill for designing, reviewing and improving digital products and end-to-end user flows.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": {"name": "Wovemind"},
+  "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/product-experience-strategist#readme",
+  "repository": "https://github.com/wovemind-sg/claude-marketplace",
   "license": "MIT"
 }

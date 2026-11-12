@@ -108,7 +108,7 @@ The builder runs in the background. Wait for its completion notification, after 
    - `{{PAGE_FRAGMENT}}`: the contents of that page's fragment file.
    - Add each font family the builder reports to the shell's Google Fonts `<link>` as another `family=` parameter. Fragments load no fonts of their own, so a family missing there silently falls back.
    - Escape `&`, `<`, `>` and quotes in inserted text, but not in the fragments. `{{SHORTLIST_URL}}` must be a `https://claude.ai/` link. Leave no `{{...}}` placeholder.
-2. Serve the work directory with a UTF-8 charset: run `python3 <skill dir>/scripts/serve.py <WORK> <PORT>` as a background Bash command (`run_in_background: true`), with a free port of your choice.
+2. Serve the work directory with a UTF-8 charset: run `python3 <skill dir>/scripts/serve.py <WORK> <PORT>` as a background Bash command (`run_in_background: true`), with a free port of your choice. If it reports the port is in use, start it again on another port.
    The page file carries no charset of its own, because the Artifact publish wraps it in a document head that declares UTF-8. A plain `python3 -m http.server` sends no charset, so the browser shows "â€”" for "—" and "Â©" for "©". That is the local server, not a builder bug.
 3. Write this script to `<WORK>/check.js` with the Write tool, with `/absolute/path/to/WORK` in `OUT` replaced by the real absolute work directory (a relative screenshot path does not work). For every tab and every width switch setting it takes a full-page screenshot and returns one row of measurements:
    ```js

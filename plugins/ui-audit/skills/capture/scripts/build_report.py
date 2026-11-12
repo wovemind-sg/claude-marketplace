@@ -138,10 +138,12 @@ def merge_history(prev, new_items, meta):
     key is not re-captured. Every item gets history (one entry per run) and changed_in (the run its pixels last
     changed). Returns (items, runs, stale_media) where stale_media are the media paths of dropped old items."""
     n = len(prev.get("runs", [])) + 1
-    old = {_key(i): i for i in prev.get("items", [])}
+    old = {(m, *_key(i)[1:]): i for i in prev.get("items", []) for m in i.get("merged_screens", [])}  # deduped-away screens look up their survivor
+    old.update({_key(i): i for i in prev.get("items", [])})
+    pix = lambda x: x.get("head_hash") or x.get("img_hash")  # img_hash: head image content, for items without head_hash
     for i in new_items:
         o = old.get(_key(i)) or {}
-        changed = not o or not i.get("head_hash") or o.get("head_hash") != i.get("head_hash")
+        changed = not o or not pix(i) or pix(o) != pix(i)
         i["history"] = o.get("history", []) + [{"run": n, "head_sha": meta.get("head_sha"), "changed": changed}]
         i["changed_in"] = n if changed else o.get("changed_in", n - 1)
     redone = {i["screen"] for i in new_items}
@@ -229,7 +231,7 @@ def self_check(items, meta, changes=(), prev_runs=()):
     """List of problems; build refuses to write anything when non-empty."""
     p = []
     if meta.get("reused_screens") and prev_runs and prev_runs[-1].get("base_sha") != meta.get("base_sha"):
-        p.append(f"base moved from {str(prev_runs[-1].get('base_sha'))[:8]} to {str(meta.get('base_sha'))[:8]}: re-capture every screen (no reuse)")
+        p.append(f"base moved from {str(prev_runs[-1].get('base_sha') or 'unknown')[:8]} to {str(meta.get('base_sha'))[:8]}: re-capture every screen (no reuse)")
     p += [f"{i['screen']}/{i['viewport']}/{i['state']} captured at {str(i['captured_sha'])[:8]}, not head {str(meta.get('head_sha'))[:8]}"
          for i in items if not i.get("reused") and i["captured_sha"] != meta.get("head_sha")]
     return p + [f"change {c['id']} ({c['text']}) has no card and no not_captured reason"
@@ -298,12 +300,12 @@ function render(){
  $('#items').innerHTML=list.length?'':'<p class="empty">No items match.</p>';
  list.forEach(i=>{const d=document.createElement('section');d.className='item';let mode=$('#fm').value;
   const pct=i.changed_pct!=null?` · ${(+i.changed_pct).toFixed(2)}% changed`:'';
-  d.innerHTML=`<h2>${E(i.screen)} <span class="tag ${i.classification}">${i.classification.replace('_',' ')}</span>${i.changed_in===D.runs.length?'<span class="tag">Changed in this audit</span>':''}</h2><div class="meta">${E(i.platform)} · ${E(i.viewport)} · ${E(i.state)}${pct}</div><div class="meta">Captured at ${E((i.captured_sha||'').slice(0,8))}${i.reused?' · reused, files unchanged':''}</div>${(i.also_at||[]).length?`<div class="meta">Also at: ${i.also_at.map(E).join(', ')}</div>`:''}<div class="meta">Audit history: ${(i.history||[]).map((h,k)=>`#${h.run} ${E((h.head_sha||'').slice(0,8))} ${k?(h.changed?'changed':'unchanged'):'new'}`).join(' · ')}</div><p class="reason">${E(i.reason)}</p><button class="rv"></button>`+
+  d.innerHTML=`<h2>${E(i.screen)} <span class="tag ${E(i.classification)}">${E(i.classification.replace('_',' '))}</span>${i.changed_in===D.runs.length?'<span class="tag">Changed in this audit</span>':''}</h2><div class="meta">${E(i.platform)} · ${E(i.viewport)} · ${E(i.state)}${pct}</div><div class="meta">Captured at ${E((i.captured_sha||'').slice(0,8))}${i.reused?' · reused, files unchanged':''}</div>${(i.also_at||[]).length?`<div class="meta">Also at: ${i.also_at.map(E).join(', ')}</div>`:''}<div class="meta">Audit history: ${(i.history||[]).map((h,k)=>`#${E(h.run)} ${E((h.head_sha||'').slice(0,8))} ${k?(h.changed?'changed':'unchanged'):'new'}`).join(' · ')}</div><p class="reason">${E(i.reason)}</p><button class="rv"></button> <span class="meta rvn"></span>`+
   `<div class="modes">${headOnly||!i.base_img?'':[['slider','Slider'],['side','Side by side'],['diff','Diff overlay']].map(([k,l])=>`<button data-m="${k}" aria-pressed="${k===mode}">${l}</button>`).join('')}<div class="zoom"><button data-z="-1" aria-label="Decrease image height">−</button><button data-z="0">Fit to screen</button><button data-z="1" aria-label="Increase image height">+</button></div></div><div class="view"></div>`+motion(i);
-  const rk=`ui-audit-reviewed:${m.project}:${m.pr}:${i.screen}|${i.platform}|${i.viewport}|${i.state}`,rb=d.querySelector('.rv'),cv=String(i.changed_in);
+  const rk=`ui-audit-reviewed:${m.project||''}:${m.pr}:${i.screen}|${i.platform}|${i.viewport}|${i.state}`,rb=d.querySelector('.rv'),cv=String(i.changed_in);
   const isRv=()=>{try{return localStorage.getItem(rk)===cv}catch(e){return false}};
   const showRv=()=>{const r=isRv();d.classList.toggle('reviewed',r);rb.textContent=r?'Reviewed \u2014 unmark':'Mark reviewed'};
-  rb.onclick=()=>{try{isRv()?localStorage.removeItem(rk):localStorage.setItem(rk,cv)}catch(e){}showRv()};showRv();
+  rb.onclick=()=>{try{isRv()?localStorage.removeItem(rk):localStorage.setItem(rk,cv);d.querySelector('.rvn').textContent=''}catch(e){d.querySelector('.rvn').textContent="Can't save: browser storage blocked"}showRv()};showRv();
   const v=d.querySelector('.view');const draw=()=>{v.innerHTML=body(i,mode);const r=v.querySelector('input');if(r)r.oninput=()=>v.querySelector('.top').style.clipPath=`inset(0 0 0 ${r.value}%)`};
   d.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{mode=b.dataset.m;d.querySelectorAll('[data-m]').forEach(x=>x.setAttribute('aria-pressed',x===b));draw()});
   // Fit: card header + image + slider/caption row (~40px) + card padding fits the window height.
@@ -356,6 +358,10 @@ def build(spec_path, out, password=None, repo="."):
     key = lambda i: (ORDER[i["classification"]], i["screen"], i["viewport"])
     all_new = sorted(spec["items"], key=key)
     quote_check(all_new, meta, repo)
+    for i in all_new:
+        src = i["head_img"] if os.path.isabs(i["head_img"]) else os.path.join(spec_dir, i["head_img"])
+        if not i.get("head_hash") and os.path.isfile(src):
+            i["img_hash"] = hashlib.sha256(open(src, "rb").read()).hexdigest()
     merged, runs, stale = merge_history(prev, all_new, meta)
     changes = spec.get("changes") or []
     problems = self_check(merged, meta, changes, prev.get("runs", []))  # before dedupe, so a change pointing at a merged-away card still counts as covered
@@ -592,6 +598,25 @@ def selftest():
         build(spec([{**full("about", "intentional"), "head_hash": "A"}], reused_screens=["home"]), o40)
         d40 = {x["screen"]: x for x in json.load(open(os.path.join(o40, "history.json")))["items"]}
         assert d40["home"]["reused"] and d40["about"]["changed_in"] == 1, d40
+        # no head_hash: unchanged head image keeps changed_in; a changed image bumps it
+        onh = os.path.join(t, "onh")
+        build(spec([full("about", "intentional")]), onh)
+        build(spec([full("about", "intentional")]), onh)
+        it = json.load(open(os.path.join(onh, "history.json")))["items"][0]
+        assert [x["changed"] for x in it["history"]] == [True, False] and it["changed_in"] == 1, it
+        Image.new("RGB", (40, 30), "black").save(os.path.join(t, "h.png"))
+        build(spec([full("about", "intentional")]), onh)
+        assert json.load(open(os.path.join(onh, "history.json")))["items"][0]["changed_in"] == 3
+        Image.new("RGB", (40, 30), "white").save(os.path.join(t, "h.png"))
+        # a card deduped into another keeps its history: next run is unchanged, not new
+        om = os.path.join(t, "om")
+        hm2 = {**full("home", "intentional"), "route": "/home", "head_hash": "H"}
+        build(spec([a, hm2]), om)
+        build(spec([a, hm2]), om)
+        it = json.load(open(os.path.join(om, "history.json")))["items"][0]
+        assert it["merged_screens"] == ["home"] and it["changed_in"] == 1, it
+        # missing previous base_sha prints "unknown", not "None"
+        assert "unknown" in self_check([], {"reused_screens": ["x"], "base_sha": "b"}, (), [{}])[0]
         hx = open(os.path.join(orr, "index.html")).read()
         assert "ui-audit-reviewed" in hx and "Audit history" in hx
         # head-only

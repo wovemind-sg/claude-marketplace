@@ -37,7 +37,7 @@ The first run after upgrading drops the cards of earlier audits, because they ca
 
 ## Upgrading to 4.1
 
-Audits now always compare against the PR base branch; the last audited commit only selects which screens to re-capture. The first 4.1.0 run on an existing PR is a full sweep, because earlier history has no base sha and its cards are dropped. Each card lists the audits it appeared in, and "Mark reviewed" is stored per browser (`localStorage`) and clears when the card changes in a later audit.
+Audits now always compare against the PR base branch; the last audited commit only selects which screens to re-capture. 4.0 history has no base sha, so its cards count as built against the previous run's base: they are reused when that equals the merge-base, otherwise (4.0's last run was incremental) the build refuses reuse and the skill does a full sweep. Each card lists the audits it appeared in, and "Mark reviewed" is stored per browser (`localStorage`) and clears when the card changes in a later audit.
 
 ## Dark mode
 

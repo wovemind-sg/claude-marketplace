@@ -25,7 +25,7 @@ The optional argument names the screens or the focus. Without it, the skill asks
 What happens:
 1. It reads the repo (README, routes and pages, styles and design tokens, platform) and never asks what the app is.
 2. It asks one round of up to four questions: scope, emphasis and priorities, mood and style, constraints and references. A question the repo already answers is skipped.
-3. It searches the sources in `skills/find/references/sources.md` that suit each app page (in-app screen or landing page) and screenshots each candidate. This runs in a few parallel Haiku subagents, each covering a small group of sources, to keep cost and runtime down, and the main session checks every result.
+3. It searches the sources in `skills/find/references/sources.md` that suit each app page (in-app screen or landing page) and screenshots each candidate. This runs in a few parallel Haiku subagents, each covering a small group of sources, to keep cost and runtime down, and the main session checks every result. It runs in two passes: an open pass over the sites that load in a normal browser, which never tries to get past a bot check, and then, only for app pages they suit, a gated pass over the sites that block it (Behance, Land-book, Lapa Ninja) with the patchright fallback. If Claude Code refuses the gated pass, those sites are skipped and the run carries on with the open pass.
 4. It picks 6 to 8 distinct designs per app page. Each card has a "why it fits" and a "what to take" note, a designer credit and a link to the original.
 5. It publishes the shortlist as an Artifact. When you asked for several app pages, each one gets its own section.
 
@@ -90,7 +90,7 @@ Output: the plan, printed in chat. Nothing is written to the repo, and nothing i
 ## Requirements
 
 - `playwright-cli` (the Playwright CLI) for opening and screenshotting pages.
-- `uv`, for the patchright fallback on sites that block automated browsers (Behance, Land-book, Lapa Ninja). Patchright runs on demand through `uv run --with patchright`, and nothing is installed for good. Claude Code's auto mode may refuse it as bot-check circumvention. Allow `uv run --with patchright` in your permission settings if you want those sites, otherwise they are skipped.
+- `uv`, for the patchright fallback on sites that block automated browsers (Behance, Land-book, Lapa Ninja). Patchright runs on demand through `uv run --with patchright`, and nothing is installed for good. Only the gated pass uses it. Claude Code's permission check may refuse it as bot-check circumvention. Allow `uv run --with patchright` in your permission settings if you want those sites, otherwise they are skipped and the final reply names them.
 - The claude.ai Artifact tool, to publish the shortlist. Without it, the skill leaves the page as a local HTML file, and ratings do not work there.
 - `plan-tools`, installed automatically.
 

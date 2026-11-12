@@ -43,7 +43,7 @@ A blocked page is not a candidate. Never screenshot a challenge page into the sh
 
 **Patchright fallback.** Patchright is a Playwright build that is harder for bot checks to spot. It runs on demand through `uv`, so nothing is installed for good. Save this snippet as `patchright_shot.py` in the scratch directory:
 
-(Not yet verified: running it was refused by Claude Code's permission check on 2026-11-12. The snippet follows patchright's documented API.)
+Verified on 2026-11-12 against Land-book's Cloudflare page: playwright-cli got the "Verify you are human" challenge, while this snippet loaded the real gallery (title "Landbook - website design inspiration gallery") and screenshotted it.
 
 ```python
 import sys, tempfile

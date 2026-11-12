@@ -33,7 +33,24 @@ Rate the cards on the page. Ratings and notes are saved on the page and kept acr
 
 ## Planning from the shortlist
 
-(Filled in with the plan skill.)
+```
+/design-inspiration:plan https://claude.ai/code/artifact/<id>
+/design-inspiration:plan https://claude.ai/code/artifact/<id> --model sonnet
+/design-inspiration:plan
+```
+
+| Argument | Default | Meaning |
+|---|---|---|
+| artifact URL | the newest "<app> Design Shortlist" artifact for this repo (asks when several match) | the shortlist you rated |
+| `--model <name>` | asked, with Opus first | model of the planning subagent |
+
+What happens:
+1. It reads the brief, every app-page section, and your ratings and notes from the page.
+2. If no design is rated Love, it stops and asks you to rate first. An app page with no Love card is left out of the plan, and the reply names it.
+3. It fetches the screenshots of the Love cards and of the Maybe cards you wrote a note on.
+4. It spawns one planning subagent with the model you chose. The subagent studies the designs (palette, type, spacing, layout, components), reads your app's UI code, and writes one implementation plan for all the rated pages, following `/plan-tools:plan-helper`. It recreates the style in your own code and never reuses the source's images, illustrations or logos. Any design question it cannot settle comes back to you.
+
+Output: the plan, printed in chat. Nothing is written to the repo, and nothing is implemented. To build it, hand the plan to `/plan-tools:plan-implement-complete` or implement it yourself.
 
 ## Requirements
 

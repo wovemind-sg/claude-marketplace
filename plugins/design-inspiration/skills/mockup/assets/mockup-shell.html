@@ -11,8 +11,8 @@
     The tab label and the section's h2 are the same app page name. Comments are tied to a page by the section id page-<slug>
     in their anchor first, and by the nearest heading (this h2, or a heading inside the fragment) second.
   - data-mode = "restyle" (the real page, restyled) or "redesign" (free redesign). Every section keeps <div class="diffs">, one <li>
-    per thing the mockup cannot show faithfully ("None" when there is none). A redesign section also keeps <ul class="changes">,
-    one <li> per deliberate structural change; a restyle section drops it.
+    per thing the mockup cannot show faithfully ("None" when there is none). A redesign section also keeps <div class="changes">
+    (heading "Structural changes", then a <ul> with one <li> per deliberate structural change); a restyle section drops the whole block.
   - PAGE_FRAGMENT = the builder's fragment for that page: one <style> whose rules all sit inside one nested block
     .mock[data-page="<slug>"] .viewport { ... }, so pages cannot restyle each other, with breakpoints written as
     @container viewport (min-width: ...) queries (the .viewport is the container), then the page markup. The fragment sets its own
@@ -60,9 +60,9 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .mock[hidden]{display:none}
 .mock-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
 .mode{font:500 11px var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:99px;padding:2px 8px}
-.changes,.diffs ul{margin:0;padding-left:20px;max-width:80ch;font-size:14px;color:var(--muted)}
+.changes ul,.diffs ul{margin:0;padding-left:20px;max-width:80ch;font-size:14px;color:var(--muted)}
 .changes li+li,.diffs li+li{margin-top:2px}
-.diffs h3{font:600 14px/1.3 var(--font-body);margin:0 0 4px}
+.changes h3,.diffs h3{font:600 14px/1.3 var(--font-body);margin:0 0 4px}
 .stage{display:flex;justify-content:center;min-width:0}
 .viewport{container-type:inline-size;container-name:viewport;width:100%;max-width:100%;min-width:0;overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
 main[data-w="tablet"] .viewport{max-width:820px}
@@ -102,9 +102,12 @@ main[data-w="phone"] .viewport{max-width:390px}
       <h2>{{PAGE_NAME}}</h2>
       <span class="mode">{{PAGE_MODE_LABEL}}</span>
     </div>
-    <ul class="changes">
-      <li>{{STRUCTURAL_CHANGE}}</li>
-    </ul>
+    <div class="changes">
+      <h3>Structural changes</h3>
+      <ul>
+        <li>{{STRUCTURAL_CHANGE}}</li>
+      </ul>
+    </div>
     <div class="diffs">
       <h3>Differences from the real page</h3>
       <ul>

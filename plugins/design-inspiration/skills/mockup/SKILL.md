@@ -13,7 +13,7 @@ Run from the root of the app's repo, because the builder reads that repo's templ
 The page layout and its data names must match `assets/mockup-shell.html` exactly, because `plan` and the revise run read them back:
 - `<title>` is `<app> Design Mockup` (the shortlist's is `<app> Design Shortlist`; that is how the two are told apart);
 - `<header id="meta">` carries `data-shortlist="<shortlist url>"` and the brief;
-- one `section.mock[data-page="<page slug>"]` per app page, with the id `page-<page slug>`, `data-mode="restyle"` or `"redesign"`, the app page name in its `h2`, a `.diffs` list ("Differences from the real page", what the mockup cannot show faithfully), and for `redesign` also a `.changes` list (the deliberate structural changes);
+- one `section.mock[data-page="<page slug>"]` per app page, with the id `page-<page slug>`, `data-mode="restyle"` or `"redesign"`, the app page name in its `h2`, a `.diffs` list ("Differences from the real page", what the mockup cannot show faithfully), and for `redesign` also a `.changes` block headed "Structural changes" (the deliberate structural changes);
 - the page's mockup sits in that section's `.viewport`, a CSS size container named `viewport`, and every breakpoint is an `@container viewport (min-width: ...)` query on it.
 
 Do the mechanical work (reading pages, fetching screenshots, reading comments, checking, publishing) in this session. Only building and revising the mockup goes to a subagent, because that is the part that takes design judgment and the model the user picked.
@@ -94,7 +94,7 @@ When the builder returns a question instead of fragments, ask the user with `Ask
    - `{{APP_NAME}}` (in the `<title>` and the `h1`): the app name from the brief. `{{SHORTLIST_URL}}`: the shortlist URL. `{{APP_SUMMARY}}`: the brief's `.summary` text.
    - `{{BRIEF_LABEL}}` / `{{BRIEF_VALUE}}`: repeat the `dt`/`dd` pair once per question and answer of the brief, copied unchanged.
    - Repeat the tab `<button>` and the `section.mock` once per included app page, in the shortlist's order. In each, `{{PAGE_SLUG}}` is the page slug (in the tab's `id`, `aria-controls` and `data-page`, and the section's `id`, `aria-labelledby` and `data-page`), `{{PAGE_NAME}}` the page name (tab label and `h2`), `{{PAGE_MODE}}` `restyle` or `redesign`, and `{{PAGE_MODE_LABEL}}` "The real page, restyled" or "Free redesign".
-   - Every section: one `{{DIFFERENCE}}` item per difference in the builder's report (a single item "None" when it lists none). Redesign section: one `{{STRUCTURAL_CHANGE}}` item per structural change in the builder's report. Restyle section: delete the `.changes` list.
+   - Every section: one `{{DIFFERENCE}}` item per difference in the builder's report (a single item "None" when it lists none). Redesign section: one `{{STRUCTURAL_CHANGE}}` item per structural change in the builder's report. Restyle section: delete the whole `.changes` block.
    - `{{PAGE_FRAGMENT}}`: the contents of that page's fragment file.
    - Add each font family the builder reports to the shell's Google Fonts `<link>` as another `family=` parameter. Fragments load no fonts of their own, so a family missing there silently falls back.
    - Escape `&`, `<`, `>` and quotes in inserted text, but not in the fragments. Leave no `{{...}}` placeholder.
@@ -165,7 +165,7 @@ Then name every app page left out for having no Love card. Artifacts are private
 
    Match them against the `section.mock` sections in the page source from step 1:
    - `[anchored at]` starts with `#page-<slug>` of an existing section: that section, provided the `[location]` heading is that section's app page name or a heading inside that section.
-   - No `#page-` id: the `[location]` heading must be the app page name of exactly one section, or a heading that occurs in only one section. A heading every section has, such as "Differences from the real page", settles nothing.
+   - No `#page-` id: the `[location]` heading must be the app page name of exactly one section, or a heading that occurs in only one section. A heading every section has, such as "Differences from the real page" (or "Structural changes", which every redesign section has), settles nothing.
    - The id and the heading disagree, neither is present, the heading matches no section, or it matches several: ask the user with `AskUserQuestion` which app page the comment is about (options: the app page names), quoting the comment and its `[location]`. Never guess, even when the comment text names a page: the text may be talking about another page.
 3. A comment whose request is unclear (you cannot tell what change it wants), or that asks a question the mockup change does not answer, is not resolved. If the thread is activated for Claude, reply in it with one question or the answer and leave it open, so the commenter sees it there; otherwise put it to the user in your final reply. Do not guess the change.
 4. Ask the model as in step 3, unless `--model` was given or the user already chose one earlier in this session. Skip the per-page question: the modes are already set in each section's `data-mode`.

@@ -2,7 +2,7 @@
 
 Finds visual design references for the app in your repo and helps you choose between them.
 
-`/design-inspiration:find` works out what your app is from the code and asks you a few design questions. It then searches Dribbble, Awwwards, Behance and other free inspiration sites, and publishes a shortlist of 6 to 8 screenshots per app page as a private claude.ai Artifact. On that page you rate each design Love / Maybe / No and add notes. `/design-inspiration:plan` then reads your choices from the page and plans how to apply them.
+`/design-inspiration:find` works out what your app is from the code and asks you a few design questions. It then searches Dribbble, Awwwards, Behance and other free inspiration sites, and publishes a shortlist of 6 to 8 screenshots per app page as a private claude.ai Artifact. On that page you rate each design Love / Maybe / No and add notes. `/design-inspiration:mockup` can then build a responsive mockup of your pages in the chosen look, which you comment on and have revised. `/design-inspiration:plan` reads your choices and plans how to apply them.
 
 ## Install
 
@@ -30,6 +30,31 @@ What happens:
 5. It publishes the shortlist as an Artifact. When you asked for several app pages, each one gets its own section.
 
 Rate the cards on the page. Ratings and notes are saved on the page and kept across reloads. Only you and editors can change them.
+
+## Mockup before planning
+
+This step is optional. It shows you what you will get before anything is planned.
+
+```
+/design-inspiration:mockup https://claude.ai/code/artifact/<shortlist id>
+/design-inspiration:mockup https://claude.ai/code/artifact/<mockup id>
+/design-inspiration:mockup --model sonnet
+```
+
+| Argument | Default | Meaning |
+|---|---|---|
+| artifact URL | the newest "<app> Design Mockup" or "<app> Design Shortlist" artifact for this repo (asks when several match) | a shortlist to build from, or a mockup to revise |
+| `--model <name>` | asked, with Opus first | model of the subagent that builds the mockup |
+
+What happens on a shortlist:
+1. It reads your ratings and notes the same way `plan` does. App pages with no Love card are left out and named.
+2. It asks once: the model, and per app page "The real page, restyled" (keeps the page's sections, fields and controls) or "Free redesign" (may rearrange the page and lists every structural change).
+3. A subagent builds each app page in the look of your Love designs, with made-up sample data. It recreates the style in its own HTML and CSS and never reuses the source's images, logos or copy.
+4. The skill checks every page at desktop, tablet and phone width, then publishes one Artifact titled "<app> Design Mockup": a tab per app page and a Desktop / Tablet / Phone switch.
+
+The comment loop: comment on the mockup in claude.ai, on any tab, and send each thread to Claude (reply with "Send to Claude" or mention @claude). Then run `/design-inspiration:mockup <mockup url>`. It ties each comment to its app page (and asks you when it cannot tell), changes only what you asked, republishes at the same link, and replies to and resolves each thread. Threads you did not send to Claude are still acted on, but stay open and are listed for you.
+
+When you are happy, run `/design-inspiration:plan <mockup url>`.
 
 ## Planning from the shortlist
 

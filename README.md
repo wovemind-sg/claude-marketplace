@@ -36,7 +36,7 @@ Our zen:
 | Plugin | What it does | Install |
 |---|---|---|
 | [ui-audit](plugins/ui-audit) | before and after screenshots and clips of every screen a pull request changed, linked from the pull request. | `claude plugin install ui-audit@wovemind` |
-| [design-inspiration](plugins/design-inspiration) | finds design references for your app on Dribbble-like sites, lets you rate a shortlist per page, optionally mocks up your pages in that look, then plans how to apply the ones you picked. | `claude plugin install design-inspiration@wovemind` |
+| [design-inspiration](plugins/design-inspiration) | finds design references for your app on Dribbble-like sites, optionally learns your taste from pairs of designs you compare, lets you rate a shortlist per page, optionally mocks up your pages in that look, then plans how to apply the ones you picked. | `claude plugin install design-inspiration@wovemind` |
 | [ui-change-guard](plugins/ui-change-guard) | reviews UX/UI changes before you push, for lost functionality, broken wiring and regressions. | `claude plugin install ui-change-guard@wovemind` |
 | [user-flows](plugins/user-flows) | extracts the user flows of an application into `user-flows.md` and keeps Playwright tests for them in sync. | `claude plugin install user-flows@wovemind` |
 | [product-experience-strategist](plugins/product-experience-strategist) | product strategy, UX/UI and business judgment for designing and reviewing digital products and their flows. | `claude plugin install product-experience-strategist@wovemind` |

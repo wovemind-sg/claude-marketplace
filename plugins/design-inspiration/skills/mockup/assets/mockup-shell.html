@@ -55,6 +55,7 @@ h2{font:600 20px/1.25 var(--font-body);margin:0;text-wrap:balance}
 .bar button[aria-selected="true"],.bar button[aria-pressed="true"]{background:var(--accent-bg);color:var(--accent);border-color:var(--accent)}
 .widths{border:1px solid var(--line);border-radius:8px;padding:2px}
 .widths button{font-size:13px;padding:4px 10px}
+@media (max-width:1024px),(pointer:coarse){.bar button{min-height:44px;min-width:44px}#meta summary{padding-block:12px}} /* 44px touch floor at tablet and phone widths */
 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .mock{display:grid;gap:14px}
 .mock[hidden]{display:none}

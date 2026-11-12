@@ -31,7 +31,11 @@ Parse `$ARGUMENTS`:
 
 ## 1. Which run
 
-`Artifact` `action: "read"` with the URL. The `<title>` decides:
+`Artifact` `action: "read"` with the URL. A page as large as a mockup is not returned inline: the result names a local file it saved the page to. When it does, that saved file is the source of truth for everything below. Read it in full once with `Read`, because the steps below take their data from it and the `Artifact` tool refuses to republish a page whose saved file this session has not read in full. It is large and costs context, so read it once and hand subagents a file path, never the pasted source.
+
+The saved file is the served document, not the bare page: the publish wraps the page in a doctype, an `<html>`, a `<head>` with styles it injects and a `<body>` open tag before it, and `</body></html>` after it. For a mockup, the page itself is what `assets/mockup-shell.html` contains, from its `<title>` line to its closing `</script>`.
+
+The `<title>` decides:
 - ends in "Design Shortlist": **create** a mockup, steps 2 to 6;
 - ends in "Design Mockup": **revise** it from its comments, step 7;
 - anything else: stop and say this skill needs a shortlist or a mockup made by this plugin.
@@ -40,7 +44,7 @@ Parse `$ARGUMENTS`:
 
 Read the shortlist in this session:
 
-1. From the HTML you already read take:
+1. From the saved file you read in step 1 take:
    - the brief: everything in `<header id="brief">`, meaning the app name (`h1`), the `.summary` paragraph, and each `dt`/`dd` pair (a question and the user's answer);
    - each app-page section, `section.pg[data-page]`: the slug in `data-page` and the name in its `h2`;
    - each card inside it, `article.card[data-id]`: the id in `data-id`, the title (`h3`), designer and source link (`.credit`), the "Why it fits" and "What to take" text (`.fit`), and the image path (`img src`, normally `media/<card id>.png`).
@@ -82,11 +86,15 @@ Restyled maps to `data-mode="restyle"`, free redesign to `data-mode="redesign"`.
      >
      > Mode "restyle": keep the real page's structure, sections, fields and controls as the template has them, in the new look. Add nothing the real page does not have (no extra icons, badges, controls or sections) and remove nothing, and at each width show what the real styles show at that width. Mode "redesign": you may rearrange, add or drop sections; list every structural change as one plain sentence each in your report, for the page's `.changes` list. In both modes, wherever the mockup cannot show the page faithfully, including limits of the mockup shell (an element fixed to the screen, such as a bottom tab bar, cannot stay fixed inside the preview frame), and on a restyle wherever it still does not match the real page, list each difference as one plain sentence in your report, for the page's "Differences from the real page" list. The user reads that list to know what they will and will not get, so leave nothing off it.
      >
+     > Keep every interactive target (button, link, input, tab, row action) at least 44px high and wide at phone and tablet widths. An icon may look smaller as long as its hit area stays 44px. A request for "less space" is met with layout, never by going under that size at those widths: it is an accessibility floor, not a style choice.
+     >
      > Use realistic made-up sample data that fits the app. Never use real user data, even if you find some in the repo. Recreate the style in your own HTML and CSS: never reuse the source designs' images, illustrations, logos or copy, because they belong to their designers. Do not edit any file in the repo.
      >
      > Report: per page the fragment path, the Google Fonts families and weights it uses, the differences from the real page (or "none"), and for a redesign the structural changes. If you hit a decision the designs, notes and brief do not settle, end your run with that question as your final report (2 to 4 concrete options, your recommendation first) and wait for the answer.
 
 When the builder returns a question instead of fragments, ask the user with `AskUserQuestion` and send the answer back to the same agent with `SendMessage`. Repeat until it returns fragments. Do not answer its questions yourself: they are design choices that belong to the user. Keep the agent's id: step 5 sends problems back to it.
+
+The builder runs in the background. Wait for its completion notification, after the spawn and after every `SendMessage` to it, before going on: do not check, publish, reply or report in the meantime, because its files are not finished until it reports.
 
 ## 5. Create: fill and check before publishing
 
@@ -103,7 +111,7 @@ When the builder returns a question instead of fragments, ask the user with `Ask
    python3 -c "import http.server as s; s.SimpleHTTPRequestHandler.extensions_map['.html']='text/html; charset=utf-8'; s.test(s.SimpleHTTPRequestHandler, s.ThreadingHTTPServer, port=PORT)" >/dev/null 2>&1 & SRV=$!
    ```
    The page file carries no charset of its own, because the Artifact publish wraps it in a document head that declares UTF-8. A plain `python3 -m http.server` sends no charset, so the browser shows "â€”" for "—" and "Â©" for "©". That is the local server, not a builder bug.
-3. Write this script to `$WORK/check.js`, with `OUT` set to the absolute path `$WORK/check` (a relative screenshot path does not work). For every tab and every width switch setting it takes a full-page screenshot and returns one row of measurements:
+3. Write this script to `$WORK/check.js` as shown, then put the absolute `$WORK` path into `OUT` (a relative screenshot path does not work) with `perl -pi -e "s|/absolute/path/to/WORK|$WORK|" "$WORK/check.js"`, and check the line now names your real `$WORK`. For every tab and every width switch setting it takes a full-page screenshot and returns one row of measurements:
    ```js
    async page => {
      const OUT = '/absolute/path/to/WORK/check';
@@ -137,7 +145,7 @@ When the builder returns a question instead of fragments, ask the user with `Ask
    playwright-cli -s=mockup run-code --filename="$WORK/check.js"
    playwright-cli -s=mockup console
    ```
-   Running from `$WORK` keeps the `.playwright-cli/` state folder out of the repo.
+   Running from `$WORK` keeps the `.playwright-cli/` state folder out of the repo. Ignore any "update available" banner `playwright-cli` prints: it is not a result or an error.
 4. Read each run's `### Result` rows. In every row `visible` is that row's `slug` and nothing else (the tab shows its own page only), and both `viewport` (the `.viewport`'s scrollWidth/clientWidth) and `page` (the document's scrollWidth/innerWidth) show two equal numbers (neither scrolls sideways). Look at every screenshot: nothing overlaps or is cut off, and a restyle page shows no control or section the real page lacks. The console shows no errors; a 404 for `favicon.ico` is the local server and does not count.
 5. Send each problem back to the builder with `SendMessage`, naming the tab and width, and re-check after its fix.
 
@@ -163,27 +171,33 @@ Then name every app page left out for having no Love card. Artifacts are private
    - `[location]`: starts with the nearest heading, then `›` and the quoted text. That heading is the section's `h2` (the app page name) unless the builder's fragment has its own heading closer to the comment, so treat it as corroboration, not as the page name.
    - `[anchored element]`: the element and its text. Use it only to tell which element "this" or "here" means. A republish may have changed the element, so do not require its text to still be in the page.
 
-   Match them against the `section.mock` sections in the page source from step 1:
+   Match them against the `section.mock` sections in the saved file from step 1:
    - `[anchored at]` starts with `#page-<slug>` of an existing section: that section, provided the `[location]` heading is that section's app page name or a heading inside that section.
    - No `#page-` id: the `[location]` heading must be the app page name of exactly one section, or a heading that occurs in only one section. A heading every section has, such as "Differences from the real page" (or "Structural changes", which every redesign section has), settles nothing.
+   - Only real headings count when matching: a section's `h2` (its app page name) or an `h1` to `h3` inside that section. The same words as a nav link, tab, button or label inside another section are not a heading there, so they do not make the match ambiguous.
    - The id and the heading disagree, neither is present, the heading matches no section, or it matches several: ask the user with `AskUserQuestion` which app page the comment is about (options: the app page names), quoting the comment and its `[location]`. Never guess, even when the comment text names a page: the text may be talking about another page.
 3. A comment whose request is unclear (you cannot tell what change it wants), or that asks a question the mockup change does not answer, is not resolved. If the thread is activated for Claude, reply in it with one question or the answer and leave it open, so the commenter sees it there; otherwise put it to the user in your final reply. Do not guess the change.
 4. Ask the model as in step 3, unless `--model` was given or the user already chose one earlier in this session. Skip the per-page question: the modes are already set in each section's `data-mode`.
-5. Continue the builder agent from the create run if it is still in this session (`SendMessage`), otherwise spawn a new one (general-purpose, the chosen `model`). Give it: the repo path, the current page source saved to `$WORK/index.html` (from step 1's read), the threads grouped by app page with their text, and this instruction: "Change only what these comments ask, only in the app page each one is filed under, keeping every rule from the header comment of `<absolute path of assets/mockup-shell.html>` and the fragment rules (scoped CSS, `@container viewport` breakpoints, made-up data, no source assets). Edit `$WORK/index.html` in place. When a change alters what differs from the real page, update that section's "Differences from the real page" list, and on a redesign page its `.changes` list, so the lists stay true to the mockup. A section that lacks either block the shell gives its mode (the page was published before the block existed) gets it added now, filled from the current mockup. Report per thread what you changed, in one sentence. If a comment conflicts with the brief or another comment, end your run with that question (2 to 4 options, your recommendation first)." Relay its questions to the user as in step 4.
-6. Re-run the step 5 check on the revised page.
-7. Publish with `Artifact`, `url` set to the mockup URL and `file_path` `$WORK/index.html`, no `icon`. The URL stays the same, so links the user shared keep working.
-8. For each thread acted on, as `ArtifactComments` reports it:
+5. Make the builder's working copy: `$WORK/index.html`, the page alone in the shell's shape, without the publish wrapper (step 1), because the next publish wraps it again. One way, from the saved file's path:
+   ```bash
+   python3 -c "import re,sys; s=open(sys.argv[1],encoding='utf-8').read(); s=re.sub(r'(?is)\A.*?<body[^>]*>','',s,count=1); s=re.sub(r'(?is)</body>\s*</html>\s*\Z','',s); open(sys.argv[2],'w',encoding='utf-8').write(s)" "<saved file>" "$WORK/index.html"
+   ```
+   Check with `head -3` and `tail -3` that it starts at the page's `<title>` and ends at its `</script>`. The saved file itself stays as it is. If the read returned the HTML inline instead, write that page to `$WORK/index.html`.
+6. Continue the builder agent from the create run if it is still in this session (`SendMessage`). When there is none, such as in a new session, spawn a fresh one (general-purpose, the chosen `model`). A fresh agent has none of the create run's context, so give it, before the instruction below, the step 4 instruction's paragraphs from 'Mode "restyle"' to "Do not edit any file in the repo" as standing rules. Give either agent: the repo path, per app page its template and style file paths (found as in step 4 item 2, so the builder can tell what the real page has), the path `$WORK/index.html`, the threads grouped by app page with their text, and this instruction: "Change only what these comments ask, only in the app page each one is filed under, keeping every rule from the header comment of `<absolute path of assets/mockup-shell.html>` and the fragment rules (scoped CSS, `@container viewport` breakpoints, made-up data, no source assets). Keep every interactive target at least 44px at phone and tablet widths (an icon may look smaller if its hit area stays 44px); meet a request for less space with layout, never by going under that floor, because it is an accessibility floor, not a style choice. Edit `$WORK/index.html` in place. When a change alters what differs from the real page, update that section's "Differences from the real page" list, and on a redesign page its `.changes` list, so the lists stay true to the mockup. A section that lacks either block the shell gives its mode (the page was published before the block existed) gets it added now, filled from the current mockup. On a restyle page, whenever you add or update its Differences list, remove any control, section or chart the real page does not have and say so in your report: an addition breaks the restyle, it is not a difference to list. Keep such an addition only when a comment asked for it; then list it under Differences and say in your report that the page is no longer a pure restyle. Report per thread what you changed, in one sentence. If a comment conflicts with the brief or another comment, end your run with that question (2 to 4 options, your recommendation first)." Relay its questions to the user as in step 4, and wait for its completion notification as there before going on.
+7. Re-run the step 5 check on the revised page.
+8. Publish with `Artifact`, `url` set to the mockup URL and `file_path` `$WORK/index.html`, no `icon`. The URL stays the same, so links the user shared keep working.
+9. For each thread acted on, as `ArtifactComments` reports it:
    - activated for Claude: `reply` with what changed (one or two plain sentences), then `resolve` it, so the commenter sees what happened and the open list stays meaningful;
    - not activated: never reply or resolve, even though you addressed it (both work only on activated threads). List it for the user as acted on but left open, and say a writer can send it to Claude (reply on it with "Send to Claude") or resolve it in the artifact view.
 
    A thread from item 3 keeps its reply and stays open. Resolve only threads whose change you made.
 
-Reply with the link, one line per thread (app page, what changed), the threads left open, any question still waiting, and the two sentences from step 6 about the "Claude tried to reply but couldn't" message.
+Reply with the link, one line per thread (app page, what changed), the threads left open, any question still waiting, every restyle page the builder reported as no longer a pure restyle (a comment asked for something the real page lacks), and the two sentences from step 6 about the "Claude tried to reply but couldn't" message.
 
 ## Woken by a comment
 
 When this session published a mockup, a comment sent to Claude on it can wake the session directly, outside these steps. Handle it with step 7, not with an ad hoc answer, so every change still goes through the builder, the check and a republish to the same URL:
 
-1. Use the mockup URL this session published (there are no arguments) and re-read it with `Artifact` `action: "read"`, because step 7 works from the current source.
+1. Use the mockup URL this session published (there are no arguments) and re-read it with `Artifact` `action: "read"` and read the saved file in full as in step 1, because step 7 works from the current source and the republish needs that read.
 2. Read the waking thread first. If it is already resolved, or already has a Claude reply after its latest "sent to Claude" request, an earlier batch handled it: do nothing.
 3. Otherwise run step 7 on all open threads at once, one republish for the batch rather than one per comment, since every republish reloads the page for the user. Reuse the model chosen earlier in this session instead of asking again, and continue the same builder agent when it is still there.

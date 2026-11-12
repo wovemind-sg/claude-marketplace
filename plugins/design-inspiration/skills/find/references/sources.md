@@ -73,8 +73,10 @@ playwright-cli -s=S resize 1440 1100                                            
 playwright-cli -s=S screenshot 'iframe[src*="kombai-inspiration-library"]' --filename=<abs path>  # Kombai design page
 playwright-cli -s=S resize 1440 900
 
-# Behance project page (headed): first module to the top, hide the fixed bars, window screenshot
-playwright-cli -s=S run-code "async page => page.evaluate(() => { document.querySelector('.project-module-image-inner-wrap, [class*=project-module]').scrollIntoView({block:'start'}); document.querySelectorAll('body *').forEach(e=>{if(/fixed|sticky/.test(getComputedStyle(e).position))e.style.visibility='hidden'}) })"
+# Behance project page (headed): first module to the top, wait (an "Appreciate" bar pops up after the scroll), hide the fixed bars, window screenshot
+playwright-cli -s=S run-code "async page => page.evaluate(() => { document.querySelector('.project-module-image-inner-wrap, [class*=project-module]').scrollIntoView({block:'start'}) })"
+playwright-cli -s=S run-code "async page => { await page.waitForTimeout(3000) }"
+playwright-cli -s=S run-code "async page => page.evaluate(() => { document.querySelectorAll('body *').forEach(e=>{if(/fixed|sticky/.test(getComputedStyle(e).position))e.style.visibility='hidden'}) })"
 playwright-cli -s=S screenshot --filename=<abs path>
 ```
 

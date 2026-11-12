@@ -104,6 +104,10 @@ body {
 // Use this file only for global setup that doesn't belong in a component.
 // Required here: app-wide listeners for htmx:responseError, htmx:sendError and
 // htmx:timeout that show the user visible feedback (the UI is the app's choice).
+// This file sits inside <body>, so a boosted swap re-runs it: guard against
+// double registration (e.g. `if (!window.__htmxErrorsBound) { ...; window.__htmxErrorsBound = true; }`)
+// or every failure shows duplicate feedback. htmx:timeout never fires unless you
+// set `htmx.config.timeout` (default 0 = none), so set it here.
 ```
 
 ---

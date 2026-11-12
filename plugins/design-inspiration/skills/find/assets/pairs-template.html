@@ -159,7 +159,8 @@ var notes=[].slice.call(document.querySelectorAll("textarea[data-pnote]"));
 var status=document.getElementById("status"),hint=status.textContent,pickErr="A choice was not saved. Check your connection and click it again.";
 function render(){
   pairs.forEach(function(p){
-    var v=pk[p.dataset.pair]||{};
+    // A stored value that is not one of the expected strings counts as unset, so a bad database value cannot break the page.
+    var x=pk[p.dataset.pair]||{},v={p:["a","b","neither"].indexOf(x.p)>=0?x.p:null,love:x.love==="a"||x.love==="b"?x.love:null};
     [].forEach.call(p.querySelectorAll(".opt"),function(o){
       var s=o.dataset.side;
       if(v.p===s)o.dataset.pick="";else delete o.dataset.pick;

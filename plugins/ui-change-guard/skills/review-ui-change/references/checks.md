@@ -130,6 +130,7 @@ Build the old capability list from `git show <base>:<file>`; match each to the n
 | `$refs`/`getElementById`/`querySelector` target renamed | grep JS for the old selector | Blocker |
 | Script that initialises widgets no longer re-runs after swap (`htmx:afterSwap` hook removed) | | Blocker |
 | Removed `hx-indicator`, `hx-disabled-elt` (double submit) | | Warning |
+| App-wide `htmx:responseError`/`htmx:sendError`/`htmx:timeout` handling removed, or new htmx/boosted UI added without any visible failure feedback | failed requests look like nothing happened | Blocker |
 | `hx-boost`/`hx-push-url` changes altering history/back behavior | | Warning |
 | Event names changed (`$dispatch('x')`, `htmx.trigger`, custom events) | grep listeners | Blocker |
 | Form now submitted via JS `fetch` instead of native/htmx: CSRF header, redirects, error display handled? | | Blocker if not |

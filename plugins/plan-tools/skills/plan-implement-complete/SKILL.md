@@ -19,7 +19,7 @@ The run is long and unattended, so collect every decision now in **one** `AskUse
 
 1. **Implementer model** — model for implementation subagents. Options: Sonnet (Recommended), Opus, Haiku.
 2. **Finalize model** — model for `finalize-pr`'s review and test-plan subagents. Options: Sonnet (Recommended), Opus, Haiku.
-3. **Git & merge** — "Do you give permission in advance for the commits, the push and opening the PR, and should the PR auto-merge once checks pass?" Options: Yes, auto-merge (Recommended) — git permission Yes, monitor until merged; Yes, stop at open PR — git permission Yes, auto-merge No; No, stop before pushing — git permission No.
+3. **Git & merge** — "Do you give permission in advance for the commits, the push and opening the PR, and should the PR auto-merge once checks pass?" Options (label → what it sets): `Yes, auto-merge (Recommended)` → git permission = Yes, auto-merge = Yes; `Yes, stop at open PR` → git permission = Yes, auto-merge = No; `No, stop before pushing` → git permission = No, auto-merge = No. Keep each label short and put the explanation in the option description.
 4. **UI audit** — only when the `ui-audit` plugin is installed (`/ui-audit:capture` is in the skill list); ask it in the same call. "If the implementation changes UI, run the UI audit?" Options: Yes, config defaults (Recommended), No.
 
 If git permission is **No**, still implement and commit locally (commits stay on the branch, nothing leaves the machine) but stop before the push (finalize-pr's step 5, run from step 4 below) and hand back to the user. Auto-merge is moot then.

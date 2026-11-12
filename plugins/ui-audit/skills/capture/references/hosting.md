@@ -8,7 +8,7 @@ The audit is published either as a private Claude artifact (`Artifact` tool) or 
 In order: `--publish artifact|cloudflare` flag, the answer to the SKILL.md step 2 question, `hosting.target` in `.ui-audit/config.json`, `artifact`. Unattended runs skip the question. Call the choice `TARGET`.
 
 ## 2. Previous audit
-Skip this on the first audit of a PR. Otherwise `OLD_URL` is the `target_url` of the newest `success` `ui-audit` commit status on the PR's commits, else the `Latest:` URL of the PR body's "UI audit" section (covers audits whose status was never written). Host `claude.ai` means the old target was `artifact`, `*.pages.dev` means `cloudflare`. If neither exists (audit from before publishing, or `BASE` came from the manifest), treat it as a first audit and say earlier items are not carried over.
+Skip this on the first audit of a PR. Otherwise `OLD_URL` is the `target_url` of the newest `success` `ui-audit` commit status on the PR's commits, else the `Latest:` URL of the PR body's "UI audit" section (covers audits whose status was never written). Host `claude.ai` means the old target was `artifact`, `*.pages.dev` means `cloudflare`. If neither exists (audit from before publishing, or `LAST` came from the manifest), treat it as a first audit and say earlier items are not carried over.
 
 `OLD_PW` (old target Cloudflare, private repo only) is the password in that status description (`ui-audit ran; password: <pw>`) or the PR body `Password:` line. Never derive it from the sha of the commit carrying the status: finalize-pr re-records the status on a later commit.
 

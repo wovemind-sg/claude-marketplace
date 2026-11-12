@@ -123,7 +123,7 @@ Read `references/hosting.md` and follow it: it covers choosing the target, fetch
 - Return to the user (and to finalize-pr, which puts it in the PR body): the config suggestions (merges, deleted-file removals; nothing was asked mid-run, so the user decides), the audit URL and the password, if any, counts of changed/unintended/needs-review screens, the list of unintended items with reasons, which screens were reused, which were skipped and why, and the `report.md` text as a ready PR comment if hosting was unavailable.
 
 ## Edge cases
-- No UI changes in the diff and nothing shared changed: report "no UI changes since BASE", build nothing, but still update `last_audited_sha`.
+- No UI changes in the diff and nothing shared changed: report "no UI changes since `LAST`", build nothing, but still update `last_audited_sha`.
 - App fails to start on base: say so, fall back to `head-only` for the affected platform after asking the user (with `--unattended`, fall back without asking and note it in the report).
 - A recipe step no longer matches: refresh it with a snapshot, update the manifest recipe, mention it in the report.
 - Everything differs by a few pixels: likely font/animation instability; fix stability (see `references/web.md`) instead of reporting hundreds of changes.

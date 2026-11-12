@@ -143,13 +143,14 @@ def merge_history(prev, new_items, meta):
         o = old.get(_key(i)) or {}
         changed = not o or not i.get("head_hash") or o.get("head_hash") != i.get("head_hash")
         i["history"] = o.get("history", []) + [{"run": n, "head_sha": meta.get("head_sha"), "changed": changed}]
-        i["changed_in"] = n if changed else o.get("changed_in", n)
+        i["changed_in"] = n if changed else o.get("changed_in", n - 1)
     redone = {i["screen"] for i in new_items}
     keys = {_key(i) for i in new_items}
     reused, hashes = meta.get("reused_screens") or [], meta.get("dep_hashes") or {}
     kept, stale = [], []
+    pbase = (prev.get("runs") or [{}])[-1].get("base_sha")  # 4.0 items carry no base_sha: they share the last run's
     for i in prev.get("items", []):
-        if i["screen"] in reused and i.get("dep_hash") and i["dep_hash"] == hashes.get(i["screen"]) and i.get("base_sha") == meta.get("base_sha") and _key(i) not in keys:
+        if i["screen"] in reused and i.get("dep_hash") and i["dep_hash"] == hashes.get(i["screen"]) and i.get("base_sha", pbase) == meta.get("base_sha") and _key(i) not in keys:
             h = i.get("history", [])
             kept.append({**i, "reused": True, "history": h + [{"run": n, "head_sha": meta.get("head_sha"), "changed": False}],
                          "changed_in": i.get("changed_in", h[-1]["run"] if h else n - 1)})
@@ -580,6 +581,17 @@ def selftest():
             raise AssertionError("expected SystemExit")
         except SystemExit as e:
             assert e.code == 1 and open(os.path.join(orr, "history.json")).read() == before
+        # 4.0-format history (no base_sha/history/changed_in): reuse still works, unchanged card is not "changed now"
+        o40 = os.path.join(t, "o40")
+        build(spec([{**full("about", "intentional"), "head_hash": "A"}, {**full("home", "intentional"), "head_hash": "H"}]), o40)
+        d40 = json.load(open(os.path.join(o40, "history.json")))
+        for x in d40["items"]:
+            for k in ("base_sha", "history", "changed_in"):
+                x.pop(k, None)
+        json.dump(d40, open(os.path.join(o40, "history.json"), "w"))
+        build(spec([{**full("about", "intentional"), "head_hash": "A"}], reused_screens=["home"]), o40)
+        d40 = {x["screen"]: x for x in json.load(open(os.path.join(o40, "history.json")))["items"]}
+        assert d40["home"]["reused"] and d40["about"]["changed_in"] == 1, d40
         hx = open(os.path.join(orr, "index.html")).read()
         assert "ui-audit-reviewed" in hx and "Audit history" in hx
         # head-only

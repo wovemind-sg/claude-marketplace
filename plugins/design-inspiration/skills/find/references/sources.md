@@ -89,8 +89,8 @@ import sys, tempfile
 from patchright.sync_api import sync_playwright
 
 url, out = sys.argv[1], sys.argv[2]
-with sync_playwright() as p:
-    ctx = p.chromium.launch_persistent_context(tempfile.mkdtemp(), headless=False, no_viewport=True)
+with tempfile.TemporaryDirectory() as profile, sync_playwright() as p:  # profile removed afterwards
+    ctx = p.chromium.launch_persistent_context(profile, headless=False, no_viewport=True)
     page = ctx.new_page()
     page.goto(url, wait_until="domcontentloaded")
     page.wait_for_timeout(8000)  # give a challenge page time to clear on its own

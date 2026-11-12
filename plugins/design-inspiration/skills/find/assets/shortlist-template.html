@@ -123,7 +123,7 @@ button:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid va
 <script>
 (function(){
 // Shared state: db collection "ratings" (doc id = card id, {r: love|maybe|no}) and "notes" (doc id = card id or overall--<page>, {t}).
-var db=null,canWrite=false,local=false,rt={},nt={},pending={},dirty={},chain={};
+var db=null,canWrite=false,local=false,rt={},srv={},nt={},pending={},dirty={},chain={};
 var cards=[].slice.call(document.querySelectorAll(".card[data-id]"));
 var notes=[].slice.call(document.querySelectorAll("textarea[data-note]"));
 var status=document.getElementById("status");
@@ -152,7 +152,10 @@ function rate(id,k){
   render();
   if(local||!db)return;
   var r=db.collection("ratings").doc(id);
-  chain["r:"+id]=(chain["r:"+id]||Promise.resolve()).then(function(){return next?r.set({r:next}):r.delete()}).catch(function(){status.textContent="A rating was not saved. Check your connection and click it again."});
+  chain["r:"+id]=(chain["r:"+id]||Promise.resolve()).then(function(){return next?r.set({r:next}):r.delete()}).catch(function(){
+    // Roll back to the stored rating, so "click it again" sets it instead of toggling it off.
+    if((rt[id]||null)===next){if(srv[id])rt[id]=srv[id];else delete rt[id];render()}
+    status.textContent="A rating was not saved. Check your connection and click it again."});
 }
 function save(ta){
   var k=ta.dataset.note,sv=ta.parentNode.querySelector(".sv"),v=ta.value;
@@ -186,7 +189,7 @@ Promise.all([claude.use("db"),claude.use("user")]).then(async function(a){
   try{canWrite=a[1]?await a[1].canEdit():false}catch(e){}
   if(!canWrite)status.textContent="You can view the ratings. Only the owner and editors can change them.";
   render();
-  db.collection("ratings").onSnapshot(function(snap){rt={};snap.docs.forEach(function(d){rt[d.id]=d.data().r});render()},function(){});
+  db.collection("ratings").onSnapshot(function(snap){rt={};srv={};snap.docs.forEach(function(d){rt[d.id]=srv[d.id]=d.data().r});render()},function(){});
   db.collection("notes").onSnapshot(function(snap){nt={};snap.docs.forEach(function(d){nt[d.id]=d.data().t||""});render()},function(){});
 }).catch(function(){});
 })();

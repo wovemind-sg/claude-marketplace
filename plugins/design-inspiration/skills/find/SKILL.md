@@ -92,13 +92,13 @@ For each chosen design, write:
 - **why it fits**: one or two sentences tying it to this app and the user's answers;
 - **what to take**: the concrete part worth borrowing (layout, type pairing, color, a component, density).
 
-With several app pages, every app page gets its own section with its own cards (6 to 8, or fewer as above) and its own overall note box, all in the same Artifact. Card ids are unique across the whole page, so prefix them with the page slug.
+With several app pages, every app page gets its own section with its own cards (6 to 8, or fewer as above) and its own overall note box, all in the same Artifact. Card ids are unique across the whole page, so prefix them with the page slug. Subagents pick ids on their own, so two chosen cards can share one (two "Finance dashboard" shots from different sources): give the later ones a `-2`, `-3` suffix and use the new id for the card's `data-id` and its media file, because a shared id makes both cards share one rating and one image.
 
 ## 5. Publish
 
-1. Copy `assets/shortlist-template.html` to `$WORK/index.html` and copy each chosen screenshot to `$WORK/media/<card id>.png`.
-2. Fill it as its header comment explains. Put the app summary and every question with its answer in `<header id="brief">`, because the plan skill reads the brief from there. Repeat the `<section class="pg">` block per app page and the `<article class="card">` block per design. Set `data-page`, `data-id`, the `img src` (`media/<card id>.png`) and the source links. Escape `&`, `<`, `>` and quotes in inserted text. Leave no `{{...}}` placeholder.
-3. Load the `artifact-design` skill and follow its page contract. Also load the `artifact-capabilities` skill, because the publish call below passes `capabilities`, and the Artifact tool requires that skill before any `capabilities` publish.
+1. Load the `artifact-design` skill and follow its page contract, before writing the page. Also load the `artifact-capabilities` skill, because the publish call below passes `capabilities`, and the Artifact tool requires that skill before any `capabilities` publish.
+2. Copy `assets/shortlist-template.html` to `$WORK/index.html` and copy each chosen screenshot to `$WORK/media/<card id>.png`.
+3. Fill it as its header comment explains. Put the app summary and every question with its answer in `<header id="brief">`, because the plan skill reads the brief from there. Repeat the `<section class="pg">` block per app page and the `<article class="card">` block per design. Set `data-page`, `data-id`, the `img src` (`media/<card id>.png`) and the source links. Escape `&`, `<`, `>` and quotes in inserted text. Leave no `{{...}}` placeholder.
 4. Call `Artifact` with:
    - `file_path`: `$WORK/index.html`;
    - `files`: `{"media/<card id>.png": "$WORK/media/<card id>.png", ...}`, one entry per screenshot;
@@ -109,7 +109,7 @@ With several app pages, every app page gets its own section with its own cards (
    The page stores ratings in the `ratings` collection (doc id = card id, field `r` = `love` / `maybe` / `no`). It stores notes in `notes` (doc id = card id or `overall--<page slug>`, field `t`). Only the owner and editors can change them.
 5. After publishing, run one `ArtifactData` `list` of `ratings` to confirm the store answers. An empty list is expected.
 
-If the `Artifact` tool is unavailable, stop after filling the page (item 2 above) and tell the user where `$WORK/index.html` is, and that ratings only work on a published page.
+If the `Artifact` tool is unavailable, stop after filling the page (item 3 above) and tell the user where `$WORK/index.html` is, and that ratings only work on a published page.
 
 ## 6. Finish
 

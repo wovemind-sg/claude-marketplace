@@ -28,7 +28,7 @@ Parse `$ARGUMENTS`:
 
 ## 1. Ask for the model
 
-Unless `--model` was given, ask with one `AskUserQuestion`: "Which model should write the plan?" Options: Opus (first, the default: planning a redesign takes judgment across many files), Sonnet (cheaper and faster). Use the answer as the `Agent` `model`.
+Ask this after step 3 passes, so a run that stops for want of a Love card asks nothing, and in the same `AskUserQuestion` call as any step 2 item 4 question. Unless `--model` was given, ask: "Which model should write the plan?" Options: Opus (first, the default: planning a redesign takes judgment across many files), Sonnet (cheaper and faster). Use the answer as the `Agent` `model`.
 
 ## 2. Read the page and its choices
 
@@ -87,7 +87,7 @@ List each open thread with its app page and its text. Tie it to a page as `/desi
 
 ### M2. Ask for the model
 
-As in step 1.
+As in step 1, but after M4, in the same call as any question M4 raises about a cut-off note.
 
 ### M3. Read the mockup
 

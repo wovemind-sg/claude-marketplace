@@ -1,0 +1,236 @@
+<title>{{APP_NAME}} Design Shortlist</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<!--
+  Filling this template (find skill, step 3b "Pairs"):
+  - The title stays "<app> Design Shortlist" in every round, because mockup and plan find pages by that title and the
+    Artifact tool keeps the first title across redeploys. The shortlist is later published over this page at the same link.
+  - Replace every placeholder in double curly braces, including APP_NAME in the title. Escape &, <, > and quotes in text you insert.
+    SOURCE_URL must start with https:// or http:// (never javascript: or data:); slugs and ids use only a-z, 0-9 and hyphens.
+  - The <header id="brief"> holds the app summary and every answer, as in the shortlist template. N is the round number.
+  - Repeat one <section class="pg"> per app page still in the pair stage. data-page = page slug (lowercase, hyphens), unique.
+  - Each section holds one <div class="pair">. data-pair = "<page slug>--r<N>", e.g. "dashboard--r2"; it is the doc id in "picks".
+    DIFFERENCE is one line naming the one trait the two designs differ on, e.g. "dense table against airy cards".
+  - Fill one <article class="opt"> for side a and one for side b. Note ids are "<pair id>--<a|b>-<like|dislike>".
+  - <img src> is the published path of the screenshot, e.g. media/dashboard--linear-analytics.png.
+  - Do not rename the classes or data attributes: the script below and the find skill depend on them.
+-->
+<style>
+/* Layout: brief on top, then per app page one pair of screenshots side by side (stacked on phones) with pick, love and notes under each. */
+:root{
+  --bg:#f4f5f2; --surface:#ffffff; --fg:#1d211c; --muted:#5d6559; --line:#dcdfd7;
+  --accent:#2f5d50; --accent-fg:#ffffff;
+  --love:#b4285a; --love-bg:#fbe7ee; --maybe:#8a5a00; --maybe-bg:#fbf0d9; --no:#5d6559; --no-bg:#e9ebe6;
+  --font-display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;
+  --font-body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141714; --surface:#1c201c; --fg:#e7eae3; --muted:#a0a89b; --line:#2e342d;
+  --accent:#8cc7b3; --accent-fg:#0f1a16;
+  --love:#ff8fb3; --love-bg:#3d1a27; --maybe:#f0c069; --maybe-bg:#3a2d13; --no:#a0a89b; --no-bg:#262b25; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141714; --surface:#1c201c; --fg:#e7eae3; --muted:#a0a89b; --line:#2e342d;
+  --accent:#8cc7b3; --accent-fg:#0f1a16;
+  --love:#ff8fb3; --love-bg:#3d1a27; --maybe:#f0c069; --maybe-bg:#3a2d13; --no:#a0a89b; --no-bg:#262b25; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.55 var(--font-body);margin:0;padding-block:32px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:1240px;margin:0 auto;display:grid;gap:48px}
+h1{font:700 clamp(30px,5vw,46px)/1.08 var(--font-display);margin:0;text-wrap:balance}
+h2{font:700 clamp(22px,3.4vw,30px)/1.15 var(--font-display);margin:0;text-wrap:balance}
+h3{font:600 16px/1.3 var(--font-body);margin:0;text-wrap:balance}
+.eyebrow{font:500 12px var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+#brief{display:grid;gap:14px}
+#brief .summary{max-width:68ch;margin:0;font-size:16px}
+#brief dl{margin:0;display:grid;grid-template-columns:minmax(120px,180px) 1fr;border-top:1px solid var(--line)}
+#brief dt,#brief dd{padding:10px 0;border-bottom:1px solid var(--line);margin:0;min-width:0;overflow-wrap:anywhere}
+#brief dt{color:var(--muted);font-size:13px;padding-right:14px}
+.status{font-size:13px;color:var(--muted);margin:0}
+.pg{display:grid;gap:18px;padding-top:28px;border-top:2px solid var(--fg)}
+.pg-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 20px}
+.tally{font:500 12px var(--font-mono);color:var(--muted)}
+.pair{display:grid;gap:18px}
+.diff{margin:0;font-size:16px;overflow-wrap:anywhere}
+.diff b{font:500 11px var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-right:8px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:22px}
+.opt{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.opt[data-pick]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.opt[data-love]{border-color:var(--love);box-shadow:0 0 0 1px var(--love)}
+.opt[data-out] .shot img{filter:grayscale(1);opacity:.55}
+.shot{display:block;aspect-ratio:4/3;background:var(--no-bg);border-bottom:1px solid var(--line)}
+.shot img{width:100%;height:100%;max-width:100%;object-fit:cover;object-position:top;display:block}
+.body{display:grid;gap:10px;padding:14px 16px 16px;min-width:0}
+.credit{font-size:13px;color:var(--muted);margin:0;overflow-wrap:anywhere}
+.credit a{color:var(--accent);text-underline-offset:2px}
+.rate{display:flex;gap:6px;flex-wrap:wrap}
+.rate button{font:600 13px var(--font-body);padding:6px 14px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.rate button:disabled{cursor:default;opacity:.6}
+@media (max-width:1024px),(pointer:coarse){.rate button{min-height:44px;min-width:44px}} /* 44px touch floor at tablet and phone widths */
+.rate button[data-k="pick"][aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.rate button[data-k="love"][aria-pressed="true"]{background:var(--love-bg);color:var(--love);border-color:var(--love)}
+.rate button[data-k="neither"][aria-pressed="true"]{background:var(--no-bg);color:var(--no);border-color:var(--no)}
+button:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.note{display:grid;gap:4px}
+.note label{font-size:12px;color:var(--muted)}
+.note textarea{font:16px/1.45 var(--font-body);width:100%;min-height:64px;resize:vertical;padding:8px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.sv{font-size:12px;color:var(--muted);min-height:1em}
+.sv[data-s="err"]{color:var(--love)}
+@media (prefers-reduced-motion:no-preference){.opt{transition:border-color .15s,box-shadow .15s}}
+</style>
+
+<main>
+  <header id="brief">
+    <span class="eyebrow">Design inspiration: compare pairs</span>
+    <h1>{{APP_NAME}}</h1>
+    <p class="summary">{{APP_SUMMARY}}</p>
+    <dl>
+      <!-- One dt/dd per brief item: Platform, Current look, then each question asked and the user's answer ("(from the repo)" when the repo answered it). -->
+      <dt>{{BRIEF_LABEL}}</dt><dd>{{BRIEF_VALUE}}</dd>
+    </dl>
+    <p class="status" id="status">Round {{N}}: pick the better design in each pair and say what you like and dislike in both. Then go back to the terminal and choose Continue.</p>
+  </header>
+
+  <section class="pg" data-page="{{PAGE_SLUG}}">
+    <div class="pg-head">
+      <div><span class="eyebrow">App page</span><h2>{{PAGE_NAME}}</h2></div>
+      <span class="tally"></span>
+    </div>
+    <div class="pair" data-pair="{{PAGE_SLUG}}--r{{N}}">
+      <p class="diff"><b>The difference</b>{{DIFFERENCE}}</p>
+      <div class="opts">
+        <article class="opt" data-side="a">
+          <a class="shot" href="{{A_SOURCE_URL}}" target="_blank" rel="noopener"><img src="{{A_IMG_PATH}}" alt="Screenshot of {{A_TITLE}}" loading="lazy"></a>
+          <div class="body">
+            <h3>{{A_TITLE}}</h3>
+            <p class="credit">by {{A_DESIGNER}} on <a href="{{A_SOURCE_URL}}" target="_blank" rel="noopener">{{A_SOURCE_SITE}}</a></p>
+            <div class="rate" role="group" aria-label="Choose {{A_TITLE}}">
+              <button type="button" data-k="pick" aria-pressed="false">This one is better</button>
+              <button type="button" data-k="love" aria-pressed="false">Love it, find more like this</button>
+            </div>
+            <div class="note">
+              <label for="n-{{PAGE_SLUG}}--r{{N}}--a-like">What you like</label>
+              <textarea id="n-{{PAGE_SLUG}}--r{{N}}--a-like" data-pnote="{{PAGE_SLUG}}--r{{N}}--a-like" placeholder="Layout, colors, type, density, anything"></textarea>
+              <span class="sv"></span>
+            </div>
+            <div class="note">
+              <label for="n-{{PAGE_SLUG}}--r{{N}}--a-dislike">What you dislike</label>
+              <textarea id="n-{{PAGE_SLUG}}--r{{N}}--a-dislike" data-pnote="{{PAGE_SLUG}}--r{{N}}--a-dislike" placeholder="What you would not want on your page"></textarea>
+              <span class="sv"></span>
+            </div>
+          </div>
+        </article>
+        <article class="opt" data-side="b">
+          <a class="shot" href="{{B_SOURCE_URL}}" target="_blank" rel="noopener"><img src="{{B_IMG_PATH}}" alt="Screenshot of {{B_TITLE}}" loading="lazy"></a>
+          <div class="body">
+            <h3>{{B_TITLE}}</h3>
+            <p class="credit">by {{B_DESIGNER}} on <a href="{{B_SOURCE_URL}}" target="_blank" rel="noopener">{{B_SOURCE_SITE}}</a></p>
+            <div class="rate" role="group" aria-label="Choose {{B_TITLE}}">
+              <button type="button" data-k="pick" aria-pressed="false">This one is better</button>
+              <button type="button" data-k="love" aria-pressed="false">Love it, find more like this</button>
+            </div>
+            <div class="note">
+              <label for="n-{{PAGE_SLUG}}--r{{N}}--b-like">What you like</label>
+              <textarea id="n-{{PAGE_SLUG}}--r{{N}}--b-like" data-pnote="{{PAGE_SLUG}}--r{{N}}--b-like" placeholder="Layout, colors, type, density, anything"></textarea>
+              <span class="sv"></span>
+            </div>
+            <div class="note">
+              <label for="n-{{PAGE_SLUG}}--r{{N}}--b-dislike">What you dislike</label>
+              <textarea id="n-{{PAGE_SLUG}}--r{{N}}--b-dislike" data-pnote="{{PAGE_SLUG}}--r{{N}}--b-dislike" placeholder="What you would not want on your page"></textarea>
+              <span class="sv"></span>
+            </div>
+          </div>
+        </article>
+      </div>
+      <div class="rate" role="group" aria-label="Neither design">
+        <button type="button" data-k="neither" aria-pressed="false">Neither</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+// Shared state: db collection "picks" (doc id = pair id, {p: a|b|neither, love: a|b|null}) and "pairnotes" (doc id = <pair id>--<side>-<like|dislike>, {t}).
+var db=null,canWrite=false,local=false,pk={},srv={},nt={},pending={},dirty={},chain={};
+var pairs=[].slice.call(document.querySelectorAll(".pair[data-pair]"));
+var notes=[].slice.call(document.querySelectorAll("textarea[data-pnote]"));
+var status=document.getElementById("status"),hint=status.textContent,pickErr="A choice was not saved. Check your connection and click it again.";
+function render(){
+  pairs.forEach(function(p){
+    var v=pk[p.dataset.pair]||{};
+    [].forEach.call(p.querySelectorAll(".opt"),function(o){
+      var s=o.dataset.side;
+      if(v.p===s)o.dataset.pick="";else delete o.dataset.pick;
+      if(v.love===s)o.dataset.love="";else delete o.dataset.love;
+      if(v.p&&v.p!==s)o.dataset.out="";else delete o.dataset.out;
+      [].forEach.call(o.querySelectorAll(".rate button"),function(b){b.setAttribute("aria-pressed",String(b.dataset.k==="pick"?v.p===s:v.love===s));b.disabled=!canWrite});
+    });
+    var nb=p.querySelector('button[data-k="neither"]');
+    nb.setAttribute("aria-pressed",String(v.p==="neither"));nb.disabled=!canWrite;
+    p.closest(".pg").querySelector(".tally").textContent=v.love?"Loved: design "+v.love.toUpperCase():v.p==="neither"?"Answered: neither":v.p?"Answered: design "+v.p.toUpperCase():"Not answered yet";
+  });
+  notes.forEach(function(ta){
+    var k=ta.dataset.pnote,a=nt[k]||"";
+    // Unsaved text stays until the snapshot shows it, so a late echo of an older write cannot roll the field back.
+    if(dirty[k]&&!pending[k]&&a===(ta.value.trim()?ta.value:""))delete dirty[k];
+    if(document.activeElement!==ta&&!dirty[k]&&ta.value!==a)ta.value=a;
+    ta.readOnly=!canWrite;
+  });
+}
+function choose(id,side,k){
+  var v=pk[id]||{},next;
+  // Pick and Neither toggle the choice; Love sets the pick to its side, and pressing it again clears only the love.
+  if(k==="love")next=v.love===side?{p:v.p,love:null}:{p:side,love:side};
+  else next=v.p===side?null:{p:side,love:null};
+  if(next)pk[id]=next;else delete pk[id];
+  render();
+  if(local||!db)return;
+  var r=db.collection("picks").doc(id);
+  chain["p:"+id]=(chain["p:"+id]||Promise.resolve()).then(function(){return next?r.set(next):r.delete()}).then(function(){
+    if(status.textContent===pickErr)status.textContent=hint},function(){
+    // Roll back to the stored choice, so "click it again" sets it instead of toggling it off.
+    if(pk[id]===next){if(srv[id])pk[id]=srv[id];else delete pk[id];render()}
+    status.textContent=pickErr});
+}
+function save(ta){
+  var k=ta.dataset.pnote,sv=ta.parentNode.querySelector(".sv"),v=ta.value;
+  clearTimeout(pending[k]);delete pending[k];
+  if(local||!db){nt[k]=v;sv.textContent="";delete dirty[k];return}
+  sv.textContent="Saving…";delete sv.dataset.s;
+  var r=db.collection("pairnotes").doc(k);
+  // Report only when this write still matches the field, so an older write never says "Saved" over newer text.
+  chain["n:"+k]=(chain["n:"+k]||Promise.resolve()).then(function(){return v.trim()?r.set({t:v}):r.delete()})
+  .then(function(){if(ta.value===v&&!pending[k])sv.textContent="Saved"},
+        function(){if(ta.value===v&&!pending[k]){sv.textContent="Not saved. Type or click away to retry";sv.dataset.s="err"}});
+}
+function flush(){notes.forEach(function(ta){if(pending[ta.dataset.pnote]||(dirty[ta.dataset.pnote]&&ta.parentNode.querySelector(".sv").dataset.s))save(ta)})}
+pairs.forEach(function(p){
+  [].forEach.call(p.querySelectorAll(".opt"),function(o){[].forEach.call(o.querySelectorAll(".rate button"),function(b){b.onclick=function(){if(canWrite)choose(p.dataset.pair,o.dataset.side,b.dataset.k)}})});
+  p.querySelector('button[data-k="neither"]').onclick=function(){if(canWrite)choose(p.dataset.pair,"neither","neither")};
+});
+notes.forEach(function(ta){
+  var k=ta.dataset.pnote,sv=ta.parentNode.querySelector(".sv");
+  ta.oninput=function(){if(!canWrite)return;dirty[k]=true;if(!local){sv.textContent="Saving…";delete sv.dataset.s}clearTimeout(pending[k]);pending[k]=setTimeout(function(){save(ta)},700)};
+  ta.onblur=flush;
+});
+// Closing the page or switching away must not drop the last keystrokes still waiting on the debounce.
+addEventListener("pagehide",flush);
+document.addEventListener("visibilitychange",function(){if(document.hidden)flush()});
+render();
+if(!window.claude||!window.claude.use){
+  // Opened outside claude.ai (local preview): choices work on screen but are not stored.
+  local=true;canWrite=true;status.textContent="Preview mode: choices are not saved. Open the published page on claude.ai to keep them.";render();return;
+}
+Promise.all([claude.use("db"),claude.use("user")]).then(async function(a){
+  db=a[0];
+  if(!db){status.textContent="Sign in to claude.ai to see and save your choices.";return}
+  try{canWrite=a[1]?await a[1].canEdit():false}catch(e){}
+  if(!canWrite)status.textContent="You can view the choices. Only the owner and editors can change them.";
+  render();
+  db.collection("picks").onSnapshot(function(snap){pk={};srv={};snap.docs.forEach(function(d){var x=d.data();pk[d.id]=srv[d.id]={p:x.p,love:x.love||null}});render()},function(){});
+  db.collection("pairnotes").onSnapshot(function(snap){nt={};snap.docs.forEach(function(d){nt[d.id]=d.data().t||""});render()},function(){});
+}).catch(function(){});
+})();
+</script>

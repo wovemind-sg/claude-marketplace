@@ -52,7 +52,9 @@ What happens on a shortlist:
 3. A subagent builds each app page in the look of your Love designs, with made-up sample data. It recreates the style in its own HTML and CSS and never reuses the source's images, logos or copy.
 4. The skill checks every page at desktop, tablet and phone width, then publishes one Artifact titled "<app> Design Mockup": a tab per app page and a Desktop / Tablet / Phone switch.
 
-The comment loop: comment on the mockup in claude.ai, on any tab, and send each thread to Claude (reply with "Send to Claude" or mention @claude). Then run `/design-inspiration:mockup <mockup url>`. It ties each comment to its app page (and asks you when it cannot tell), changes only what you asked, republishes at the same link, and replies to and resolves each thread. Threads you did not send to Claude are still acted on, but stay open and are listed for you.
+The comment loop: comment on the mockup in claude.ai, on any tab, and send each thread to Claude (reply with "Send to Claude" or mention @claude). Then run `/design-inspiration:mockup <mockup url>`. It ties each comment to its app page (and asks you when it cannot tell), changes only what you asked, republishes at the same link, and replies to and resolves each thread. Threads you did not send to Claude are still acted on, but stay open and are listed for you. Each page also lists its "Differences from the real page": what the mockup cannot show faithfully.
+
+When no session is watching the mockup, claude.ai shows "Claude tried to reply but couldn't. To retry, reply to the comment and send the reply to Claude" under a comment sent to Claude. The comment is still saved, and running `/design-inspiration:mockup <mockup url>` picks up every open comment.
 
 When you are happy, run `/design-inspiration:plan <mockup url>`.
 

@@ -8,10 +8,11 @@
   - Replace every placeholder in double curly braces, including APP_NAME in the title. Escape &, <, > and quotes in text you insert.
   - <header id="meta">: data-shortlist = the shortlist Artifact URL. Copy the shortlist's brief (summary and every dt/dd pair) unchanged.
   - Repeat one tab <button> and one <section class="mock"> per app page, in the same order. data-page = the shortlist's page slug.
-    The tab label and the section's h2 are the same app page name: comments are tied to a page by that visible name.
-  - data-mode = "restyle" (the real page, restyled) or "redesign" (free redesign). A redesign section keeps <ul class="changes">,
-    one <li> per structural change, and drops <div class="diffs">. A restyle section keeps <div class="diffs">, one <li> per
-    difference from the real page, and drops <ul class="changes">.
+    The tab label and the section's h2 are the same app page name. Comments are tied to a page by the section id page-<slug>
+    in their anchor first, and by the nearest heading (this h2, or a heading inside the fragment) second.
+  - data-mode = "restyle" (the real page, restyled) or "redesign" (free redesign). Every section keeps <div class="diffs">, one <li>
+    per thing the mockup cannot show faithfully ("None" when there is none). A redesign section also keeps <ul class="changes">,
+    one <li> per deliberate structural change; a restyle section drops it.
   - PAGE_FRAGMENT = the builder's fragment for that page: one <style> whose rules all sit inside one nested block
     .mock[data-page="<slug>"] .viewport { ... }, so pages cannot restyle each other, with breakpoints written as
     @container viewport (min-width: ...) queries (the .viewport is the container), then the page markup. The fragment sets its own

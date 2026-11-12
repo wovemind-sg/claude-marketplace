@@ -70,6 +70,7 @@ button:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid va
 .note textarea{font:16px/1.45 var(--font-body);width:100%;min-height:64px;resize:vertical;padding:8px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
 .overall textarea{min-height:80px}
 .sv{font-size:12px;color:var(--muted);min-height:1em}
+.sv[data-s="err"]{color:var(--love)}
 @media (prefers-reduced-motion:no-preference){.card{transition:border-color .15s,box-shadow .15s}}
 </style>
 
@@ -122,7 +123,7 @@ button:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid va
 <script>
 (function(){
 // Shared state: db collection "ratings" (doc id = card id, {r: love|maybe|no}) and "notes" (doc id = card id or overall--<page>, {t}).
-var db=null,canWrite=false,local=false,rt={},nt={},pending={},chain={};
+var db=null,canWrite=false,local=false,rt={},nt={},pending={},dirty={},chain={};
 var cards=[].slice.call(document.querySelectorAll(".card[data-id]"));
 var notes=[].slice.call(document.querySelectorAll("textarea[data-note]"));
 var status=document.getElementById("status");
@@ -134,7 +135,9 @@ function render(){
   });
   notes.forEach(function(ta){
     var k=ta.dataset.note,a=nt[k]||"";
-    if(document.activeElement!==ta&&!pending[k]&&ta.value!==a)ta.value=a;
+    // Unsaved text stays until the snapshot shows it, so a late echo of an older write cannot roll the field back.
+    if(dirty[k]&&!pending[k]&&a===(ta.value.trim()?ta.value:""))delete dirty[k];
+    if(document.activeElement!==ta&&!dirty[k]&&ta.value!==a)ta.value=a;
     ta.readOnly=!canWrite;
   });
   [].forEach.call(document.querySelectorAll(".pg"),function(s){
@@ -151,18 +154,27 @@ function rate(id,k){
   var r=db.collection("ratings").doc(id);
   chain["r:"+id]=(chain["r:"+id]||Promise.resolve()).then(function(){return next?r.set({r:next}):r.delete()}).catch(function(){status.textContent="A rating was not saved. Check your connection and click it again."});
 }
-function save(k,v,sv){
-  nt[k]=v;
-  if(local||!db){sv.textContent="";return}
+function save(ta){
+  var k=ta.dataset.note,sv=ta.parentNode.querySelector(".sv"),v=ta.value;
+  clearTimeout(pending[k]);delete pending[k];
+  if(local||!db){nt[k]=v;sv.textContent="";delete dirty[k];return}
+  sv.textContent="Saving…";delete sv.dataset.s;
   var r=db.collection("notes").doc(k);
+  // Report only when this write still matches the field, so an older write never says "Saved" over newer text.
   chain["n:"+k]=(chain["n:"+k]||Promise.resolve()).then(function(){return v.trim()?r.set({t:v}):r.delete()})
-  .then(function(){sv.textContent="Saved"},function(){sv.textContent="Not saved, try again"});
+  .then(function(){if(ta.value===v&&!pending[k])sv.textContent="Saved"},
+        function(){if(ta.value===v&&!pending[k]){sv.textContent="Not saved. Type or click away to retry";sv.dataset.s="err"}});
 }
+function flush(){notes.forEach(function(ta){if(pending[ta.dataset.note]||(dirty[ta.dataset.note]&&ta.parentNode.querySelector(".sv").dataset.s))save(ta)})}
 cards.forEach(function(c){[].forEach.call(c.querySelectorAll(".rate button"),function(b){b.onclick=function(){if(canWrite)rate(c.dataset.id,b.dataset.k)}})});
 notes.forEach(function(ta){
   var k=ta.dataset.note,sv=ta.parentNode.querySelector(".sv");
-  ta.oninput=function(){if(!canWrite)return;sv.textContent=local?"":"Editing…";clearTimeout(pending[k]);pending[k]=setTimeout(function(){delete pending[k];save(k,ta.value,sv)},700)};
+  ta.oninput=function(){if(!canWrite)return;dirty[k]=true;if(!local){sv.textContent="Saving…";delete sv.dataset.s}clearTimeout(pending[k]);pending[k]=setTimeout(function(){save(ta)},700)};
+  ta.onblur=flush;
 });
+// Closing the page or switching away must not drop the last keystrokes still waiting on the debounce.
+addEventListener("pagehide",flush);
+document.addEventListener("visibilitychange",function(){if(document.hidden)flush()});
 render();
 if(!window.claude||!window.claude.use){
   // Opened outside claude.ai (local preview): choices work on screen but are not stored.

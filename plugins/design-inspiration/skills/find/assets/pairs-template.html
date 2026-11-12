@@ -191,7 +191,7 @@ function choose(id,side,k){
   chain["p:"+id]=(chain["p:"+id]||Promise.resolve()).then(function(){return next?r.set(next):r.delete()}).then(function(){
     if(status.textContent===pickErr)status.textContent=hint},function(){
     // Roll back to the stored choice, so "click it again" sets it instead of toggling it off.
-    if(pk[id]===next){if(srv[id])pk[id]=srv[id];else delete pk[id];render()}
+    if((pk[id]||null)===next){if(srv[id])pk[id]=srv[id];else delete pk[id];render()}
     status.textContent=pickErr});
 }
 function save(ta){

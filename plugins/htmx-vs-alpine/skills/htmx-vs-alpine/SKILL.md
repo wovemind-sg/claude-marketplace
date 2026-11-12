@@ -74,6 +74,7 @@ hx-indicator="#spinner"     <!-- show a loading element while request is in flig
 - Use `hx-indicator` to show loading state — don't duplicate it with Alpine.js.
 - Lean on progressive enhancement: the page should still work without JavaScript when possible.
 - Avoid duplicating server state on the client; the server is the single source of truth.
+- Make failed requests visible: htmx 2 does not swap 4xx/5xx responses, so handle `htmx:responseError`, `htmx:sendError` and `htmx:timeout` app-wide with user-visible feedback (the UI is the app's choice), never console-only.
 
 ---
 

@@ -37,7 +37,7 @@ Loading order matters:
 - `app.js` before Alpine (so any setup runs first)
 - Alpine with `defer` last (needs a complete DOM to scan for `x-data`)
 
-`hx-boost="true"` on `<body>` is not optional — it makes every `<a>` and `<form>` fetch via AJAX and swap `<body>` instead of doing a full-page navigation. In a Capacitor WKWebView, a normal browser navigation (a plain `<a href>` click, a server 303 redirect landed on directly) reloads the whole page — CDN scripts re-fetch, the screen flashes white, and the app stops feeling native. Boosted navigation avoids all of that. Never rely on `<a href>` full-page navigation or a bare `RedirectResponse` as the primary nav path — let hx-boost intercept it.
+`hx-boost="true"` on `<body>` is not optional — it makes every `<a>` and `<form>` fetch via AJAX and swap `<body>` instead of doing a full-page navigation. In a Capacitor WKWebView, a normal browser navigation (a plain `<a href>` click, a server 303 redirect landed on directly) reloads the whole page — CDN scripts re-fetch, the screen flashes white, and the app stops feeling native. Boosted navigation avoids all of that. Never rely on `<a href>` full-page navigation or a bare `RedirectResponse` as the primary nav path — let hx-boost intercept it. Failed boosted requests must also surface visible feedback; see "Failed htmx requests must be visible" in `SKILL.md`.
 
 ---
 
@@ -102,6 +102,12 @@ body {
 // App-wide JavaScript.
 // Prefer HTMX attributes and Alpine.js x-data for UI interactions.
 // Use this file only for global setup that doesn't belong in a component.
+// Required here: app-wide listeners for htmx:responseError, htmx:sendError and
+// htmx:timeout that show the user visible feedback (the UI is the app's choice).
+// This file sits inside <body>, so a boosted swap re-runs it: guard against
+// double registration (e.g. `if (!window.__htmxErrorsBound) { ...; window.__htmxErrorsBound = true; }`)
+// or every failure shows duplicate feedback. htmx:timeout never fires unless you
+// set `htmx.config.timeout` (default 0 = none), so set it here.
 ```
 
 ---

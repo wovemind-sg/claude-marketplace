@@ -4,16 +4,17 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
 <!--
-  Filling this shell (mockup skill, step 5 "Check before publishing"):
+  Filling this shell (mockup skill, step 5 "Fill and check before publishing"). Drop this comment from the filled page.
   - Replace every placeholder in double curly braces, including APP_NAME in the title. Escape &, <, > and quotes in text you insert.
   - <header id="meta">: data-shortlist = the shortlist Artifact URL. Copy the shortlist's brief (summary and every dt/dd pair) unchanged.
   - Repeat one tab <button> and one <section class="mock"> per app page, in the same order. data-page = the shortlist's page slug.
     The tab label and the section's h2 are the same app page name: comments are tied to a page by that visible name.
-  - data-mode = "restyle" (the real page, restyled) or "redesign" (free redesign). Only a redesign section keeps <ul class="changes">,
-    one <li> per structural change; delete the list from restyle sections.
-  - {{PAGE_FRAGMENT}} = the builder's fragment for that page: one <style> whose rules all sit inside one nested block
+  - data-mode = "restyle" (the real page, restyled) or "redesign" (free redesign). A redesign section keeps <ul class="changes">,
+    one <li> per structural change, and drops <div class="diffs">. A restyle section keeps <div class="diffs">, one <li> per
+    difference from the real page, and drops <ul class="changes">.
+  - PAGE_FRAGMENT = the builder's fragment for that page: one <style> whose rules all sit inside one nested block
     .mock[data-page="<slug>"] .viewport { ... }, so pages cannot restyle each other, with breakpoints written as
-    @container (min-width: ...) queries (the .viewport is the container), then the page markup. The fragment sets its own
+    @container viewport (min-width: ...) queries (the .viewport is the container), then the page markup. The fragment sets its own
     background and colors; it does not follow the viewer's theme.
   - Do not rename the ids, classes or data attributes: the mockup and plan skills read them.
   - Hidden tabs stay in the document (the hidden attribute only hides them), so comments on every page keep their anchor.
@@ -58,8 +59,9 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .mock[hidden]{display:none}
 .mock-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
 .mode{font:500 11px var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:99px;padding:2px 8px}
-.changes{margin:0;padding-left:20px;max-width:80ch;font-size:14px;color:var(--muted)}
-.changes li+li{margin-top:2px}
+.changes,.diffs ul{margin:0;padding-left:20px;max-width:80ch;font-size:14px;color:var(--muted)}
+.changes li+li,.diffs li+li{margin-top:2px}
+.diffs h3{font:600 14px/1.3 var(--font-body);margin:0 0 4px}
 .stage{display:flex;justify-content:center;min-width:0}
 .viewport{container-type:inline-size;container-name:viewport;width:100%;max-width:100%;min-width:0;overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
 main[data-w="tablet"] .viewport{max-width:820px}
@@ -102,6 +104,12 @@ main[data-w="phone"] .viewport{max-width:390px}
     <ul class="changes">
       <li>{{STRUCTURAL_CHANGE}}</li>
     </ul>
+    <div class="diffs">
+      <h3>Differences from the real page</h3>
+      <ul>
+        <li>{{DIFFERENCE}}</li>
+      </ul>
+    </div>
     <div class="stage"><div class="viewport">
 {{PAGE_FRAGMENT}}
     </div></div>

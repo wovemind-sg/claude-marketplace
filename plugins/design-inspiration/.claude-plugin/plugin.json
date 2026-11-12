@@ -1,0 +1,12 @@
+{
+  "name": "design-inspiration",
+  "description": "Finds visual design inspiration for the app in the current repo: works out what the app is, asks a few design questions, searches Dribbble, Awwwards and other free inspiration sites, and publishes a shortlist of 6 to 8 screenshots per app page as a claude.ai Artifact where you rate each one Love / Maybe / No. An optional mockup skill builds a responsive mockup of your pages in the chosen look, which you comment on to have it revised. A plan skill then reads your ratings and notes from that page and has a subagent plan how to apply the chosen designs.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Wovemind"
+  },
+  "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/design-inspiration#readme",
+  "repository": "https://github.com/wovemind-sg/claude-marketplace",
+  "license": "MIT",
+  "dependencies": ["plan-tools"]
+}

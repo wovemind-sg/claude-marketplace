@@ -379,6 +379,27 @@
       ]
     },
     {
+      "name": "design-inspiration",
+      "source": "./plugins/design-inspiration",
+      "description": "Design inspiration for the app in your repo: asks a few design questions, searches Dribbble, Awwwards and other free inspiration sites, publishes a shortlist per app page as a claude.ai Artifact you rate Love / Maybe / No, optionally mocks up your pages in that look for comments, then plans how to apply the designs you picked.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "ui-quality",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/design-inspiration#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
+      "tags": [
+        "ui",
+        "design",
+        "inspiration",
+        "dribbble",
+        "moodboard",
+        "playwright",
+        "artifact"
+      ]
+    },
+    {
       "name": "session-overview",
       "source": "./plugins/session-overview",
       "description": "Side pane (/sessions) listing every open Claude Code session on the machine, grouped by project, with its goal and state.",

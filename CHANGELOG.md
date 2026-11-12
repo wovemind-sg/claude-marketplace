@@ -2,6 +2,10 @@
 
 Marketplace-level changes only. Each plugin's own version lives in its `plugin.json`.
 
+## 2026-11-12
+
+- Removed the supabase-python, evolution-api, whatsapp-safety, singapore-lta and sg-card-benefits plugins.
+
 ## 2026-11-11
 
 - Added `homepage` and `repository` links to every plugin and a `url` to the marketplace owner.

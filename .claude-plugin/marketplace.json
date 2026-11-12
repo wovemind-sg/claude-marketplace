@@ -8,43 +8,6 @@
   },
   "plugins": [
     {
-      "name": "singapore-lta",
-      "source": "./plugins/singapore-lta",
-      "description": "Query Singapore's Land Transport Authority (LTA) DataMall API for real-time bus arrivals, traffic incidents, car park availability, train service alerts, station crowd density, taxi availability, EV charging points, and more.",
-      "author": {
-        "name": "Wovemind"
-      },
-      "license": "MIT",
-      "category": "singapore",
-      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/singapore-lta#readme",
-      "repository": "https://github.com/wovemind-sg/claude-marketplace",
-      "tags": [
-        "transport",
-        "singapore",
-        "api",
-        "lta",
-        "real-time"
-      ]
-    },
-    {
-      "name": "supabase-python",
-      "source": "./plugins/supabase-python",
-      "description": "FastAPI with Supabase and SQLAlchemy/SQLModel",
-      "author": {
-        "name": "Wovemind"
-      },
-      "license": "MIT",
-      "category": "scaffolding",
-      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/supabase-python#readme",
-      "repository": "https://github.com/wovemind-sg/claude-marketplace",
-      "tags": [
-        "supabase",
-        "python",
-        "fastapi",
-        "sqlmodel"
-      ]
-    },
-    {
       "name": "htmx-vs-alpine",
       "source": "./plugins/htmx-vs-alpine",
       "description": "Guides Claude to choose between HTMX and Alpine.js for client-side interactivity in server-rendered web applications.",
@@ -162,67 +125,6 @@
         "push",
         "alerts",
         "webhook"
-      ]
-    },
-    {
-      "name": "evolution-api",
-      "source": "./plugins/evolution-api",
-      "description": "Complete Evolution API endpoint reference for WhatsApp client code — instances, messages, webhooks, groups, chats, profiles, and error flows.",
-      "author": {
-        "name": "Wovemind"
-      },
-      "license": "MIT",
-      "category": "libraries",
-      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/evolution-api#readme",
-      "repository": "https://github.com/wovemind-sg/claude-marketplace",
-      "tags": [
-        "whatsapp",
-        "evolution-api",
-        "messaging",
-        "api",
-        "webhooks",
-        "bots"
-      ]
-    },
-    {
-      "name": "whatsapp-safety",
-      "source": "./plugins/whatsapp-safety",
-      "description": "Guides agents to interact with WhatsApp via Evolution API without getting the number flagged, banned, or rate-limited — warm-up, human pacing, message spinning, consent, safe groups, and incident response.",
-      "author": {
-        "name": "Wovemind"
-      },
-      "license": "MIT",
-      "category": "libraries",
-      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/whatsapp-safety#readme",
-      "repository": "https://github.com/wovemind-sg/claude-marketplace",
-      "tags": [
-        "whatsapp",
-        "evolution-api",
-        "messaging",
-        "safety",
-        "anti-ban",
-        "rate-limiting",
-        "automation"
-      ]
-    },
-    {
-      "name": "sg-card-benefits",
-      "source": "./plugins/sg-card-benefits",
-      "description": "Monitor Singapore credit/debit card benefits and T&Cs for changes — structured extraction, normalization, and semantic diffing across all major SG issuers.",
-      "author": {
-        "name": "Wovemind"
-      },
-      "license": "MIT",
-      "category": "singapore",
-      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/sg-card-benefits#readme",
-      "repository": "https://github.com/wovemind-sg/claude-marketplace",
-      "tags": [
-        "singapore",
-        "credit-cards",
-        "miles",
-        "cashback",
-        "monitoring",
-        "change-detection"
       ]
     },
     {

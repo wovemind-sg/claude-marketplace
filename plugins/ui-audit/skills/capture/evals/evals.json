@@ -18,9 +18,10 @@
      ]},
     {"id": 1, "name": "incremental-after-rename-and-text-change",
      "prompt": "This repo is a tiny static site. Audit PR #7 (c1..c4, base c0, PR body in PR_BODY.md). Then run `git checkout followup` (commit c5 renames the schedule screen to schedule-link in the config and rewords the unknown-account error) and update the same audit for c5, keeping the audit directory from the first run so history carries over. Do not commit.",
-     "expected_output": "After run 2 the page has no card for the old 'schedule' screen; every card shows its commit sha; cards from run 1 are kept only when marked reused with unchanged files; no card quotes the removed string 'No account found.' as current text (such a card is needs_review); the history lists two runs.",
+     "expected_output": "After run 2 the page has no card for the old 'schedule' screen; every card shows its commit sha; cards from run 1 are kept only when marked reused with unchanged files; base images of every card come from the PR base commit c0, not from c4; no card quotes the removed string 'No account found.' as current text (such a card is needs_review); the history lists two runs.",
      "assertions": [
        "After run 2 there is no card for the screen named schedule (renamed to schedule-link) and its old media is listed as stale or removed",
+       "Run 2 captured base images from a worktree at the PR base c0 (the merge-base), not at c4 (the last audited commit); the spec base_sha is c0 and incremental_from is c4",
        "Every card shows 'Captured at <sha8>'; cards captured in run 1 and kept say 'reused, files unchanged' and belong to screens whose files did not change between c4 and c5",
        "No kept card is for a screen whose files changed in c5 (login, schedule-link, form.js users are re-captured at c5)",
        "No card reason presents 'No account found.' as the current text: either the reason uses the new wording or the card is needs_review with the Needs review prefix",

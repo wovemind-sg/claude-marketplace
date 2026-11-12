@@ -47,7 +47,6 @@ Our zen:
 | [fastapi-template](plugins/fastapi-template) | scaffolds a FastAPI, Jinja2, HTMX and Alpine.js web app with PostgreSQL, Redis and OpenRouter AI. | `claude plugin install fastapi-template@wovemind` |
 | [go-webapp-template](plugins/go-webapp-template) | scaffolds the same kind of app in Go, and migrates an existing fastapi-template project to Go. | `claude plugin install go-webapp-template@wovemind` |
 | [htmx-vs-alpine](plugins/htmx-vs-alpine) | decides whether HTMX or Alpine.js should drive each piece of interactivity in a server-rendered app. | `claude plugin install htmx-vs-alpine@wovemind` |
-| [supabase-python](plugins/supabase-python) | FastAPI with Supabase for auth and storage, and SQLAlchemy or SQLModel for database queries. | `claude plugin install supabase-python@wovemind` |
 
 ### Libraries and references
 
@@ -56,8 +55,6 @@ Our zen:
 | [python-arq](plugins/python-arq) | reference for the arq library: async job queues in Python with asyncio and Redis. | `claude plugin install python-arq@wovemind` |
 | [flagd](plugins/flagd) | reference for flagd, the OpenFeature feature-flag evaluation engine. | `claude plugin install flagd@wovemind` |
 | [openfeature](plugins/openfeature) | reference for OpenFeature, the vendor-neutral feature-flag standard, with deep dives for Go, .NET and Python. | `claude plugin install openfeature@wovemind` |
-| [evolution-api](plugins/evolution-api) | endpoint reference for writing WhatsApp client code against an Evolution API server. | `claude plugin install evolution-api@wovemind` |
-| [whatsapp-safety](plugins/whatsapp-safety) | keeps WhatsApp automation through Evolution API from getting the number flagged or banned. | `claude plugin install whatsapp-safety@wovemind` |
 
 ### Notifications
 
@@ -77,13 +74,6 @@ Our zen:
 | Plugin | What it does | Install |
 |---|---|---|
 | [launch-video](plugins/launch-video) | turns an app repository into a launch video with a presenter, screen recordings, voice-over and captions. | `claude plugin install launch-video@wovemind` |
-
-### Singapore
-
-| Plugin | What it does | Install |
-|---|---|---|
-| [singapore-lta](plugins/singapore-lta) | query Singapore's Land Transport Authority DataMall API for bus arrivals, traffic, car parks, train alerts and more (Singapore only). | `claude plugin install singapore-lta@wovemind` |
-| [sg-card-benefits](plugins/sg-card-benefits) | monitors Singapore credit and debit card benefits and terms for changes (Singapore only). | `claude plugin install sg-card-benefits@wovemind` |
 
 ## Refresh after changes
 

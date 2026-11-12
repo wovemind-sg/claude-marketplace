@@ -1,12 +1,12 @@
 ---
 name: plan
-description: Plan how to apply the designs the user chose on a design-inspiration shortlist. Reads the Love / Maybe / No ratings and notes from the shortlist Artifact that /design-inspiration:find published, asks which model should plan, and spawns one subagent that writes an implementation plan restyling the app's pages after the chosen designs. Use whenever the user has rated a shortlist and wants to apply it, "plan the redesign", "use the designs I picked", "I rated the cards, go", or passes a shortlist Artifact link, even if they do not say "plan".
-argument-hint: "[artifact url] [--model <name>]"
+description: Plan how to apply the designs the user chose on a design-inspiration shortlist, or how to build the mockup they accepted. Reads the Love / Maybe / No ratings and notes from the shortlist Artifact that /design-inspiration:find published, asks which model should plan, and spawns one subagent that writes an implementation plan restyling the app's pages after the chosen designs; from a mockup made by /design-inspiration:mockup it plans to build what the mockup shows, after checking no comment thread is still open. Use whenever the user has rated a shortlist or finished a mockup and wants to apply it, "plan the redesign", "use the designs I picked", "I rated the cards, go", "build the mockup", or passes a shortlist or mockup Artifact link, even if they do not say "plan".
+argument-hint: "[mockup or shortlist url] [--model <name>]"
 ---
 
-# Plan from the shortlist
+# Plan from the shortlist or the mockup
 
-The user rated the designs on a shortlist page made by `/design-inspiration:find`. Read their choices, hand them to one planning subagent, and show its plan in chat. Nothing is written to the repo: the user decides what to do with the plan, for example implementing it with `/plan-tools:plan-implement-complete`.
+The user rated the designs on a shortlist page made by `/design-inspiration:find`, and may have built and accepted a mockup of their pages with `/design-inspiration:mockup`. Read their choices (or the mockup), hand them to one planning subagent, and show its plan in chat. Nothing is written to the repo: the user decides what to do with the plan, for example implementing it with `/plan-tools:plan-implement-complete`.
 
 Run from the root of the app's repo, because the planner reads that repo's UI code.
 
@@ -16,8 +16,15 @@ Parse `$ARGUMENTS`:
 
 | Argument | Default | Meaning |
 |---|---|---|
-| artifact URL | found with `Artifact` `action: "list"`: the newest artifact titled "<app name> Design Shortlist" for this repo's app; ask with `AskUserQuestion` when several match, and stop with a pointer to `/design-inspiration:find` when none does | the shortlist to read |
+| artifact URL | found with `Artifact` `action: "list"`: the newest artifact titled "<app name> Design Mockup" for this repo's app, else the newest titled "<app name> Design Shortlist"; ask with `AskUserQuestion` when several match, and stop with a pointer to `/design-inspiration:find` when none does | the mockup or shortlist to read |
 | `--model <name>` | asked (see step 1) | model for the planning subagent |
+
+## Which input
+
+`Artifact` `action: "read"` with the URL. The `<title>` decides:
+- ends in "Design Shortlist": plan from the shortlist, steps 1 to 6;
+- ends in "Design Mockup": plan to build the mockup, steps M1 to M6 under "Plan from a mockup";
+- anything else: stop and say this skill needs a shortlist or a mockup made by this plugin.
 
 ## 1. Ask for the model
 
@@ -27,7 +34,7 @@ Unless `--model` was given, ask with one `AskUserQuestion`: "Which model should 
 
 Do this in the session, not in a subagent. It is a few tool calls, and the planner needs the result verbatim.
 
-1. `Artifact` `action: "read"` with the URL. From the HTML take:
+1. From the HTML you already read take:
    - the brief: everything in `<header id="brief">`, meaning the app name (`h1`), the `.summary` paragraph, and each `dt`/`dd` pair (a question and the user's answer);
    - each app-page section, `section.pg[data-page]`: the slug in `data-page` and the name in its `h2`;
    - each card inside it, `article.card[data-id]`: the id in `data-id`, the title (`h3`), designer and source link (`.credit`), the "Why it fits" and "What to take" text (`.fit`), and the image path (`img src`, normally `media/<card id>.png`).
@@ -62,3 +69,49 @@ When the planner returns a question instead of a plan, ask the user with `AskUse
 ## 6. Show the plan
 
 Print the planner's plan in chat as it came back. Then add one line naming any section that was left out for having no Love card. Stop there: do not write the plan to a file, and do not start implementing.
+
+## Plan from a mockup
+
+Running this skill on a mockup means the user accepts it as the target. The mockup is what they saw and approved, so the plan builds that, not a fresh reading of the shortlist.
+
+### M1. Check for open comments
+
+`ArtifactComments` (load it with ToolSearch if it is deferred) `action: "read"` with the mockup URL, following any cursor until all threads are read. Resolved threads are done. If any thread is still open, stop before planning: an open comment is a change the user asked for that the mockup does not show yet.
+
+List each open thread with its app page and its text. Tie it to a page as `/design-inspiration:mockup` step 7 does (the thread's location data or quoted text against the `section.mock` sections, or a page name in the text); when that does not settle it, write "page unclear" rather than guess. Then ask with one `AskUserQuestion`: "Some comments on the mockup are still open. What now?" Options:
+- "Revise the mockup first" (first): stop and tell the user to run `/design-inspiration:mockup <mockup url>`, then this skill again.
+- "Plan anyway": plan the mockup as it stands. The open comments are not requirements; name them in your final reply.
+
+### M2. Ask for the model
+
+As in step 1.
+
+### M3. Read the mockup
+
+From the HTML read in "Which input" take:
+- the brief: `<header id="meta">`, meaning the app name (`h1`), the `.summary` paragraph, each `dt`/`dd` pair, and the shortlist URL in `data-shortlist`;
+- each app page, `section.mock[data-page]`: the slug in `data-page`, the name in its `h2`, the mode in `data-mode` (`restyle` keeps the real page's structure, `redesign` changes it), and for a redesign each item of its `.changes` list.
+
+The planner needs the mockup's full source. When the read result names a saved file holding the full page, use that file's absolute path; otherwise write the HTML to a file in the session's scratchpad. Each app page's mockup is the `<style>` and markup inside its section's `.viewport`.
+
+### M4. Read the shortlist for context
+
+`Artifact` `action: "read"` with the `data-shortlist` URL, and `ArtifactData` `list` its `ratings` and `notes` as in step 2. Per app page, take the `love` cards' titles, designers and source links, and the notes. This is context only: it tells the planner where the look came from, so it can credit each design. The mockup stays the target. Do not fetch the screenshots. If the shortlist cannot be read, go on without it and say so in your final reply.
+
+### M5. Spawn the planner
+
+Spawn one `Agent` (general-purpose) with the chosen `model`. Its brief is the only context it gets, so give it everything:
+
+- the repo's absolute path;
+- the brief from M3, as text;
+- the absolute path of the mockup's saved HTML;
+- per app page: the page name and slug, its mode, the `.changes` items for a redesign, and from M4 its Love designs (title, designer, source link) and notes;
+- this instruction:
+
+  > The mockup HTML is the target: for each app page listed, its `section.mock[data-page="<slug>"]` shows what the user approved, and the markup and `<style>` inside that section's `.viewport` are the page to match. Read it closely: palette, typography, spacing and density, layout and grid, components, and how the layout changes at each breakpoint. Read this app's UI code: templates or components, styles, design tokens, theme and fonts. Then write an implementation plan that makes each listed app page look and work like its mockup. Mode "restyle": keep the page's structure and change its look. Mode "redesign": also make every listed structural change. The mockup's breakpoints are `@container viewport (min-width: ...)` queries, because the mockup page switches widths without resizing the window; translate each one into this app's own media queries (or its framework's breakpoints) at the same widths. Reuse the app's existing components and tokens wherever they can produce the same look, rather than copying the mockup's CSS. The mockup's sample data is made up: wire the real data instead. Say plainly, per page, where the real result will differ from the mockup and why. Follow `/plan-tools:plan-helper` (invoke it with the Skill tool) when writing and checking the plan. Never reuse the source designs' images, illustrations, logos or copy, because they belong to their designers. Write one plan that covers every listed page, and name the files it changes. Do not edit any file. If you hit a decision the mockup, brief and notes do not settle, end your run with that question as your final report (2 to 4 concrete options, your recommendation first) and wait for the answer.
+
+Relay its questions to the user as in step 5.
+
+### M6. Show the plan
+
+Print the planner's plan in chat as it came back. Then add one line naming any open comment left out because the user chose to plan anyway, and whether the shortlist could not be read. Stop there: do not write the plan to a file, and do not start implementing.

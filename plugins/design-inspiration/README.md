@@ -56,9 +56,12 @@ The comment loop: comment on the mockup in claude.ai, on any tab, and send each 
 
 When you are happy, run `/design-inspiration:plan <mockup url>`.
 
-## Planning from the shortlist
+## Planning
+
+`plan` takes either the mockup or the shortlist. Give it the mockup if you made one: it then plans to build what the mockup shows. Without a mockup it plans straight from your shortlist ratings.
 
 ```
+/design-inspiration:plan https://claude.ai/code/artifact/<mockup id>
 /design-inspiration:plan https://claude.ai/code/artifact/<id>
 /design-inspiration:plan https://claude.ai/code/artifact/<id> --model sonnet
 /design-inspiration:plan
@@ -66,14 +69,19 @@ When you are happy, run `/design-inspiration:plan <mockup url>`.
 
 | Argument | Default | Meaning |
 |---|---|---|
-| artifact URL | the newest "<app> Design Shortlist" artifact for this repo (asks when several match) | the shortlist you rated |
+| artifact URL | the newest "<app> Design Mockup" artifact for this repo, else the newest "<app> Design Shortlist" (asks when several match) | the mockup you accepted, or the shortlist you rated |
 | `--model <name>` | asked, with Opus first | model of the planning subagent |
 
-What happens:
+What happens on a shortlist:
 1. It reads the brief, every app-page section, and your ratings and notes from the page.
 2. If no design is rated Love, it stops and asks you to rate first. An app page with no Love card is left out of the plan, and the reply names it.
 3. It fetches the screenshots of the Love cards and of the Maybe cards you wrote a note on.
 4. It spawns one planning subagent with the model you chose. The subagent studies the designs (palette, type, spacing, layout, components), reads your app's UI code, and writes one implementation plan for all the rated pages, following `/plan-tools:plan-helper`. It recreates the style in your own code and never reuses the source's images, illustrations or logos. Any design question it cannot settle comes back to you.
+
+What happens on a mockup (running `plan` on it means you accept it):
+1. If a comment thread on the mockup is still open, it stops, lists the open threads with their app page, and asks whether to revise the mockup first (`/design-inspiration:mockup <mockup url>`) or plan anyway.
+2. It reads each app page's mockup, its mode (restyled or free redesign) and its listed structural changes, and follows the mockup's link back to the shortlist for the brief and the credits of your Love designs.
+3. It spawns one planning subagent with the model you chose. The subagent treats the mockup as the target, reads your app's UI code, and plans to build each page in your own code: it reuses your existing components and tokens where they give the same look, turns the mockup's width breakpoints into your app's media queries, and says plainly where the real result will differ from the mockup.
 
 Output: the plan, printed in chat. Nothing is written to the repo, and nothing is implemented. To build it, hand the plan to `/plan-tools:plan-implement-complete` or implement it yourself.
 

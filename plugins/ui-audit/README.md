@@ -20,7 +20,7 @@ The skill also triggers when you ask for screenshots of UI changes, a visual aud
 Each run:
 0. Requires a clean working tree (ignoring `.ui-audit/`); if not, offers to commit your changes, otherwise stops.
 1. Loads `.ui-audit/config.json` (first run: interviews you, discovers screens, writes config and manifest).
-2. Finds the last audited commit (a `ui-audit` commit status on the PR, else `last_audited_sha` in the manifest, else the merge-base) and stops if nothing changed since.
+2. Sets `BASE` to the merge-base with the PR base branch (always the diff baseline) and finds `LAST`, the last audited commit (a `ui-audit` commit status on the PR, else `last_audited_sha` in the manifest). `LAST` only picks which screens to re-capture; the run stops if nothing changed since `LAST`. If the base branch moved since the last audit, the run is a full sweep.
 3. Asks which platforms (if several are enabled) and which baseline mode and where to publish (`hosting.target` in the config is the default, `--publish` skips the question). Baseline modes: `base+head` (default; shows only screens that really changed, with diff overlay), `head-only` (fast, no diff, everything needs review) or `head+base-related` (base captured only for screens whose own files changed).
 4. Picks screens from file hashes plus model reasoning about ripples from shared files, captures base (git worktree) and head under identical conditions, diffs, classifies, and builds the audit page.
 5. Publishes the audit and returns the URL (and the password, if any), ready for the PR body:
@@ -34,6 +34,10 @@ Never pushes, and commits only your uncommitted work in step 0 when you say yes.
 ## Upgrading to 4.0
 
 The first run after upgrading drops the cards of earlier audits, because they carry no reuse marks (screen, file hash and commit); later runs keep only cards whose screen is marked reused with an unchanged file hash. The build now checks that every card was captured at the audited commit, that every visible change of the PR has a card or a stated reason, and that text quoted in reasons exists in the current code. It lists config suggestions after the run (screens that redirect to another, screens whose files were deleted). Set `report.default_view` (`slider`, `side` or `diff`) in `.ui-audit/config.json` to choose the view the page opens in; the page also has a picker.
+
+## Upgrading to 4.1
+
+Audits now always compare against the PR base branch; the last audited commit only selects which screens to re-capture. 4.0 history has no base sha, so its cards count as built against the previous run's base: they are reused when that equals the merge-base, otherwise (4.0's last run was incremental) the build refuses reuse and the skill does a full sweep. Each card lists the audits it appeared in, and "Mark reviewed" is stored per browser (`localStorage`) and clears when the card changes in a later audit.
 
 ## Dark mode
 

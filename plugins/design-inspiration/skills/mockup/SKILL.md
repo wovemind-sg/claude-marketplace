@@ -138,7 +138,7 @@ The builder runs in the background. Wait for its completion notification, after 
    Run it from `$WORK` with its own `playwright-cli` session, once in a 1440 by 900 window and once in a 390 by 844 window. Type the commands out as below: do not keep a command in a shell variable, because zsh does not split it into words.
    ```bash
    cd <WORK>
-   playwright-cli -s=mockup open http://localhost:PORT/index.html
+   playwright-cli -s=mockup open http://127.0.0.1:PORT/index.html
    playwright-cli -s=mockup resize 1440 900
    playwright-cli -s=mockup run-code --filename=<WORK>/check.js
    playwright-cli -s=mockup resize 390 844
@@ -149,7 +149,7 @@ The builder runs in the background. Wait for its completion notification, after 
 4. Read each run's `### Result` rows. In every row `visible` is that row's `slug` and nothing else (the tab shows its own page only), and both `viewport` (the `.viewport`'s scrollWidth/clientWidth) and `page` (the document's scrollWidth/innerWidth) show two equal numbers (neither scrolls sideways). Look at every screenshot: nothing overlaps or is cut off, and a restyle page shows no control or section the real page lacks. The console shows no errors; a 404 for `favicon.ico` is the local server and does not count. Search the page (`grep -niE '<script|<iframe|<form|<object|<embed|<meta|javascript:|\son[a-z]+=|https?://|(src|srcset|href|action)\s*=\s*\S?\s*//|url\(\s*\S?\s*//|@import' <WORK>/index.html`): the only hits allowed are the shell's own `<script>` and `<meta>`, its Google Fonts and `fonts.gstatic.com` links, the `data-shortlist` URL and SVG `xmlns` namespaces. Anything else, and any sample data that looks real or like a secret, goes back to the builder as a problem.
 5. Send each problem back to the builder with `SendMessage`, naming the tab and width, and re-check after its fix.
 
-This check is what makes the mockup a trustworthy preview of the result: a broken layout the user sees on claude.ai would read as the design, not as a bug. Stop the server (`pkill -f "scripts/serve.py <WORK>"`) and close the browser session (`playwright-cli -s=mockup close`) when done.
+This check is what makes the mockup a trustworthy preview of the result: a broken layout the user sees on claude.ai would read as the design, not as a bug. Stop the server (stop its background task with `TaskStop`; `pkill -f` would match the shell that runs it) and close the browser session (`playwright-cli -s=mockup close`) when done.
 
 ## 6. Create: publish
 

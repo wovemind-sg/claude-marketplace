@@ -153,7 +153,7 @@ button:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid va
 <script>
 (function(){
 // Shared state: db collection "picks" (doc id = pair id, {p: a|b|neither, love: a|b|null}) and "pairnotes" (doc id = <pair id>--<side>-<like|dislike>, {t}).
-var db=null,canWrite=false,local=false,pk={},srv={},nt={},pending={},dirty={},chain={};
+var db=null,canWrite=false,local=false,pk={},srv={},nt={},pending={},dirty={},chain={},inflight={};
 var pairs=[].slice.call(document.querySelectorAll(".pair[data-pair]"));
 var notes=[].slice.call(document.querySelectorAll("textarea[data-pnote]"));
 var status=document.getElementById("status"),hint=status.textContent,pickErr="A choice was not saved. Check your connection and click it again.";
@@ -189,8 +189,11 @@ function choose(id,side,k){
   render();
   if(local||!db)return;
   var r=db.collection("picks").doc(id);
+  inflight[id]=(inflight[id]||0)+1;
   chain["p:"+id]=(chain["p:"+id]||Promise.resolve()).then(function(){return next?r.set(next):r.delete()}).then(function(){
+    inflight[id]--;
     if(status.textContent===pickErr)status.textContent=hint},function(){
+    inflight[id]--;
     // Roll back to the stored choice, so "click it again" sets it instead of toggling it off.
     if((pk[id]||null)===next){if(srv[id])pk[id]=srv[id];else delete pk[id];render()}
     status.textContent=pickErr});
@@ -230,7 +233,11 @@ Promise.all([claude.use("db"),claude.use("user")]).then(async function(a){
   try{canWrite=a[1]?await a[1].canEdit():false}catch(e){}
   if(!canWrite)status.textContent="You can view the choices. Only the owner and editors can change them.";
   render();
-  db.collection("picks").onSnapshot(function(snap){pk={};srv={};snap.docs.forEach(function(d){var x=d.data();pk[d.id]=srv[d.id]={p:x.p,love:x.love||null}});render()},function(){});
+  db.collection("picks").onSnapshot(function(snap){
+    var old=pk;pk={};srv={};snap.docs.forEach(function(d){var x=d.data();pk[d.id]=srv[d.id]={p:x.p,love:x.love||null}});
+    // A choice still being written stays as clicked, so a snapshot of an older write cannot flip it back.
+    Object.keys(inflight).forEach(function(id){if(inflight[id]>0){if(old[id])pk[id]=old[id];else delete pk[id]}});
+    render()},function(){});
   db.collection("pairnotes").onSnapshot(function(snap){nt={};snap.docs.forEach(function(d){nt[d.id]=d.data().t||""});render()},function(){});
 }).catch(function(){});
 })();

@@ -324,7 +324,7 @@ function render(){
     const sw=w=>{const cap=Math.min(v.clientWidth,im.naturalWidth);w<cap?d.style.setProperty('--sw',w+'px'):d.style.removeProperty('--sw')};
     if(!k){// fit the taller of before/after so neither overflows the window
      const ims=[...v.querySelectorAll('.slider img')],f=()=>sw(parseFloat(d.style.getPropertyValue('--fit'))/Math.max(...ims.map(x=>x.naturalHeight/x.naturalWidth)));
-     Promise.all(ims.map(x=>x.complete?0:new Promise(r=>x.addEventListener('load',r,{once:true})))).then(f)}
+     Promise.all(ims.map(x=>x.complete?0:new Promise(r=>{x.addEventListener('load',r,{once:true});x.loading='eager'}))).then(f)}
     else sw(im.getBoundingClientRect().width*(k>0?1.25:.8));return}
    z=k?Math.max(.25,z*(k>0?1.25:.8)):1;d.style.setProperty('--z',z)});
   draw();$('#items').appendChild(d);d.fit()})}

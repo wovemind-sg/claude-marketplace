@@ -322,7 +322,9 @@ function render(){
   let z=1;d.querySelectorAll('[data-z]').forEach(b=>b.onclick=()=>{const k=+b.dataset.z,im=mode==='slider'&&v.querySelector('.slider>img');
    if(im){// slider sizes by width so before and after stay aligned; full width = natural width capped at the card
     const sw=w=>{const cap=Math.min(v.clientWidth,im.naturalWidth);w<cap?d.style.setProperty('--sw',w+'px'):d.style.removeProperty('--sw')};
-    if(!k){const f=()=>sw(parseFloat(d.style.getPropertyValue('--fit'))*im.naturalWidth/im.naturalHeight);im.naturalWidth?f():im.addEventListener('load',f,{once:true})}
+    if(!k){// fit the taller of before/after so neither overflows the window
+     const ims=[...v.querySelectorAll('.slider img')],f=()=>sw(parseFloat(d.style.getPropertyValue('--fit'))/Math.max(...ims.map(x=>x.naturalHeight/x.naturalWidth)));
+     Promise.all(ims.map(x=>x.complete?0:new Promise(r=>x.addEventListener('load',r,{once:true})))).then(f)}
     else sw(im.getBoundingClientRect().width*(k>0?1.25:.8));return}
    z=k?Math.max(.25,z*(k>0?1.25:.8)):1;d.style.setProperty('--z',z)});
   draw();$('#items').appendChild(d);d.fit()})}

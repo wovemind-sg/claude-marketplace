@@ -254,10 +254,10 @@ button[aria-pressed=true]{outline:2px solid var(--fg)}
 .modes{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}
 .view img,video{max-width:100%;height:auto;display:block}.view img{width:auto;max-height:calc(var(--fit,95vh) * var(--z,1))}
 .zoom{display:flex;gap:6px;margin-left:auto}
-.slider{display:grid;position:relative;width:fit-content;max-width:100%;touch-action:pan-y;user-select:none;--p:50%}
+.slider{display:grid;position:relative;width:var(--sw,fit-content);max-width:100%;touch-action:pan-y;user-select:none;--p:50%}
 .view .slider img{max-height:none}.view .slider>img{width:var(--sw,auto);max-width:100%;height:auto}
 .slider>img,.slider>.wm,.slider .top,.slider .dv{grid-area:1/1}.slider .top{overflow:hidden;position:relative;clip-path:inset(0 0 0 var(--p))}
-.slider .dv{width:2px;margin-left:calc(var(--p) - 1px);background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.5);pointer-events:none}.slider.narrow .lf{display:none}
+.slider .dv{width:2px;margin-left:calc(var(--p) - 1px);background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.5);pointer-events:none}.slider.narrow .lf{display:none}.slider.narrow .wm{margin:2px;padding:0 4px}
 .wm{position:absolute;top:0;left:0;margin:8px;padding:2px 8px;border-radius:4px;background:rgba(0,0,0,.55);color:#fff;font-size:.8rem;font-weight:600;pointer-events:none}.top .wm{left:auto;right:0}.view .slider .top img{width:100%;max-width:100%;height:auto}
 .slider input{grid-row:2;width:0;min-width:100%;margin:0;padding:8px 0;position:sticky;bottom:0;z-index:1;background:var(--card)}
 .side{display:flex;gap:10px}.side figure{margin:0;flex:1 1 0;min-width:0}figcaption{font-size:.8rem;color:var(--muted)}
@@ -520,7 +520,7 @@ def selftest():
         build(p, o7d)
         assert 'position:absolute' not in h.split('.slider .top{')[1].split('}')[0] and 'grid-area:1/1' in h
         assert 'position:sticky;bottom:0' in h.split('.slider input{')[1].split('}')[0]
-        assert all(x in h for x in ('.view .slider img{max-height:none}', 'setPointerCapture', '.slider.narrow .lf{display:none}', 'ui-audit-skipped'))
+        assert all(x in h for x in ('.view .slider img{max-height:none}', 'setPointerCapture', '.slider.narrow .lf{display:none}.slider.narrow .wm{margin:2px;padding:0 4px}', 'ui-audit-skipped'))
         # stale media: re-capturing home lists the old home files
         old = next(i for i in json.load(open(os.path.join(out, "history.json")))["items"] if i["screen"] == "home")
         stale = build(spec([full("home", "intentional")]), out)["stale_media"]

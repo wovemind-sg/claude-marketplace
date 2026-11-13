@@ -416,6 +416,24 @@
         "pane",
         "overview"
       ]
+    },
+    {
+      "name": "auto-resume",
+      "source": "./plugins/auto-resume",
+      "description": "Sends \"continue\" to a session stopped by the usage limit once the limit resets: /auto-resume on|off, or add /auto-resume to one prompt.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "workflow",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/auto-resume#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
+      "tags": [
+        "usage-limit",
+        "resume",
+        "mod",
+        "automation"
+      ]
     }
   ]
 }

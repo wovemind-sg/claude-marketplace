@@ -257,7 +257,7 @@ button[aria-pressed=true]{outline:2px solid var(--fg)}
 .slider{display:grid;position:relative;width:fit-content;max-width:100%;touch-action:pan-y}
 .slider>img,.slider>.wm,.slider .top{grid-area:1/1}.slider .top{overflow:hidden;position:relative}
 .wm{position:absolute;top:0;left:0;margin:8px;padding:2px 8px;border-radius:4px;background:rgba(0,0,0,.55);color:#fff;font-size:.8rem;font-weight:600;pointer-events:none}.top .wm{left:auto;right:0}.slider .top img{width:100%;max-width:none}
-.slider input{grid-row:2;width:0;min-width:100%;margin:6px 0 0}
+.slider input{grid-row:2;width:0;min-width:100%;margin:0;padding:8px 0;position:sticky;bottom:0;z-index:1;background:var(--card)}
 .side{display:flex;gap:10px}.side figure{margin:0;flex:1 1 0;min-width:0}figcaption{font-size:.8rem;color:var(--muted)}
 .stills{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.stills img{max-width:30%}
 .item.reviewed .modes,.item.reviewed .view,.item.reviewed h3,.item.reviewed .stills,.item.reviewed video,.item.reviewed .reason{display:none}
@@ -505,6 +505,7 @@ def selftest():
         sp = json.load(open(p)); sp["changes"] = [{"id": "c", "text": "home copy", "items": [{"screen": "home"}]}]; json.dump(sp, open(p, "w"))
         build(p, o7d)
         assert 'position:absolute' not in h.split('.slider .top{')[1].split('}')[0] and 'grid-area:1/1' in h
+        assert 'position:sticky;bottom:0' in h.split('.slider input{')[1].split('}')[0]
         # stale media: re-capturing home lists the old home files
         old = next(i for i in json.load(open(os.path.join(out, "history.json")))["items"] if i["screen"] == "home")
         stale = build(spec([full("home", "intentional")]), out)["stale_media"]

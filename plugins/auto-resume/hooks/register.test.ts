@@ -114,3 +114,96 @@ test('a new prompt typed by the person ends the one-task arming', async ($, on) 
   await clock.advance(4 * 60 * MIN)
   expect(sent).toEqual(['task', 'something else'])
 })
+
+const run = ($: Engine, args = '') => $.command.run({ command: 'auto-resume', args, origin: composer } as never)
+
+test('bare /auto-resume reports off, on for the task, on for every session, and the next send', async ($, on) => {
+  engine(on)
+  await start($)
+  expect((await run($)).text).toBe('Auto-resume is off.')
+
+  await $.prompt.submit({ text: 'task /auto-resume', wait: false, origin: composer })
+  expect((await run($)).text).toBe('Auto-resume is on for the current task.')
+
+  await run($, 'on')
+  expect((await run($)).text).toBe('Auto-resume is on for every session.')
+
+  await limit($)
+  expect((await run($)).text).toMatch(/^Auto-resume is on for every session\. Next "continue" at .+\.$/)
+})
+
+test('on/off confirm and are case-insensitive; an invalid arg shows usage and changes nothing', async ($, on) => {
+  const { clock, sent } = engine(on)
+  await start($)
+  expect((await run($, ' ON ')).text).toBe('Auto-resume is on for every session.')
+  expect((await run($, 'maybe')).text).toBe('Usage: /auto-resume on | off, or add /auto-resume to a prompt.')
+  expect((await run($)).text).toBe('Auto-resume is on for every session.') // still on
+  await limit($)
+  await clock.advance(4 * 60 * MIN)
+  expect(sent).toEqual(['continue'])
+})
+
+test('/auto-resume typed alone as a prompt does not arm', async ($, on) => {
+  const { clock, sent } = engine(on)
+  await start($)
+  await $.prompt.submit({ text: '/auto-resume', command: { name: 'auto-resume', args: '' }, wait: false, origin: composer } as never)
+  expect((await run($)).text).toBe('Auto-resume is off.')
+  await limit($)
+  await clock.advance(4 * 60 * MIN)
+  expect(sent).toEqual(['/auto-resume'])
+})
+
+test('a token inside a word is not a token', async ($, on) => {
+  const { clock, sent } = engine(on)
+  await start($)
+  await $.prompt.submit({ text: 'see docs/auto-resume.md and x/auto-resume', wait: false, origin: composer })
+  await limit($)
+  await clock.advance(4 * 60 * MIN)
+  expect(sent).toEqual(['see docs/auto-resume.md and x/auto-resume'])
+})
+
+test('a StopFailure that is not rate_limit is ignored', async ($, on) => {
+  const { clock, sent } = engine(on)
+  await start($)
+  await run($, 'on')
+  await $.classic.StopFailure({ error: 'server_error' } as never)
+  await clock.advance(4 * 60 * MIN)
+  expect(sent).toEqual([])
+  expect((await run($)).text).toBe('Auto-resume is on for every session.') // nothing scheduled
+})
+
+test('a second StopFailure reschedules instead of doubling the send', async ($, on) => {
+  const { clock, sent } = engine(on)
+  await start($)
+  await run($, 'on')
+  await limit($)
+  await clock.advance(60 * MIN)
+  await limit($) // same reset time again: still one send
+  await clock.advance(4 * 60 * MIN)
+  expect(sent).toEqual(['continue'])
+  await clock.advance(4 * 60 * MIN)
+  expect(sent).toEqual(['continue'])
+})
+
+test('a pending send is restored after a reload (session.start again, same store)', async ($, on) => {
+  const { clock, sent } = engine(on)
+  await start($)
+  await run($, 'on')
+  await limit($)
+  await clock.advance(60 * MIN)
+  await start($) // the reload
+  expect((await run($)).text).toMatch(/Next "continue" at/)
+  await clock.advance(4 * 60 * MIN)
+  expect(sent).toEqual(['continue'])
+})
+
+test('/auto-resume off cancels a pending send', async ($, on) => {
+  const { clock, sent } = engine(on)
+  await start($)
+  await run($, 'on')
+  await limit($)
+  await run($, 'off')
+  expect((await run($)).text).toBe('Auto-resume is off.')
+  await clock.advance(4 * 60 * MIN)
+  expect(sent).toEqual([])
+})

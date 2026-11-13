@@ -49,7 +49,7 @@ This step is optional. It shows you what you will get before anything is planned
 
 What happens on a shortlist:
 1. It reads your ratings and notes the same way `plan` does. App pages with no Love card are left out and named.
-2. It asks once: the model, and per app page "The real page, restyled" (keeps the page's sections, fields and controls) or "Free redesign" (may rearrange the page and lists every structural change).
+2. It asks once: the model, and per app page "Shallow redesign" (keeps the page's structure: a table stays a table, and every section, field and control stays), "Deep redesign" (keeps its features and data, but may present them differently, such as a table turned into cards or a graph) or "Full redesign" (anything may change). Each page of the mockup lists its deliberate changes.
 3. A subagent builds each app page in the look of your Love designs, with made-up sample data. It recreates the style in its own HTML and CSS and never reuses the source's images, logos or copy.
 4. The skill checks every page at desktop, tablet and phone width, then publishes one Artifact titled "<app> Design Mockup": a tab per app page and a Desktop / Tablet / Phone switch.
 
@@ -83,7 +83,7 @@ What happens on a shortlist:
 
 What happens on a mockup (running `plan` on it means you accept it):
 1. If a comment thread on the mockup is still open, it stops, lists the open threads with their app page, and asks whether to revise the mockup first (`/design-inspiration:mockup <mockup url>`) or plan anyway.
-2. It reads each app page's mockup, its mode (restyled or free redesign) and its listed structural changes, and follows the mockup's link back to the shortlist for the brief and the credits of your Love designs.
+2. It reads each app page's mockup, its mode (shallow, deep or full redesign) and its listed deliberate changes, and follows the mockup's link back to the shortlist for the brief and the credits of your Love designs.
 3. It spawns one planning subagent with the model you chose. The subagent treats the mockup as the target, reads your app's UI code, and plans to build each page in your own code: it reuses your existing components and tokens where they give the same look, turns the mockup's width breakpoints into your app's media queries, and says plainly where the real result will differ from the mockup.
 
 Output: the plan, printed in chat. Nothing is written to the repo, and nothing is implemented. To build it, hand the plan to `/plan-tools:plan-implement-complete` or implement it yourself.

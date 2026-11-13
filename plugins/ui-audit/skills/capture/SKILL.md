@@ -113,7 +113,7 @@ Why: reviewers only want screens that changed, with the surprising ones first.
 ### 6. Build and publish
 Why: the audit is only useful if reviewers can open it. Both targets are private (artifact until shared, Cloudflare behind a password), so publishing needs no confirmation.
 Build exits 1 when the self-check fails (a card captured at another commit than HEAD that is not a valid reuse, a reuse after the base moved (fix: full sweep, rebuild), or a change with no card and no `not_captured`) and writes nothing. Read stderr and fix: recapture, add the missing state, or write `not_captured`; then rebuild. A quoted string missing from the code is not a failure: the card becomes `needs_review`, so fix the reason if the quote was wrong.
-The page shows each card's audit history, and a per-browser "Mark reviewed" that clears when the card changes in a later audit.
+The page shows each card's audit history, and a per-browser "Mark reviewed" that clears when the card changes in a later audit, and a per-browser "Skip" that collapses a card to its title row (also clears when the card changes).
 Read `references/hosting.md` and follow it: it covers choosing the target, fetching the previous `history.json`, building, publishing, and the fallback (local `index.html` plus `report.md`).
 
 ### 7. Record and report

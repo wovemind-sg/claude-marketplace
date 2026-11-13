@@ -254,12 +254,15 @@ button[aria-pressed=true]{outline:2px solid var(--fg)}
 .modes{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}
 .view img,video{max-width:100%;height:auto;display:block}.view img{width:auto;max-height:calc(var(--fit,95vh) * var(--z,1))}
 .zoom{display:flex;gap:6px;margin-left:auto}
-.slider{display:grid;position:relative;width:fit-content;max-width:100%;touch-action:pan-y}
-.slider>img,.slider>.wm,.slider .top{grid-area:1/1}.slider .top{overflow:hidden;position:relative}
-.wm{position:absolute;top:0;left:0;margin:8px;padding:2px 8px;border-radius:4px;background:rgba(0,0,0,.55);color:#fff;font-size:.8rem;font-weight:600;pointer-events:none}.top .wm{left:auto;right:0}.slider .top img{width:100%;max-width:none}
+.slider{display:grid;position:relative;width:fit-content;max-width:100%;touch-action:pan-y;user-select:none;--p:50%}
+.view .slider img{max-height:none}.view .slider>img{width:var(--sw,auto);max-width:100%;height:auto}
+.slider>img,.slider>.wm,.slider .top,.slider .dv{grid-area:1/1}.slider .top{overflow:hidden;position:relative;clip-path:inset(0 0 0 var(--p))}
+.slider .dv{width:2px;margin-left:calc(var(--p) - 1px);background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.5);pointer-events:none}.slider.narrow .lf{display:none}
+.wm{position:absolute;top:0;left:0;margin:8px;padding:2px 8px;border-radius:4px;background:rgba(0,0,0,.55);color:#fff;font-size:.8rem;font-weight:600;pointer-events:none}.top .wm{left:auto;right:0}.view .slider .top img{width:100%;max-width:100%;height:auto}
 .slider input{grid-row:2;width:0;min-width:100%;margin:0;padding:8px 0;position:sticky;bottom:0;z-index:1;background:var(--card)}
 .side{display:flex;gap:10px}.side figure{margin:0;flex:1 1 0;min-width:0}figcaption{font-size:.8rem;color:var(--muted)}
 .stills{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.stills img{max-width:30%}
+.sk{float:right;font-size:16px}.item.skipped>:not(h2){display:none}
 .item.reviewed .modes,.item.reviewed .view,.item.reviewed h3,.item.reviewed .stills,.item.reviewed video,.item.reviewed .reason{display:none}
 .empty{color:var(--muted)}#summary{overflow-wrap:anywhere;max-height:30vh;overflow-y:auto;white-space:pre-line}ul{padding-left:1.2em}
 </style></head><body>
@@ -291,7 +294,7 @@ function body(i,mode){
  if(headOnly||!i.base_img)return `<p class="meta">Head only: no baseline captured, nothing to compare.</p>${img(i.head_img,'head')}`;
  if(mode==='side')return `<div class="side"><figure>${img(i.base_img,'before')}<figcaption>Before</figcaption></figure><figure>${img(i.head_img,'after')}<figcaption>After</figcaption></figure></div>`;
  if(mode==='diff')return i.diff_img?`${img(i.diff_img,'diff overlay')}<div class="meta">Diff overlay</div>`:'<p class="empty">No diff overlay for this item.</p>';
- return `<div class="slider">${img(i.base_img,'before')}<span class="wm">Before</span><div class="top" style="clip-path:inset(0 0 0 50%)">${img(i.head_img,'after')}<span class="wm">After</span></div><input type="range" min="0" max="100" value="50" aria-label="Before/after slider"></div>`}
+ return `<div class="slider">${img(i.base_img,'before')}<span class="wm">B<span class="lf">efore</span></span><div class="top">${img(i.head_img,'after')}<span class="wm">A<span class="lf">fter</span></span></div><i class="dv"></i><input type="range" min="0" max="100" value="50" aria-label="Before/after slider"></div>`}
 function motion(i){let h='';if(i.clips&&i.clips.length)h+=i.clips.map(c=>`<video controls muted loop playsinline src="${E(c)}"></video>`).join('');
  const s=i.stills||{};if(Object.keys(s).length)h+=`<div class="stills">`+['start','mid','end'].filter(k=>s[k]).map(k=>`<figure style="margin:0">${img(s[k],k)}<figcaption>${k}</figcaption></figure>`).join('')+`</div>`;return h?`<h3>Motion</h3>${h}`:''}
 function render(){
@@ -300,17 +303,28 @@ function render(){
  $('#items').innerHTML=list.length?'':'<p class="empty">No items match.</p>';
  list.forEach(i=>{const d=document.createElement('section');d.className='item';let mode=$('#fm').value;
   const pct=i.changed_pct!=null?` · ${(+i.changed_pct).toFixed(2)}% changed`:'';
-  d.innerHTML=`<h2>${E(i.screen)} <span class="tag ${E(i.classification)}">${E(i.classification.replace('_',' '))}</span>${i.changed_in===D.runs.length?'<span class="tag">Changed in this audit</span>':''}</h2><div class="meta">${E(i.platform)} · ${E(i.viewport)} · ${E(i.state)}${pct}</div><div class="meta">Captured at ${E((i.captured_sha||'').slice(0,8))}${i.reused?' · reused, files unchanged':''}</div>${(i.also_at||[]).length?`<div class="meta">Also at: ${i.also_at.map(E).join(', ')}</div>`:''}<div class="meta">Audit history: ${(i.history||[]).map((h,k)=>`#${E(h.run)} ${E((h.head_sha||'').slice(0,8))} ${k?(h.changed?'changed':'unchanged'):'new'}`).join(' · ')}</div><p class="reason">${E(i.reason)}</p><button class="rv"></button> <span class="meta rvn"></span>`+
+  d.innerHTML=`<h2><button class="sk"></button>${E(i.screen)} <span class="tag ${E(i.classification)}">${E(i.classification.replace('_',' '))}</span>${i.changed_in===D.runs.length?'<span class="tag">Changed in this audit</span>':''}</h2><div class="meta">${E(i.platform)} · ${E(i.viewport)} · ${E(i.state)}${pct}</div><div class="meta">Captured at ${E((i.captured_sha||'').slice(0,8))}${i.reused?' · reused, files unchanged':''}</div>${(i.also_at||[]).length?`<div class="meta">Also at: ${i.also_at.map(E).join(', ')}</div>`:''}<div class="meta">Audit history: ${(i.history||[]).map((h,k)=>`#${E(h.run)} ${E((h.head_sha||'').slice(0,8))} ${k?(h.changed?'changed':'unchanged'):'new'}`).join(' · ')}</div><p class="reason">${E(i.reason)}</p><button class="rv"></button> <span class="meta rvn"></span>`+
   `<div class="modes">${headOnly||!i.base_img?'':[['slider','Slider'],['side','Side by side'],['diff','Diff overlay']].map(([k,l])=>`<button data-m="${k}" aria-pressed="${k===mode}">${l}</button>`).join('')}<div class="zoom"><button data-z="-1" aria-label="Decrease image height">−</button><button data-z="0">Fit to screen</button><button data-z="1" aria-label="Increase image height">+</button></div></div><div class="view"></div>`+motion(i);
-  const rk=`ui-audit-reviewed:${m.project||''}:${m.pr}:${i.screen}|${i.platform}|${i.viewport}|${i.state}`,rb=d.querySelector('.rv'),cv=String(i.changed_in);
-  const isRv=()=>{try{return localStorage.getItem(rk)===cv}catch(e){return false}};
-  const showRv=()=>{const r=isRv();d.classList.toggle('reviewed',r);rb.textContent=r?'Reviewed \u2014 unmark':'Mark reviewed'};
-  rb.onclick=()=>{try{isRv()?localStorage.removeItem(rk):localStorage.setItem(rk,cv);d.querySelector('.rvn').textContent=''}catch(e){d.querySelector('.rvn').textContent="Can't save: browser storage blocked"}showRv()};showRv();
-  const v=d.querySelector('.view');const draw=()=>{v.innerHTML=body(i,mode);const r=v.querySelector('input');if(r)r.oninput=()=>v.querySelector('.top').style.clipPath=`inset(0 0 0 ${r.value}%)`};
+  const tog=(p,cls,btn,on,off)=>{const k=`${p}:${m.project||''}:${m.pr}:${i.screen}|${i.platform}|${i.viewport}|${i.state}`,cv=String(i.changed_in);
+   const is=()=>{try{return localStorage.getItem(k)===cv}catch(e){return false}};
+   const show=()=>{const r=is();d.classList.toggle(cls,r);btn.textContent=r?on:off};
+   btn.onclick=()=>{try{is()?localStorage.removeItem(k):localStorage.setItem(k,cv);d.querySelector('.rvn').textContent=''}catch(e){d.querySelector('.rvn').textContent="Can't save: browser storage blocked"}show()};show()};
+  tog('ui-audit-reviewed','reviewed',d.querySelector('.rv'),'Reviewed \u2014 unmark','Mark reviewed');tog('ui-audit-skipped','skipped',d.querySelector('.sk'),'Skipped \u2014 show','Skip');
+  const v=d.querySelector('.view');const draw=()=>{v.innerHTML=body(i,mode);const s=v.querySelector('.slider');if(!s)return;const r=s.querySelector('input');
+   const set=p=>{p=Math.min(100,Math.max(0,p));s.style.setProperty('--p',p+'%');r.value=p},mv=e=>{const b=s.getBoundingClientRect();set((e.clientX-b.left)/b.width*100)};
+   r.oninput=()=>set(+r.value);
+   s.onpointerdown=e=>{if(e.target===r)return;s.setPointerCapture(e.pointerId);mv(e);e.preventDefault()};
+   s.onpointermove=e=>{if(s.hasPointerCapture(e.pointerId))mv(e)};
+   new ResizeObserver(()=>s.classList.toggle('narrow',s.offsetWidth<180)).observe(s)};
   d.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{mode=b.dataset.m;d.querySelectorAll('[data-m]').forEach(x=>x.setAttribute('aria-pressed',x===b));draw()});
   // Fit: card header + image + slider/caption row (~40px) + card padding fits the window height.
   d.fit=()=>d.style.setProperty('--fit',Math.max(120,innerHeight-(v.getBoundingClientRect().top-d.getBoundingClientRect().top)-60)+'px');
-  let z=1;d.querySelectorAll('[data-z]').forEach(b=>b.onclick=()=>{const k=+b.dataset.z;z=k?Math.max(.25,z*(k>0?1.25:.8)):1;d.style.setProperty('--z',z)});
+  let z=1;d.querySelectorAll('[data-z]').forEach(b=>b.onclick=()=>{const k=+b.dataset.z,im=mode==='slider'&&v.querySelector('.slider>img');
+   if(im){// slider sizes by width so before and after stay aligned; full width = natural width capped at the card
+    const sw=w=>{const cap=Math.min(v.clientWidth,im.naturalWidth);w<cap?d.style.setProperty('--sw',w+'px'):d.style.removeProperty('--sw')};
+    if(!k){const f=()=>sw(parseFloat(d.style.getPropertyValue('--fit'))*im.naturalWidth/im.naturalHeight);im.naturalWidth?f():im.addEventListener('load',f,{once:true})}
+    else sw(im.getBoundingClientRect().width*(k>0?1.25:.8));return}
+   z=k?Math.max(.25,z*(k>0?1.25:.8)):1;d.style.setProperty('--z',z)});
   draw();$('#items').appendChild(d);d.fit()})}
 addEventListener('resize',()=>document.querySelectorAll('.item').forEach(d=>d.fit()));
 render();
@@ -506,6 +520,7 @@ def selftest():
         build(p, o7d)
         assert 'position:absolute' not in h.split('.slider .top{')[1].split('}')[0] and 'grid-area:1/1' in h
         assert 'position:sticky;bottom:0' in h.split('.slider input{')[1].split('}')[0]
+        assert all(x in h for x in ('.view .slider img{max-height:none}', 'setPointerCapture', '.slider.narrow .lf{display:none}', 'ui-audit-skipped'))
         # stale media: re-capturing home lists the old home files
         old = next(i for i in json.load(open(os.path.join(out, "history.json")))["items"] if i["screen"] == "home")
         stale = build(spec([full("home", "intentional")]), out)["stale_media"]

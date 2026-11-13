@@ -10,9 +10,9 @@
   - Repeat one tab <button> and one <section class="mock"> per app page, in the same order. data-page = the shortlist's page slug.
     The tab label and the section's h2 are the same app page name. Comments are tied to a page by the section id page-<slug>
     in their anchor first, and by the nearest heading (this h2, or a heading inside the fragment) second.
-  - data-mode = "restyle" (the real page, restyled) or "redesign" (free redesign). Every section keeps <div class="diffs">, one <li>
-    per thing the mockup cannot show faithfully ("None" when there is none). A redesign section also keeps <div class="changes">
-    (heading "Structural changes", then a <ul> with one <li> per deliberate structural change); a restyle section drops the whole block.
+  - data-mode = "shallow" (shallow redesign), "deep" (deep redesign) or "full" (full redesign). Every section keeps both blocks:
+    <div class="changes"> (heading "Deliberate changes", then a <ul> with one <li> per deliberate change beyond the look) and
+    <div class="diffs"> (one <li> per thing the mockup cannot show faithfully). Each list holds a single "None" when it is empty.
   - PAGE_FRAGMENT = the builder's fragment for that page: one <style> whose rules all sit inside one nested block
     .mock[data-page="<slug>"] .viewport { ... }, so pages cannot restyle each other, with breakpoints written as
     @container viewport (min-width: ...) queries (the .viewport is the container), then the page markup. The fragment sets its own
@@ -104,9 +104,9 @@ main[data-w="phone"] .viewport{max-width:390px}
       <span class="mode">{{PAGE_MODE_LABEL}}</span>
     </div>
     <div class="changes">
-      <h3>Structural changes</h3>
+      <h3>Deliberate changes</h3>
       <ul>
-        <li>{{STRUCTURAL_CHANGE}}</li>
+        <li>{{DELIBERATE_CHANGE}}</li>
       </ul>
     </div>
     <div class="diffs">

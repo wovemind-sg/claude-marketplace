@@ -30,6 +30,7 @@ Our zen:
 | [plan-tools](plugins/plan-tools) | plan-driven workflow: bootstrap a new web or mobile app, split plans into context-sized sessions, and drive them to pull requests. | `claude plugin install plan-tools@wovemind` |
 | [explain](plugins/explain) | explains code and concepts in the current project, building on what you already know. | `claude plugin install explain@wovemind` |
 | [session-overview](plugins/session-overview) | a side pane (`/sessions`) listing every open Claude Code session on the machine, grouped by project. | `claude plugin install session-overview@wovemind` |
+| [auto-resume](plugins/auto-resume) | types `continue` into a session stopped by the usage limit once the limit resets: always (`/auto-resume on`) or for one prompt (`/auto-resume` in it). | `claude plugin install auto-resume@wovemind` |
 
 ### UI quality
 

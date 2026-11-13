@@ -1,0 +1,9 @@
+{
+  "name": "auto-resume",
+  "description": "Sends \"continue\" to a session stopped by the usage limit once the limit resets: /auto-resume on|off, or add /auto-resume to one prompt.",
+  "version": "0.1.0",
+  "author": {"name": "Wovemind"},
+  "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/auto-resume#readme",
+  "repository": "https://github.com/wovemind-sg/claude-marketplace",
+  "license": "MIT"
+}

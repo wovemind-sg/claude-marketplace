@@ -70,6 +70,7 @@ for f in \
   plugins/ui-audit/skills/capture/scripts/dep_hash.py \
   plugins/ui-audit/skills/capture/scripts/diff_images.py \
   plugins/ui-audit/skills/capture/scripts/build_report.py \
+  plugins/ui-audit/skills/capture/scripts/capture.py \
   plugins/compliance-audit/skills/audit/scripts/detect_signals.py \
   plugins/compliance-audit/skills/audit/scripts/license_scan.py \
   plugins/compliance-audit/skills/apply/scripts/parse_cards.py \

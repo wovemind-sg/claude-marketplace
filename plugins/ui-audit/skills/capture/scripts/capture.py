@@ -4,7 +4,7 @@
 Each session runs one `run-code` call that loops over its jobs: fresh goto of the route, dark setup, freeze CSS,
 fonts and network idle, steps, full-page screenshot (the routine in references/web.md). Writes
 <work>/<side>/<screen>/<viewport>/<state>[--dark].png plus <state>[--dark].txt (page text) and prints JSON:
-written, failed [{session, screen, state, key, error}], redirects [{screen, route, to}], not_found [{side, screen, route}]
+written, failed [{session, screen, state, key, error}], redirects [{side, screen, route, to}], not_found [{side, screen, route}]
 (route answered 404, no shot, not a failure), final_urls {<side>/<screen>/<viewport>/<state>: url},
 truncated (shots cut at 16000 px). Exit 1 when anything failed.
 --only takes output stems (<screen>/<viewport>/<state>[--dark]), the same form as failed entries' keys.
@@ -274,7 +274,7 @@ def collect(sessions, results, routes):
                 rep["final_urls"][f"{sess['side']}/{j['key']}"] = r["url"]
                 to = redirect_target(r["url"], j["screen"], routes)
                 if to:
-                    red = {"screen": j["screen"], "route": j["route"], "to": to}
+                    red = {"side": sess["side"], "screen": j["screen"], "route": j["route"], "to": to}
                     if red not in rep["redirects"]:
                         rep["redirects"].append(red)
                     if os.path.exists(png):
@@ -435,7 +435,7 @@ def selftest():
         assert "1000 px wide" in failed[("head-desktop", "plain/desktop/default")]
         assert not os.path.exists(os.path.join(w, "head/plain/desktop/default.png"))  # failed shot removed
         assert not any("dark_mode" in e for e in failed.values()), failed  # base matching light is fine
-        assert rep["redirects"] == [{"screen": "old", "route": "/old.html", "to": "verify"}], rep["redirects"]
+        assert rep["redirects"] == [{"side": "head", "screen": "old", "route": "/old.html", "to": "verify"}], rep["redirects"]
         assert not os.path.exists(os.path.join(w, "head/old/desktop/default.png"))
         assert not os.path.exists(os.path.join(w, "head/old/desktop/default--dark.png"))
         assert os.path.exists(os.path.join(w, "base/old/desktop/default.png"))
@@ -452,6 +452,13 @@ def selftest():
         assert not any("wrong method" in f["error"] for f in rep["failed"])  # base-only call cannot judge
         rep = collect({"head-desktop": s["head-desktop"]}, {"head-desktop": "session head-desktop: boom"}, routes)
         assert len(rep["failed"]) == len(s["head-desktop"]["jobs"]) and not rep["written"]
+        # base-only redirect (the page moved at head): entry says side base, head shot stays
+        br = [dict(r, url="http://b:2/verify.html") if r["key"] == "old/desktop/default" else r for r in results["base-desktop"]]
+        Image.new("RGB", (1440, 50)).save(os.path.join(w, "head/old/desktop/default.png"))
+        rep = collect({"base-desktop": sel["base-desktop"]}, {"base-desktop": br}, routes)
+        assert rep["redirects"] == [{"side": "base", "screen": "old", "route": "/old.html", "to": "verify"}], rep
+        assert not os.path.exists(os.path.join(w, "base/old/desktop/default.png"))
+        assert os.path.exists(os.path.join(w, "head/old/desktop/default.png"))
     print(json.dumps({"selftest": "ok"}))
 
 

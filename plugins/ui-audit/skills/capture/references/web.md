@@ -14,7 +14,7 @@ It opens one playwright-cli session per side x viewport x theme (`head-mobile-da
 
 - `written`: PNG paths, each checked to exist at the viewport width.
 - `failed`: `{session, screen, state, key, error}`. A job that throws (bad selector, timeout, unknown step shape) does not stop the others. A dark session fails when its method left the page background and text color unchanged on every side (one side unchanged is fine: the base may predate dark mode; a base-only call never fails on this). Rerun fixed items with `--only <key> ...`. Exit code 1 when anything failed.
-- `redirects`: `{screen, route, to}` for default states that landed on another selected screen's route (no image kept).
+- `redirects`: `{side, screen, route, to}` for default states that landed on another selected screen's route (no image kept on that side). Only head entries go into the spec `redirects` (without `side`); a base-only one is handled as in SKILL.md step 4.
 - `not_found`: `{side, screen, route}` for routes that answered 404 (no image; not a failure).
 - `final_urls` and `truncated` (shots cut at 16000 px; say so in the report).
 

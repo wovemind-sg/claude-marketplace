@@ -99,7 +99,7 @@ Why: pixels are the evidence. Base and head must be captured under identical con
 - Native (Capacitor, Expo/React Native): follow `references/native.md`. Tell the user it is untested on real apps.
 - Always capture base fresh. In `head-only` mode skip base entirely.
 - Layout everywhere: `<side>/<screen>/<viewport>/<state>.png`. Dark captures are the same states with a `--dark` suffix (`default--dark.png`), so the scripts, history and audit page need no theme support: a dark item is just a state. How to switch themes is in `references/web.md`.
-- `capture.py` saves each state's page text as `<state>.txt` next to its PNG, for the reasons in step 5. A default state whose final URL is another selected screen's route is not kept: the script lists it in `redirects` as `{screen, route, to}`. Copy those into the spec `redirects` and add the config suggestion "merge <screen> into <target>".
+- `capture.py` saves each state's page text as `<state>.txt` next to its PNG, for the reasons in step 5. A default state whose final URL is another selected screen's route is not kept: the script lists it in `redirects` as `{side, screen, route, to}`. Copy each `side: head` entry's `screen`, `route` and `to` into the spec `redirects` and add the config suggestion "merge <screen> into <target>". A `side: base` entry with no head entry for that screen means the page moved at head: it gets no spec redirect and no merge suggestion; its head shot has no base image, so the card is `added` and its reason says the route redirected at base.
 - Sources of flakiness (animations, fonts, clocks, random data) are handled in `references/web.md`. If a screen cannot be made stable, mask it in config rather than ignoring noisy diffs.
 
 ### 5. Compare and classify

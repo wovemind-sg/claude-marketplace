@@ -91,10 +91,12 @@ already exists and belongs to another server, ask before overwriting.
   locally in their own terminal (the token then never passes through Claude):
 
   ```bash
-  bash -c 'umask 077; read -rs -p "Token: " t && printf "%s\n" "$t" > ~/.ntfy.new && mv ~/.ntfy.new ~/.ntfy'
+  bash -c 'umask 077; read -rs -p "Token: " t && [[ $t == tk_* ]] && printf "%s\n" "$t" > ~/.ntfy.new && mv ~/.ntfy.new ~/.ntfy || echo " not saved: expected tk_..."'
   ```
 
-  (`bash -c` because zsh's `read -p` means something else.)
+  (`bash -c` because zsh's `read -p` means something else. Anything not
+  starting with `tk_`, such as an empty line or the password, leaves an
+  existing `~/.ntfy` untouched.)
 
   Then check it with `grep -q '^tk_' ~/.ntfy && echo ok`.
 
@@ -136,7 +138,8 @@ session; for the test below use the values the user just entered.
 Send it only if `~/.ntfy` is absent or holds the token for `<server>`:
 `ntfy-send` sends that token to whatever server it is given. If the user
 kept a token for another server (declined to move or overwrite it in step 2
-or 4), skip the test and say why.
+or 4), skip the test and say why, and warn that every later push to
+`<server>` would send that token too until `~/.ntfy` is moved.
 
 ```bash
 ntfy-send -s <server> -o <topic> -t "ntfy configured" -- "Test from Claude Code"

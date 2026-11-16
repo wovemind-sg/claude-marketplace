@@ -250,6 +250,10 @@ def collect(sessions, results, routes):
             def fail(msg):
                 rep["failed"].append({"session": name, "screen": j["screen"], "state": j["state"], "key": j["key"],
                                       "error": msg})
+                # diff_images.py walks the tree, so a failed item's shot (or one left from an earlier run) must go
+                for p in (j["out"], j["out"][:-4] + ".txt"):
+                    if os.path.exists(p):
+                        os.remove(p)
             if r.get("error"):
                 fail(r["error"])
                 continue
@@ -429,6 +433,7 @@ def selftest():
         assert "unknown step shape" in failed[("head-desktop", "login/desktop/bad")]
         assert failed[("head-desktop", "home/desktop/menu")].startswith("Timeout")
         assert "1000 px wide" in failed[("head-desktop", "plain/desktop/default")]
+        assert not os.path.exists(os.path.join(w, "head/plain/desktop/default.png"))  # failed shot removed
         assert not any("dark_mode" in e for e in failed.values()), failed  # base matching light is fine
         assert rep["redirects"] == [{"screen": "old", "route": "/old.html", "to": "verify"}], rep["redirects"]
         assert not os.path.exists(os.path.join(w, "head/old/desktop/default.png"))

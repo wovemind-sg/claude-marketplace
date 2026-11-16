@@ -106,6 +106,8 @@ A later commit that only touches `about.html` re-captures `about` alone.
 
 - `skills/capture/SKILL.md`: the workflow.
 - `skills/capture/references/`: `config-schema.md`, `web.md`, `native.md`, `ripple-reasoning.md`, `hosting.md`.
-- `skills/capture/scripts/`: `dep_hash.py`, `diff_images.py`, `build_report.py` (each has `--help` and `--selftest`).
+- `skills/capture/scripts/`: `dep_hash.py`, `diff_images.py`, `build_report.py`, `capture.py` (each has `--help` and `--selftest`).
+
+Web capture runs in one scripted pass: `capture.py` replays every screen, state, viewport and theme of base and head in parallel playwright-cli sessions, so the model only handles recipes that fail, ripple reasoning and classification.
 
 Native capture (Capacitor, Expo/React Native) follows the documented simulator and emulator commands but has not been tried on a real app yet.

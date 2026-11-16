@@ -15,10 +15,11 @@ Scripts live in `${CLAUDE_SKILL_DIR}/scripts/` (if that variable is not set, the
 | `scripts/dep_hash.py` | which screens changed since a sha, shared-file ripple flags, new hashes |
 | `scripts/diff_images.py` | pixel diff base vs head with masks, overlay images, changed % |
 | `scripts/build_report.py` | audit `index.html`, `report.md`, `history.json` from a spec |
+| `scripts/capture.py` | web capture of every screen, state, viewport and theme for base and head in one parallel pass |
 
 References, read only when the step says so:
 - `references/config-schema.md`: config and manifest schemas, first-run interview, screen discovery, token-saving rules (step 0 and whenever you edit them).
-- `references/web.md`: playwright-cli capture flow, viewports and mobile emulation, stable stills, states, motion clips (step 4 for web).
+- `references/web.md`: the `capture.py` call and the playwright-cli steps it runs, viewports and mobile emulation, stable stills, states, motion clips (step 4 for web).
 - `references/native.md`: Capacitor/Expo simulator and emulator capture (step 4 when a native platform is selected).
 - `references/ripple-reasoning.md`: finding screens the dependency graph misses (step 3).
 - `references/hosting.md`: choosing the target, publishing as a Claude artifact or to Cloudflare Pages, history migration, fallback, PR link format (step 6).
@@ -31,10 +32,10 @@ Never commit or push anything yourself, with one exception: step 0 may commit th
 
 Capture runs are long and mostly repetitive, and every screenshot, snapshot and shell output lands in context. Spawn subagents with `model: haiku` for the mechanical parts so the main session keeps only the results. Haiku is reliable when the task is a fixed recipe with a checkable output; it is not reliable at open-ended judgment, so keep that yourself (or use Sonnet).
 
+Web replay is not delegated: it is one `capture.py` call (step 4), which also checks file existence and widths.
+
 Use Haiku (one subagent per platform, or per batch of screens) for:
-- Replaying recorded recipes from the manifest in step 4: start the app, set viewport and emulation, visit each screen/state, save PNGs to the agreed layout, record clips for flagged motion items.
 - Native boot/install/launch/screenshot loops from `references/native.md`.
-- Checking that every expected file exists with the expected viewport width.
 - Running the scripts in steps 3 and 5 when you only need their JSON, and assembling the spec from `diff_images.py` output for items you have already classified.
 
 Keep on the main model (or Sonnet), never Haiku:
@@ -64,7 +65,7 @@ Why: incremental runs should only look at what changed since the last audit.
 - Record `BASE`, `LAST`, `HEAD`, and whether this is incremental. Also determine the PR number (`gh pr view --json number`, or from `--pr`); it is needed to publish.
 
 ### 2. Ask the per-run questions
-Why: the user knows which platforms and comparison they care about; the cost differs a lot. Skip a question only when the argument already answers it (`--platforms`, `--baseline`, `--publish`, `--themes`). Use AskUserQuestion. With `--unattended`, ask nothing: use the arguments, else the config and the defaults in `references/config-schema.md`, and do not offer dark mode (`dark_mode` stays absent, so a later attended run offers it).
+Why: the user knows which platforms and comparison they care about; the cost differs a lot. Skip a question only when the argument already answers it (`--platforms`, `--baseline`, `--publish`, `--themes`). Ask all the remaining questions together in one AskUserQuestion call (it takes at most 4; when 5 remain, ask the viewports one in a second call). With `--unattended`, ask nothing: use the arguments, else the config and the defaults in `references/config-schema.md`, and do not offer dark mode (`dark_mode` stays absent, so a later attended run offers it).
 - **Platforms**, only if more than one is enabled in config: which to capture this run (for example web, iOS simulator, Android emulator). Native captures are slower, so let the user pick.
 - **Baseline mode**, always (default `base+head`):
   - `base+head`: capture the old version and the new version of every affected screen, then show only screens that really changed, side by side with a diff overlay. This is the default because reviewers see exactly what moved, and it is the only mode that can find unintended changes.
@@ -92,12 +93,13 @@ Why: capturing everything is slow and noisy; capturing too little hides ripples.
 
 ### 4. Capture
 Why: pixels are the evidence. Base and head must be captured under identical conditions or the diff is noise.
-- Delegate the replay to Haiku subagents as described above; capture new or broken recipes yourself.
-- Web: follow `references/web.md` (base from a git worktree at `BASE`, head from the working tree, same seed and storage state, desktop and mobile, states from the manifest recipes, motion rules).
+- Web: follow `references/web.md`. Start the base server (git worktree at `BASE`) and the head server (working tree) together, same seed and storage state, then run `capture.py` once with both `--side` values; it captures every selected screen, state, viewport and theme in parallel. It can take minutes: run it with a long Bash `timeout` or in the background.
+- On `failed` entries: take a snapshot to fix the recipe (`references/web.md` "States"), update the manifest, and rerun only those items with `--only <key> ...` (the `key` of each failed entry). A base failure on a state whose feature does not exist at `BASE` is expected: treat that item as `added`. `not_found` lists routes that answered 404 (no shot taken; on base, the page did not exist yet, see step 3.5). Motion clips are captured by hand (`references/web.md` "Motion").
+- Native: delegate the boot and screenshot loops to Haiku subagents as described above.
 - Native (Capacitor, Expo/React Native): follow `references/native.md`. Tell the user it is untested on real apps.
 - Always capture base fresh. In `head-only` mode skip base entirely.
 - Layout everywhere: `<side>/<screen>/<viewport>/<state>.png`. Dark captures are the same states with a `--dark` suffix (`default--dark.png`), so the scripts, history and audit page need no theme support: a dark item is just a state. How to switch themes is in `references/web.md`.
-- After each default `goto`, record the final URL (`playwright-cli eval "location.href"`) and save the page text (`eval "document.body.innerText"` to `<state>.txt`) for the reasons in step 5. If the final URL equals an already captured screen's route, do not capture it: add `{screen, route, to}` to the spec `redirects` and the config suggestion "merge <screen> into <target>".
+- `capture.py` saves each state's page text as `<state>.txt` next to its PNG, for the reasons in step 5. A default state whose final URL is another selected screen's route is not kept: the script lists it in `redirects` as `{screen, route, to}`. Copy those into the spec `redirects` and add the config suggestion "merge <screen> into <target>".
 - Sources of flakiness (animations, fonts, clocks, random data) are handled in `references/web.md`. If a screen cannot be made stable, mask it in config rather than ignoring noisy diffs.
 
 ### 5. Compare and classify

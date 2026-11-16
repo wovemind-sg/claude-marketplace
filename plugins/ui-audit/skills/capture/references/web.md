@@ -91,15 +91,19 @@ async page => {
     }
     return Math.max(h, 0);
   });
-  let extra = 0;
+  let extra = 0, cut = false;
   for (let i = 0; i < 5; i++) {
-    const total = Math.min(orig.height + extra + await need(), MAX);
+    const want = orig.height + extra + await need();
+    const total = Math.min(want, MAX);
+    cut = want > MAX;
     if (total <= orig.height + extra) break; // stopped growing
     extra = total - orig.height;
     await page.setViewportSize({width: orig.width, height: total});
     await page.waitForTimeout(300);
   }
-  await page.screenshot({path: '/abs/path/<screen>/<viewport>/<state>.png', fullPage: true});
+  // fullPage alone shoots the whole document, so the cap needs a clip
+  await page.screenshot({path: '/abs/path/<screen>/<viewport>/<state>.png', fullPage: true,
+    ...(cut ? {clip: {x: 0, y: 0, width: orig.width, height: MAX}} : {})});
   await page.setViewportSize(orig);
 }
 ```

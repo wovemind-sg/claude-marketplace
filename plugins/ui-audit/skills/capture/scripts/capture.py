@@ -84,7 +84,8 @@ SESSION_JS = r"""async page => {
       await emulate(total);
       await page.waitForTimeout(300);
     }
-    await page.screenshot({path, fullPage: true});
+    // fullPage alone shoots the whole document, so the cap needs a clip
+    await page.screenshot({path, fullPage: true, ...(cut ? {clip: {x: 0, y: 0, width: orig.width, height: MAX}} : {})});
     await page.setViewportSize(orig);
     return cut;
   };

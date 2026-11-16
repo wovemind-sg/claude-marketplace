@@ -30,7 +30,7 @@ Keep the returned URL. Artifacts are private by default: reviewers see the audit
 
 Later publish for the same PR (old target `artifact`, `OLD_URL` is its URL):
 1. `Artifact` action `list`, `scope: files`, with `OLD_URL`. Why: the publish is refused for any path it replaces or removes (`report.md`, `index.html`, `stale_media`) that this session has not read or listed.
-2. Build, then `Artifact` publish with `url` set to `OLD_URL` and `file_path` `AUDIT_DIR/index.html`. In `files` pass only the new media (item and finding media this build wrote), `history.json` and `report.md`, and `null` for each path in `stale_media`. Files you leave out stay published, so kept items still load. Why: a version holds at most 511 files, stale media would fill it.
+2. Build, then `Artifact` publish with `url` set to `OLD_URL` and `file_path` `AUDIT_DIR/index.html`. In `files` pass only the new media, `history.json` and `report.md`, and `null` for each path in `stale_media`. Files you leave out stay published, so kept items still load. Why: a version holds at most 511 files, stale media would fill it.
 
 Limits: at most 255 files per publish, 511 per version. Above 255, split the media across several publishes to the same URL (each publish needs `file_path`: pass `AUDIT_DIR/index.html` every time, the last publish carries the final one).
 

@@ -12,7 +12,7 @@ Configure `.claude/finalize-pr.md` for the current repo. This file is read verba
 - Runs after the test plan and user-flows sync, before residual work and the PR.
 - The PR does not exist yet on a first run: steps must not use `gh pr ...`.
 - On an incremental run the agent is told the `$BASE..HEAD` range changed since the last finalize; each step says whether to scope to it or run in full.
-- Steps can't edit the PR, but can hand it text: write `.finalize-pr/sections/<slug>.md` (first line is the heading, e.g. `## break-ui`; subheadings `###` or deeper, since a section ends at the next heading of its level) and finalize-pr adds it to the PR body (replacing a section with the same heading); an optional `<slug>.json` (`{"title", "findings": [{"title", "text", "screenshot", "screen"}]}`) goes on the UI audit page. finalize-pr empties `.finalize-pr/sections/` before the steps run, so write the files on every run, and gitignore `.finalize-pr/` (untracked files stop the clean-tree checks).
+- Steps can't edit the PR, but can hand it text: write `.finalize-pr/sections/<slug>.md` (first line is the heading, e.g. `## break-ui`; subheadings `###` or deeper, since a section ends at the next heading of its level) and finalize-pr adds it to the PR body (replacing a section with the same heading). finalize-pr empties `.finalize-pr/sections/` before the steps run, so write the files on every run, and gitignore `.finalize-pr/` (untracked files stop the clean-tree checks).
 - The agent commits its own fixes and reports what it fixed and what it found but did not fix (those become residual work).
 
 ## Procedure

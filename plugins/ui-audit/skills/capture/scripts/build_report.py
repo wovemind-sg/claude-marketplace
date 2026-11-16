@@ -19,9 +19,7 @@ Spec JSON (paths are absolute or relative to the spec file):
   "redirects": [{"screen": "old", "route": "/old", "to": "target-screen"}],
   "changes": [{"id": "c1", "text": "what changed in the PR", "items": [{"screen", "viewport", "state"}],
                "not_captured": "why no card (omit when items has cards)"}],
-  "config_suggestions": ["merge old-verify into verify", ...],
-  "findings": [{"title": "break-ui", "findings": [{"title": "required", "text": "...", "screenshot": "a.png",
-                                                  "screen": "optional screen name"}]}]
+  "config_suggestions": ["merge old-verify into verify", ...]
 }
 base_img/diff_img/changed_pct are omitted for head-only items. Media is copied into OUT/media/.
 If OUT/history.json exists, a new item replaces only the old item with the same (screen, platform,
@@ -45,10 +43,6 @@ head (git grep -F) when the screen has no deps or there is no manifest. A missin
 needs_review (unintended stays unintended) and prefixes its reason with 'Needs review: "X" not in current code. '.
 Self-check (exit 1, nothing written, all problems on stderr): a card whose captured_sha != meta.head_sha that is
 not a valid reuse; a change whose items match no card (screen, plus viewport/state when given) and has no not_captured.
-findings (optional) are extra review notes, e.g. from a finalize-pr repo step: each group is drawn as its own
-section on the page, headed by its title, after "Changes in this PR". screenshot is optional; when given it is copied
-into OUT/media/ like other media (a missing file fails the build). Only the latest run's findings are shown: they are
-kept in history.json so the next build lists their media in stale_media. Not written to report.md.
 The page and report.md list the changes ("Changes in this PR") and config_suggestions (only when non-empty).
 Prints JSON {index, report, items, runs, stale_media} on stdout;
 stale_media lists the media paths (relative to OUT) of dropped old items, for the publisher to delete.
@@ -120,12 +114,6 @@ def validate(spec):
     for c in spec.get("changes") or []:
         if not isinstance(c, dict) or not c.get("id") or not c.get("text"):
             fail(f"change needs 'id' and 'text': {c}")
-    for g in spec.get("findings") or []:
-        if not isinstance(g, dict) or not g.get("title") or not isinstance(g.get("findings"), list):
-            fail(f"findings group needs 'title' and a 'findings' list: {g}")
-        for f in g["findings"]:
-            if not isinstance(f, dict) or not f.get("title"):
-                fail(f"finding needs 'title': {f}")
     for i in spec["items"]:
         for k in ("screen", "platform", "viewport", "classification", "head_img"):
             if not i.get(k):
@@ -139,16 +127,6 @@ def validate(spec):
 
 def _key(i):
     return (i["screen"], i["platform"], i["viewport"], i.get("state") or "default")
-
-
-def copy_findings(groups, run_no, spec_dir, out):
-    """Copy each finding screenshot into OUT/media/r<run>-f<group>-<n>/ and rewrite to the relative path."""
-    for g, grp in enumerate(groups):
-        for n, f in enumerate(grp["findings"]):
-            if f.get("screenshot"):
-                tmp = {"screen": "finding", "viewport": f"f{g}", "state": n, "head_img": f["screenshot"]}
-                copy_media(tmp, f"r{run_no}", spec_dir, out)
-                f["screenshot"] = tmp["head_img"]
 
 
 def media_of(i):
@@ -270,7 +248,7 @@ PAGE = r"""<!doctype html>
 h1{font-size:1.4rem;margin:.2em 0}.meta{color:var(--muted);font-size:.9rem}
 .bar{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}select,button{font:inherit;font-size:16px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg)}
 button[aria-pressed=true]{outline:2px solid var(--fg)}
-.item,.fi{border:1px solid var(--line);border-radius:8px;padding:12px;margin:14px 0;background:var(--card)}
+.item{border:1px solid var(--line);border-radius:8px;padding:12px;margin:14px 0;background:var(--card)}
 .item h2{font-size:1.05rem;margin:0 0 4px}.tag{font-size:.75rem;font-weight:600;padding:2px 8px;border-radius:99px;border:1px solid currentColor;margin-left:6px}
 .tag.unintended{color:var(--unintended)}.tag.needs_review{color:var(--needs_review)}.tag.intentional{color:var(--intentional)}
 .modes{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}
@@ -286,11 +264,10 @@ button[aria-pressed=true]{outline:2px solid var(--fg)}
 .stills{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.stills img{max-width:30%}
 .sk{float:right;font-size:16px}.item.skipped>:not(h2){display:none}
 .item.reviewed .modes,.item.reviewed .view,.item.reviewed h3,.item.reviewed .stills,.item.reviewed video,.item.reviewed .reason{display:none}
-.empty{color:var(--muted)}#summary,.finding{overflow-wrap:anywhere;white-space:pre-line}#summary{max-height:30vh;overflow-y:auto}ul{padding-left:1.2em}
+.empty{color:var(--muted)}#summary{overflow-wrap:anywhere;max-height:30vh;overflow-y:auto;white-space:pre-line}ul{padding-left:1.2em}
 </style></head><body>
 <h1>UI audit</h1><div class="meta" id="meta"></div><p id="summary" hidden></p>
 <div id="changes" hidden><h2>Changes in this PR</h2><ul id="chl"></ul></div>
-<div id="findings"></div>
 <div class="bar"><select id="fp" aria-label="Platform"></select><select id="fv" aria-label="Viewport"></select><select id="fc" aria-label="Classification"></select><select id="fm" aria-label="Default view"></select></div>
 <div id="items"></div>
 <div id="sugg" hidden><h2>Config suggestions</h2><ul id="sgl"></ul></div>
@@ -313,7 +290,6 @@ $('#fm').onchange=()=>{try{localStorage.setItem('ui-audit-view',$('#fm').value)}
 if((D.changes||[]).length){$('#changes').hidden=false;$('#chl').innerHTML=D.changes.map(c=>`<li>${E(c.text)}: ${c.not_captured?`Not captured: ${E(c.not_captured)}`:(c.items||[]).map(x=>E([x.screen,x.viewport,x.state].filter(Boolean).join(' / '))).join('; ')}</li>`).join('')}
 if((D.config_suggestions||[]).length){$('#sugg').hidden=false;$('#sgl').innerHTML=D.config_suggestions.map(x=>`<li>${E(x)}</li>`).join('')}
 const img=(p,a)=>`<img src="${E(p)}" alt="${E(a)}" loading="lazy">`;
-$('#findings').innerHTML=(D.findings||[]).map(g=>`<section><h2>${E(g.title)}</h2>${g.findings.map(f=>`<div class="fi"><h3>${E(f.title)}</h3>${f.screen?`<div class="meta">${E(f.screen)}</div>`:''}${f.text?`<p class="finding">${E(f.text)}</p>`:''}${f.screenshot?`<div class="view">${img(f.screenshot,f.title)}</div>`:''}</div>`).join('')||'<p class="empty">No findings.</p>'}</section>`).join('');
 function body(i,mode){
  if(headOnly||!i.base_img)return `<p class="meta">Head only: no baseline captured, nothing to compare.</p>${img(i.head_img,'head')}`;
  if(mode==='side')return `<div class="side"><figure>${img(i.base_img,'before')}<figcaption>Before</figcaption></figure><figure>${img(i.head_img,'after')}<figcaption>After</figcaption></figure></div>`;
@@ -416,13 +392,10 @@ def build(spec_path, out, password=None, repo="."):
     run_no = len(prev.get("runs", [])) + 1
     for n, i in enumerate(new):
         copy_media(i, f"r{run_no}-{n}", spec_dir, out)
-    findings = spec.get("findings") or []
-    stale += [f["screenshot"] for g in prev.get("findings", []) for f in g["findings"] if f.get("screenshot")]  # latest run only
-    copy_findings(findings, run_no, spec_dir, out)
     items.sort(key=key)
-    json.dump({"meta": meta, "items": items, "runs": runs, "redirects": reds, "config_suggestions": sugg, "findings": findings}, open(hist_p, "w"), indent=1)
+    json.dump({"meta": meta, "items": items, "runs": runs, "redirects": reds, "config_suggestions": sugg}, open(hist_p, "w"), indent=1)
     sugg = sugg + lost  # shown with the suggestions so an unmatched redirect is never silent
-    data = json.dumps({"meta": meta, "items": items, "runs": runs, "changes": changes, "config_suggestions": sugg, "findings": findings}).replace("</", "<\\/")
+    data = json.dumps({"meta": meta, "items": items, "runs": runs, "changes": changes, "config_suggestions": sugg}).replace("</", "<\\/")
     title = " - ".join(["UI audit", *([meta["project"]] if meta.get("project") else []), f"PR {meta['pr']}" if meta.get("pr") else "PR -"])
     subs = {"__TITLE__": html.escape(title), "__DATA__": data}  # one pass: a project/summary containing a placeholder must not be re-substituted
     open(os.path.join(out, "index.html"), "w").write(re.sub("__TITLE__|__DATA__", lambda m: subs[m.group()], PAGE))
@@ -660,27 +633,6 @@ def selftest():
         build(spec([a, hm2]), om)
         it = json.load(open(os.path.join(om, "history.json")))["items"][0]
         assert it["merged_screens"] == ["home"] and it["changed_in"] == 1, it
-        # findings: grouped sections, screenshots copied to media/, latest run only (old media goes stale)
-        of = os.path.join(t, "of")
-        def fspec(groups):
-            p = spec([full("about", "intentional")])
-            sp = json.load(open(p)); sp["findings"] = groups; json.dump(sp, open(p, "w"))
-            return p
-        build(fspec([{"title": "break-ui", "findings": [{"title": "<b>long name</b>", "text": "wraps", "screenshot": os.path.join(t, "h.png"), "screen": "home"}, {"title": "no image"}]}]), of)
-        fd = json.load(open(os.path.join(of, "history.json")))["findings"]
-        shot = fd[0]["findings"][0]["screenshot"]
-        assert shot.startswith("media/") and os.path.isfile(os.path.join(of, shot)), fd
-        fh = open(os.path.join(of, "index.html")).read()
-        assert 'id="findings"' in fh and "break-ui" in fh and "<b>long" not in fh.split('id="data"')[0], "escaped, in data only"
-        assert "break-ui" not in open(os.path.join(of, "report.md")).read()
-        r = build(fspec([]), of)
-        assert shot in r["stale_media"] and json.load(open(os.path.join(of, "history.json")))["findings"] == [], r
-        for bad in ([{"findings": []}], [{"title": "x", "findings": [{"text": "no title"}]}]):
-            try:
-                build(fspec(bad), os.path.join(t, "ofb"))
-                raise AssertionError(f"bad findings accepted: {bad}")
-            except SystemExit:
-                pass
         # missing previous base_sha prints "unknown", not "None"
         assert "unknown" in self_check([], {"reused_screens": ["x"], "base_sha": "b"}, (), [{}])[0]
         hx = open(os.path.join(orr, "index.html")).read()

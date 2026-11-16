@@ -5,7 +5,7 @@
 With both servers up (see "Serve base and head"), capture every selected screen, state, viewport and theme of both sides in one call, run from the repo root:
 
 ```bash
-python3 -I scripts/capture.py --config .ui-audit/config.json --manifest .ui-audit/manifest.json --work "$WORK" \
+python3 -I "${CLAUDE_SKILL_DIR}/scripts/capture.py" --config .ui-audit/config.json --manifest .ui-audit/manifest.json --work "$WORK" \
   --side head=http://localhost:8123 --side base=http://localhost:8124 \
   --screens home,login --themes light+dark      # --screens default: every config screen
 ```
@@ -13,7 +13,7 @@ python3 -I scripts/capture.py --config .ui-audit/config.json --manifest .ui-audi
 It opens one playwright-cli session per side x viewport x theme (`head-mobile-dark`), all in parallel, each running one `run-code` call that loops over its jobs and does exactly what the sections below describe: `state-load` of `web.storage_state`, `resize`, mobile emulation, dark setup, a fresh `goto` per state, freeze CSS plus `web.freeze_css`, fonts and network idle, the recipe steps (shapes in `config-schema.md`), the full-page routine (or a viewport shot for `full_page: false`). It writes the layout below plus `<state>.txt` (page text after the steps) and prints JSON:
 
 - `written`: PNG paths, each checked to exist at the viewport width.
-- `failed`: `{session, screen, state, key, error}`. A job that throws (bad selector, timeout, unknown step shape) does not stop the others. A dark session fails when its method left the body background unchanged on every side (one side unchanged is fine: the base may predate dark mode). Rerun fixed items with `--only <key> ...`. Exit code 1 when anything failed.
+- `failed`: `{session, screen, state, key, error}`. A job that throws (bad selector, timeout, unknown step shape) does not stop the others. A dark session fails when its method left the page background and text color unchanged on every side (one side unchanged is fine: the base may predate dark mode; a base-only call never fails on this). Rerun fixed items with `--only <key> ...`. Exit code 1 when anything failed.
 - `redirects`: `{screen, route, to}` for default states that landed on another selected screen's route (no image kept).
 - `not_found`: `{side, screen, route}` for routes that answered 404 (no image; not a failure).
 - `final_urls` and `truncated` (shots cut at 16000 px; say so in the report).

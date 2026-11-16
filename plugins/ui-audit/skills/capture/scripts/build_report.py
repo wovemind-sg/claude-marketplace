@@ -330,7 +330,7 @@ function render(){
    z=k?Math.max(.25,z*(k>0?1.25:.8)):1;d.style.setProperty('--z',z)};
   d.zoom=zoom;d.querySelectorAll('[data-z]').forEach(b=>b.onclick=()=>zoom(+b.dataset.z));
   draw();$('#items').appendChild(d);d.fit();zoom(0,1)})}
-addEventListener('resize',()=>document.querySelectorAll('.item').forEach(d=>{d.fit();if(d.fitted)d.zoom(0,1)}));
+let rz=0;addEventListener('resize',()=>{cancelAnimationFrame(rz);rz=requestAnimationFrame(()=>document.querySelectorAll('.item').forEach(d=>{d.fit();if(d.fitted)d.zoom(0,1)}))});  // one refit per frame
 render();
 $('#runs').innerHTML=(D.runs||[]).slice().reverse().map(r=>`<li>${E((r.head_sha||'').slice(0,8))} (${E(r.baseline_mode)})${r.incremental_from?` from ${E(r.incremental_from.slice(0,8))}`:''}: re-captured ${E((r.recaptured||[]).join(', ')||'none')}${(r.reused||[]).length?`; reused ${E(r.reused.join(', '))}`:''}</li>`).join('');
 </script></body></html>"""

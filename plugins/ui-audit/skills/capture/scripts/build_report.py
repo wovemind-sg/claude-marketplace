@@ -308,7 +308,7 @@ function render(){
   const tog=(p,cls,btn,on,off)=>{const k=`${p}:${m.project||''}:${m.pr}:${i.screen}|${i.platform}|${i.viewport}|${i.state}`,cv=String(i.changed_in);
    const is=()=>{try{return localStorage.getItem(k)===cv}catch(e){return false}};
    const show=()=>{const r=is();d.classList.toggle(cls,r);btn.textContent=r?on:off};
-   btn.onclick=()=>{try{is()?localStorage.removeItem(k):localStorage.setItem(k,cv);d.querySelector('.rvn').textContent=''}catch(e){d.querySelector('.rvn').textContent="Can't save: browser storage blocked"}show()};show()};
+   btn.onclick=()=>{try{is()?localStorage.removeItem(k):localStorage.setItem(k,cv);d.querySelector('.rvn').textContent=''}catch(e){d.querySelector('.rvn').textContent="Can't save: browser storage blocked"}show();if(d.fit){d.fit();if(d.fitted)d.zoom(0,1)}};show()};
   tog('ui-audit-reviewed','reviewed',d.querySelector('.rv'),'Reviewed \u2014 unmark','Mark reviewed');tog('ui-audit-skipped','skipped',d.querySelector('.sk'),'Skipped \u2014 show','Skip');
   const v=d.querySelector('.view');const draw=()=>{v.innerHTML=body(i,mode);const s=v.querySelector('.slider');if(!s)return;const r=s.querySelector('input');
    const set=p=>{p=Math.min(100,Math.max(0,p));s.style.setProperty('--p',p+'%');r.value=p},mv=e=>{const b=s.getBoundingClientRect();set((e.clientX-b.left)/b.width*100)};
@@ -316,19 +316,21 @@ function render(){
    s.onpointerdown=e=>{if(e.target===r)return;s.setPointerCapture(e.pointerId);mv(e);e.preventDefault()};
    s.onpointermove=e=>{if(s.hasPointerCapture(e.pointerId))mv(e)};
    new ResizeObserver(()=>s.classList.toggle('narrow',s.offsetWidth<180)).observe(s)};
-  d.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{mode=b.dataset.m;d.querySelectorAll('[data-m]').forEach(x=>x.setAttribute('aria-pressed',x===b));draw()});
+  d.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{mode=b.dataset.m;d.querySelectorAll('[data-m]').forEach(x=>x.setAttribute('aria-pressed',x===b));draw();zoom(0,1)});
   // Fit: card header + image + slider/caption row (~40px) + card padding fits the window height.
   d.fit=()=>d.style.setProperty('--fit',Math.max(120,innerHeight-(v.getBoundingClientRect().top-d.getBoundingClientRect().top)-60)+'px');
-  let z=1;d.querySelectorAll('[data-z]').forEach(b=>b.onclick=()=>{const k=+b.dataset.z,im=mode==='slider'&&v.querySelector('.slider>img');
+  // Every card opens in Fit to screen, and refits after a mode switch or a resize until −/+ is used. auto: don't force lazy images to load.
+  let z=1;const zoom=(k,auto)=>{d.fitted=!k;const im=mode==='slider'&&v.querySelector('.slider>img');
    if(im){// slider sizes by width so before and after stay aligned; full width = natural width capped at the card
     const sw=w=>{const cap=Math.min(v.clientWidth,im.naturalWidth);w<cap?d.style.setProperty('--sw',w+'px'):d.style.removeProperty('--sw')};
     if(!k){// fit the taller of before/after so neither overflows the window
      const ims=[...v.querySelectorAll('.slider img')],f=()=>sw(parseFloat(d.style.getPropertyValue('--fit'))/Math.max(...ims.map(x=>x.naturalHeight/x.naturalWidth)));
-     Promise.all(ims.map(x=>x.complete?0:new Promise(r=>{x.addEventListener('load',r,{once:true});x.loading='eager'}))).then(f)}
+     Promise.all(ims.map(x=>x.complete?0:new Promise(r=>{x.addEventListener('load',r,{once:true});if(!auto)x.loading='eager'}))).then(()=>{if(d.fitted&&v.contains(im))f()})}
     else sw(im.getBoundingClientRect().width*(k>0?1.25:.8));return}
-   z=k?Math.max(.25,z*(k>0?1.25:.8)):1;d.style.setProperty('--z',z)});
-  draw();$('#items').appendChild(d);d.fit()})}
-addEventListener('resize',()=>document.querySelectorAll('.item').forEach(d=>d.fit()));
+   z=k?Math.max(.25,z*(k>0?1.25:.8)):1;d.style.setProperty('--z',z)};
+  d.zoom=zoom;d.querySelectorAll('[data-z]').forEach(b=>b.onclick=()=>zoom(+b.dataset.z));
+  draw();$('#items').appendChild(d);d.fit();zoom(0,1)})}
+let rz=0;addEventListener('resize',()=>{cancelAnimationFrame(rz);rz=requestAnimationFrame(()=>document.querySelectorAll('.item').forEach(d=>{d.fit();if(d.fitted)d.zoom(0,1)}))});  // one refit per frame
 render();
 $('#runs').innerHTML=(D.runs||[]).slice().reverse().map(r=>`<li>${E((r.head_sha||'').slice(0,8))} (${E(r.baseline_mode)})${r.incremental_from?` from ${E(r.incremental_from.slice(0,8))}`:''}: re-captured ${E((r.recaptured||[]).join(', ')||'none')}${(r.reused||[]).length?`; reused ${E(r.reused.join(', '))}`:''}</li>`).join('');
 </script></body></html>"""
@@ -439,6 +441,8 @@ def selftest():
         build(spec([full("about", "unintended"), {**full("home", "intentional"), "clips": ["c.webm"], "stills": {"start": "h.png"}}]), out)
         h = open(os.path.join(out, "index.html")).read()
         assert 'id="summary"' in h and 'data-z=' in h
+        assert "d.fit();if(d.fitted)d.zoom(0,1)" in h and "d.fitted&&v.contains(im)" in h, "revealed and late-loading cards refit"
+        assert "d.fit();zoom(0,1)" in h and "draw();zoom(0,1)" in h and "if(d.fitted)d.zoom(0,1)" in h, "cards open, switch and resize in Fit to screen"
         build(spec([full("about", "unintended")], summary="Sums it up."), os.path.join(t, "outs"))
         assert "Sums it up." in open(os.path.join(t, "outs", "report.md")).read()
         assert "overflow-wrap:anywhere" in h and "Sums it up." not in open(os.path.join(out, "report.md")).read()  # long-summary wrap; no summary -> absent

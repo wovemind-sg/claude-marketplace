@@ -133,6 +133,11 @@ session; for the test below use the values the user just entered.
 
 ## 7. Test push
 
+Send it only if `~/.ntfy` is absent or holds the token for `<server>`:
+`ntfy-send` sends that token to whatever server it is given. If the user
+kept a token for another server (declined to move or overwrite it in step 2
+or 4), skip the test and say why.
+
 ```bash
 ntfy-send -s <server> -o <topic> -t "ntfy configured" -- "Test from Claude Code"
 ```

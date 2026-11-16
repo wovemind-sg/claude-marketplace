@@ -40,6 +40,16 @@ Or use the command, which keeps working and sends the push once the condition is
 /ntfy:notify-me when you finish the implementation
 ```
 
+## Setup guide
+
+Run `/ntfy:configure` (or ask "set up ntfy on my phone") for a step-by-step
+walkthrough: public ntfy.sh or your own server, auth on a self-hosted server
+(users and an access token, saved to `~/.ntfy`), the iOS/Android app, the
+plugin settings, and a test push. It assumes ntfy is already installed on a
+self-hosted server. If that server runs on Railway, it suggests loading the
+Railway skill (`/use-railway`) and then sets the `NTFY_*` variables, checks the
+volume, redeploys and creates the token for you, after you approve each change.
+
 ## Settings and environment variables
 
 Set the plugin's `server` and `topic` settings with `/plugin configure ntfy@wovemind` (or the

@@ -4,7 +4,7 @@
 Each session runs one `run-code` call that loops over its jobs: fresh goto of the route, dark setup, freeze CSS,
 fonts and network idle, steps, full-page screenshot (the routine in references/web.md). Writes
 <work>/<side>/<screen>/<viewport>/<state>[--dark].png plus <state>[--dark].txt (page text) and prints JSON:
-written, failed [{session, screen, state, error}], redirects [{screen, route, to}], not_found [{side, screen, route}]
+written, failed [{session, screen, state, key, error}], redirects [{screen, route, to}], not_found [{side, screen, route}]
 (route answered 404, no shot, not a failure), final_urls {<side>/<screen>/<viewport>/<state>: url},
 truncated (shots cut at 16000 px). Exit 1 when anything failed.
 --only takes output stems (<screen>/<viewport>/<state>[--dark]), the same form as failed entries' keys.
@@ -99,13 +99,17 @@ SESSION_JS = r"""async page => {
   for (const j of C.jobs) {
     const r = {key: j.key};
     try {
+      // a job that threw mid full-page leaves the viewport stretched; reset so it cannot leak into this one
+      await page.setViewportSize({width: vp.width, height: vp.height});
       await emulate(vp.height);
       const resp = await page.goto(C.base + j.route);
       if (resp && resp.status() === 404) { r.not_found = true; out.push(r); continue; }
       await settle();
       r.url = await page.evaluate(() => location.href);
       r.width = await page.evaluate(() => innerWidth);
-      r.bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+      // html bg, body bg, body text color: many apps keep body transparent and theme the root or the text
+      r.bg = await page.evaluate(() => [document.documentElement, document.body].map(e => getComputedStyle(e).backgroundColor)
+        .concat(getComputedStyle(document.body).color));
       for (const s of j.steps) await step(s);
       r.text = await page.evaluate(() => document.body.innerText);
       if (j.full_page) r.truncated = await fullPage(j.out);
@@ -153,7 +157,7 @@ def build_plan(config, manifest, sides, work, screens=None, themes="light", only
                 for s in selected:
                     if dark and s.get("dark") is False:
                         continue
-                    states = {st["name"]: st for st in s.get("states", [])}
+                    states = {st["name"]: st for st in s.get("states", [{"name": "default"}])}
                     rec = recipes.get(s["name"], {})
                     for name in list(states) + [n for n in rec if n not in states]:
                         st = states.get(name, {})
@@ -194,6 +198,8 @@ def redirect_target(final_url, own_screen, routes):
         p = urlsplit(u)
         return (p.path or "/") + ("?" + p.query if p.query else "")
     at = norm(final_url)
+    if own_screen in routes and norm(routes[own_screen]) == at:
+        return None  # stayed on its own route, even if another screen shares it
     return next((n for n, r in routes.items() if n != own_screen and norm(r) == at), None)
 
 
@@ -208,7 +214,7 @@ def collect(sessions, results, routes):
             by_key[(name, j["key"])] = j.get("error") and {"error": j["error"]} or got.get(
                 j["key"], {"error": res if isinstance(res, str) else "no result for this job"})
     # A dark method that changes nothing on any side is wrong; one side matching (a base without dark CSS) is fine.
-    bad_dark = set()
+    verdicts = {}
     for name, sess in sessions.items():
         if not sess["dark"]:
             continue
@@ -216,8 +222,10 @@ def collect(sessions, results, routes):
         pairs = [(by_key[(name, j["key"])].get("bg"), by_key.get((light, j["key"][:-len("--dark")]), {}).get("bg"))
                  for j in sess["jobs"]]
         pairs = [p for p in pairs if p[0] and p[1]]
-        bad_dark.add((sess["viewport_name"], bool(pairs) and all(a == b for a, b in pairs)))
-    bad_dark = {v for v, bad in bad_dark if bad} - {v for v, bad in bad_dark if not bad}
+        verdicts.setdefault(sess["viewport_name"], []).append(
+            (sess["side"], bool(pairs) and all(a == b for a, b in pairs)))
+    # a base-only call (head+base-related) cannot judge: the base may predate dark mode
+    bad_dark = {v for v, vs in verdicts.items() if all(b for _, b in vs) and any(s != "base" for s, _ in vs)}
     for name, sess in sessions.items():
         for j in sess["jobs"]:
             r = by_key[(name, j["key"])]
@@ -238,8 +246,8 @@ def collect(sessions, results, routes):
                 fail(f"innerWidth {r['width']}, expected {width}: viewport or emulation did not apply")
                 continue
             if sess["dark"] and sess["viewport_name"] in bad_dark:
-                fail(f"dark_mode {json.dumps(sess['dark'])} left the body background unchanged on every side: "
-                     "wrong method")
+                fail(f"dark_mode {json.dumps(sess['dark'])} left the page background and text color unchanged on "
+                     "every side: wrong method")
                 continue
             if j["state"].removesuffix("--dark") == "default" and j["screen"] in routes:
                 rep["final_urls"][f"{sess['side']}/{j['key']}"] = r["url"]
@@ -254,7 +262,8 @@ def collect(sessions, results, routes):
             if not os.path.exists(png):
                 fail("screenshot missing")
                 continue
-            got_w = Image.open(png).size[0]
+            with Image.open(png) as im:
+                got_w = im.size[0]
             if got_w != width:
                 fail(f"screenshot is {got_w} px wide, expected {width}")
                 continue
@@ -272,8 +281,10 @@ def cli(work, sess, *args):
         if not (p.returncode and "is not open" in p.stdout + p.stderr) or attempt:
             break
         time.sleep(1)  # `open` can answer "not open" on the very next command
-    if p.returncode or "### Error" in p.stdout:
-        raise RuntimeError(f"playwright-cli {args[0]}: " + (p.stdout + p.stderr).strip()[-500:])
+    # line match: page text inside a run-code result may contain "### Error"; stdout last so the
+    # error is not cut off behind stderr's update banner
+    if p.returncode or "### Error" in p.stdout.splitlines():
+        raise RuntimeError(f"playwright-cli {args[0]}: " + (p.stderr + p.stdout).strip()[-500:])
     return p.stdout
 
 
@@ -357,6 +368,10 @@ def selftest():
         assert redirect_target("http://h:1/old.html", "old", routes) is None
         assert redirect_target("http://h:1/schedule.html?token=abc", "old", routes) == "sched"
         assert redirect_target("http://h:1/schedule.html", "old", routes) is None
+        assert redirect_target("http://h:1/old.html", "old", dict(routes, alias="/old.html")) is None  # shared route
+        bare = build_plan({"viewports": {"d": {"width": 9, "height": 9}}, "screens": [{"name": "x", "route": "/x"}]},
+                          {}, sides[:1], w)
+        assert [j["key"] for j in bare["head-d"]["jobs"]] == ["x/d/default"]  # no states: default only
 
         # collect: fake a run of the head and base desktop sessions (light + dark)
         sel = {n: s[n] for n in ("head-desktop", "head-desktop-dark", "base-desktop", "base-desktop-dark")}
@@ -399,6 +414,8 @@ def selftest():
             r["bg"] = "rgb(255, 255, 255)"
         rep = collect(sel, results, routes)
         assert any("wrong method" in f["error"] for f in rep["failed"] if f["session"] == "head-desktop-dark")
+        rep = collect({n: sel[n] for n in ("base-desktop", "base-desktop-dark")}, results, routes)
+        assert not any("wrong method" in f["error"] for f in rep["failed"])  # base-only call cannot judge
         rep = collect({"head-desktop": s["head-desktop"]}, {"head-desktop": "session head-desktop: boom"}, routes)
         assert len(rep["failed"]) == len(s["head-desktop"]["jobs"]) and not rep["written"]
     print(json.dumps({"selftest": "ok"}))

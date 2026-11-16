@@ -308,7 +308,7 @@ function render(){
   const tog=(p,cls,btn,on,off)=>{const k=`${p}:${m.project||''}:${m.pr}:${i.screen}|${i.platform}|${i.viewport}|${i.state}`,cv=String(i.changed_in);
    const is=()=>{try{return localStorage.getItem(k)===cv}catch(e){return false}};
    const show=()=>{const r=is();d.classList.toggle(cls,r);btn.textContent=r?on:off};
-   btn.onclick=()=>{try{is()?localStorage.removeItem(k):localStorage.setItem(k,cv);d.querySelector('.rvn').textContent=''}catch(e){d.querySelector('.rvn').textContent="Can't save: browser storage blocked"}show()};show()};
+   btn.onclick=()=>{try{is()?localStorage.removeItem(k):localStorage.setItem(k,cv);d.querySelector('.rvn').textContent=''}catch(e){d.querySelector('.rvn').textContent="Can't save: browser storage blocked"}show();if(d.fit){d.fit();if(d.fitted)d.zoom(0,1)}};show()};
   tog('ui-audit-reviewed','reviewed',d.querySelector('.rv'),'Reviewed \u2014 unmark','Mark reviewed');tog('ui-audit-skipped','skipped',d.querySelector('.sk'),'Skipped \u2014 show','Skip');
   const v=d.querySelector('.view');const draw=()=>{v.innerHTML=body(i,mode);const s=v.querySelector('.slider');if(!s)return;const r=s.querySelector('input');
    const set=p=>{p=Math.min(100,Math.max(0,p));s.style.setProperty('--p',p+'%');r.value=p},mv=e=>{const b=s.getBoundingClientRect();set((e.clientX-b.left)/b.width*100)};
@@ -325,7 +325,7 @@ function render(){
     const sw=w=>{const cap=Math.min(v.clientWidth,im.naturalWidth);w<cap?d.style.setProperty('--sw',w+'px'):d.style.removeProperty('--sw')};
     if(!k){// fit the taller of before/after so neither overflows the window
      const ims=[...v.querySelectorAll('.slider img')],f=()=>sw(parseFloat(d.style.getPropertyValue('--fit'))/Math.max(...ims.map(x=>x.naturalHeight/x.naturalWidth)));
-     Promise.all(ims.map(x=>x.complete?0:new Promise(r=>{x.addEventListener('load',r,{once:true});if(!auto)x.loading='eager'}))).then(f)}
+     Promise.all(ims.map(x=>x.complete?0:new Promise(r=>{x.addEventListener('load',r,{once:true});if(!auto)x.loading='eager'}))).then(()=>{if(d.fitted&&v.contains(im))f()})}
     else sw(im.getBoundingClientRect().width*(k>0?1.25:.8));return}
    z=k?Math.max(.25,z*(k>0?1.25:.8)):1;d.style.setProperty('--z',z)};
   d.zoom=zoom;d.querySelectorAll('[data-z]').forEach(b=>b.onclick=()=>zoom(+b.dataset.z));
@@ -441,6 +441,7 @@ def selftest():
         build(spec([full("about", "unintended"), {**full("home", "intentional"), "clips": ["c.webm"], "stills": {"start": "h.png"}}]), out)
         h = open(os.path.join(out, "index.html")).read()
         assert 'id="summary"' in h and 'data-z=' in h
+        assert "d.fit();if(d.fitted)d.zoom(0,1)" in h and "d.fitted&&v.contains(im)" in h, "revealed and late-loading cards refit"
         assert "d.fit();zoom(0,1)" in h and "draw();zoom(0,1)" in h and "if(d.fitted)d.zoom(0,1)" in h, "cards open, switch and resize in Fit to screen"
         build(spec([full("about", "unintended")], summary="Sums it up."), os.path.join(t, "outs"))
         assert "Sums it up." in open(os.path.join(t, "outs", "report.md")).read()

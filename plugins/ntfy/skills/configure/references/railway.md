@@ -63,16 +63,13 @@ run it yourself instead:
 ## 5. Create the token (you)
 
 The container has `NTFY_AUTH_FILE` in its environment, so the CLI finds the
-database. Pipe the token straight into `~/.ntfy`:
+database. Use the pipe from step 4 of SKILL.md, with
+`railway ssh --service <svc> -- ntfy token add --label claude-code <user>`
+as the command.
 
-```bash
-(umask 077; railway ssh --service <svc> -- ntfy token add --label claude-code <user> \
-  | grep -oE 'tk_[A-Za-z0-9]+' > ~/.ntfy)
-[ -s ~/.ntfy ] && grep -q '^tk_' ~/.ntfy && echo ok
-```
-
-If that does not print `ok`, rerun the `railway ssh` part with output sent
-to `/dev/null` and only its stderr shown, to see the error without the
-token. A `Host key verification failed` error means `ssh.railway.com` is
+If that does not print `ok`, run
+`railway ssh --service <svc> -- ntfy user list` to see the error (it prints
+no secrets; rerunning `token add` would leave another live token on the
+server). A `Host key verification failed` error means `ssh.railway.com` is
 missing from `~/.ssh/known_hosts`; with the user's OK, add it with
 `ssh-keyscan -t ed25519 ssh.railway.com >> ~/.ssh/known_hosts`.

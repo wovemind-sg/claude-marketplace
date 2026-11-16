@@ -43,7 +43,8 @@ send to it, so the topic name is the password.
 
 - If `~/.ntfy` exists and belongs to another server, `ntfy-send` would send it
   to ntfy.sh too. With the user's OK, move it aside:
-  `mv ~/.ntfy ~/.ntfy.bak`.
+  `mv ~/.ntfy ~/.ntfy.bak` (check first that no `~/.ntfy.bak` would be
+  overwritten).
 - Suggest a long random topic, e.g. `claude-$(openssl rand -hex 12)`, and
   show it (a topic is not a token; the user needs to type it on the phone).
   Plain `claude` is easy to guess.
@@ -63,6 +64,9 @@ strangers can't read or post to the user's topics.
   through `server.yml` and the `ntfy user` / `ntfy token` commands on their
   server. You usually have no shell there, so give exact commands and wait.
 
+Pick the topic first (any name, e.g. `claude`: with `deny-all`, only
+logged-in users can use it); a non-admin user needs access to it.
+
 Both end with: an auth-enabled server, a user the phone logs in as, and a
 `tk_...` token for Claude.
 
@@ -76,21 +80,23 @@ already exists and belongs to another server, ask before overwriting.
 
   ```bash
   (umask 077; <command that runs: ntfy token add --label claude-code <user>> \
-    | grep -oE 'tk_[A-Za-z0-9]+' > ~/.ntfy)
-  [ -s ~/.ntfy ] && grep -q '^tk_' ~/.ntfy && echo ok
+    | grep -oE 'tk_[A-Za-z0-9]+' > ~/.ntfy.new) \
+    && mv ~/.ntfy.new ~/.ntfy && echo ok || rm -f ~/.ntfy.new
   ```
 
-  (`ntfy token add` prints `token tk_... created for user <user>, ...`.)
+  (`ntfy token add` prints `token tk_... created for user <user>, ...`.
+  Writing to `~/.ntfy.new` first keeps an existing `~/.ntfy` intact when the
+  command fails, and the new file is created mode 600.)
 - When the user creates it on the server by hand, ask them to run this
   locally in their own terminal (the token then never passes through Claude):
 
   ```bash
-  bash -c 'umask 077; read -rs -p "Token: " t && printf "%s\n" "$t" > ~/.ntfy'
+  bash -c 'umask 077; read -rs -p "Token: " t && printf "%s\n" "$t" > ~/.ntfy.new && mv ~/.ntfy.new ~/.ntfy'
   ```
 
   (`bash -c` because zsh's `read -p` means something else.)
 
-  Then check it with the `[ -s ~/.ntfy ] ...` line above.
+  Then check it with `grep -q '^tk_' ~/.ntfy && echo ok`.
 
 ## 5. Phone app
 
@@ -120,7 +126,7 @@ Claude cannot open the plugin dialog. Ask the user to run
 `/plugin configure ntfy@wovemind` and set:
 
 - `server`: `https://ntfy.sh` or their server's URL (no trailing topic).
-- `topic`: the topic from step 2 or the one subscribed to in step 5.
+- `topic`: the topic from step 2 or 3, the one subscribed to in step 5.
 
 The new values reach this plugin's skills after `/reload-plugins` or a new
 session; for the test below use the values the user just entered.
@@ -135,8 +141,8 @@ Success prints a JSON line with an `"id"`. Ask the user whether it arrived.
 
 | Symptom | Likely cause |
 |---|---|
-| HTTP 401 | `~/.ntfy` missing, wrong, or for another server |
-| HTTP 403 | the user has no write access to the topic (`ntfy access <user> <topic> rw`, or make the user admin) |
+| HTTP 401 | `~/.ntfy` empty, wrong, or for another server |
+| HTTP 403 | `~/.ntfy` missing (anonymous on a `deny-all` server), or the user has no write access to the topic (`ntfy access <user> <topic> rw`, or make the user admin) |
 | `"id"` printed but nothing on the phone | phone subscribed to another server/topic, or not logged in as a user with read access |
 | arrives on Android, not (or hours late) on iOS | `upstream-base-url` not set on the server |
 | late on Android | instant delivery off or battery optimization on |

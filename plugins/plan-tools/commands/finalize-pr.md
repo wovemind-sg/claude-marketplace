@@ -63,7 +63,7 @@ Steps:
 
 3. **Update user flows.** If `user-flows.md` exists at the repository root, invoke `/user-flows:update-user-flows` to sync it with the changes made in steps 1–2, then commit the result. Skip this step if the file doesn't exist.
 
-3b. **Repo steps.** If `.claude/finalize-pr.md` exists at the repository root (`git rev-parse --show-toplevel`) and is not empty, first empty `.finalize-pr/sections/` at the repo root (`rm -rf .finalize-pr/sections`), so only this run's sections are used, then spawn an agent (subagent_type: general-purpose, model: sonnet) with a prompt that:
+3b. **Repo steps.** If `.claude/finalize-pr.md` exists at the repository root (`git rev-parse --show-toplevel`) and is not empty, first empty `.finalize-pr/sections/` at the repo root (`rm -rf "$(git rev-parse --show-toplevel)/.finalize-pr/sections"`), so only this run's sections are used, then spawn an agent (subagent_type: general-purpose, model: sonnet) with a prompt that:
    - Includes the file's contents verbatim and instructs it to carry out every step in it, in order, on the current branch.
    - On an incremental run, tells it the range `git diff $BASE..HEAD` changed since the last finalize; each repo step decides whether to scope to that range or run in full.
    - Instructs it to commit any fixes it makes, and report back what each step did, what it fixed, and anything it found but did NOT fix (with reason).
@@ -94,7 +94,7 @@ Steps:
    - The security review: what it fixed and deferred, or why it was skipped.
    - The test plan, what passed, what was fixed.
    - Whether user flows were synced.
-   - What the repo steps (`.claude/finalize-pr.md`) did, or that none exist, and each section they added to the PR body (its heading, and whether it was appended or replaced).
+   - What the repo steps (`.claude/finalize-pr.md`) did, or that none exist, and each `.finalize-pr/sections/*.md` heading with its outcome: appended to the PR body, replaced there, or not added because no PR was raised (then give the file path so the user can read it).
    - Which residual items were fixed in step 4, and which follow-up issues were opened (URLs).
    - The UI audit URL, its password if any, and counts (or why it was skipped).
    - The PR URL, or that the branch is ready but not pushed (push/PR answer "No").

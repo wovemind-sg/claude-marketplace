@@ -7,7 +7,8 @@ fonts and network idle, steps, full-page screenshot (the routine in references/w
 written, failed [{session, screen, state, key, error}], redirects [{side, screen, route, to}], not_found [{side, screen, route}]
 (route answered 404, no shot, not a failure), final_urls {<side>/<screen>/<viewport>/<state>: url},
 truncated (shots cut at 16000 px). Exit 1 when anything failed.
---only takes output stems (<screen>/<viewport>/<state>[--dark]), the same form as failed entries' keys.
+--only takes output stems (<screen>/<viewport>/<state>[--dark]), the same form as failed entries' keys. A dark
+key selected without its light key reads the light colors in its own session, so the dark-method check still runs.
 """
 import argparse
 import json
@@ -46,8 +47,7 @@ SESSION_JS = r"""async page => {
     await cdp.send('Emulation.setTouchEmulationEnabled', {enabled: vp.touch});
     if (vp.ua) await cdp.send('Emulation.setUserAgentOverride', {userAgent: vp.ua});
   };
-  const settle = async () => {
-    const d = C.dark;
+  const settle = async (d = C.dark) => {
     if (d && d.method === 'class') await page.evaluate(c => document.documentElement.classList.add(c), d.class || 'dark');
     if (d && d.method === 'attribute') await page.evaluate(([a, v]) => document.documentElement.setAttribute(a, v), [d.attribute || 'data-theme', d.value || 'dark']);
     await page.addStyleTag({content: FREEZE + (C.freeze_css || '')});
@@ -90,6 +90,22 @@ SESSION_JS = r"""async page => {
     await page.setViewportSize(orig);
     return cut;
   };
+  // html bg, body bg, body text color: many apps keep body transparent and theme the root or the text
+  const readBg = () => page.evaluate(() => [document.documentElement, document.body].map(e => getComputedStyle(e).backgroundColor)
+    .concat(getComputedStyle(document.body).color));
+  // a dark job whose light shot is not in this run (--only): read the light values here, before the theme switches
+  const probed = {};
+  for (const j of C.jobs) {
+    if (!j.light_probe || j.route in probed) continue;
+    try {
+      await page.setViewportSize({width: vp.width, height: vp.height});
+      await emulate(vp.height);
+      const resp = await page.goto(C.base + j.route);
+      if (resp && resp.status() === 404) continue;
+      await settle(null);
+      probed[j.route] = await readBg();
+    } catch (e) {}
+  }
   try {
     const d = C.dark;
     if (d && d.method === 'media') await page.emulateMedia({colorScheme: 'dark'});
@@ -108,9 +124,8 @@ SESSION_JS = r"""async page => {
       await settle();
       r.url = await page.evaluate(() => location.href);
       r.width = await page.evaluate(() => innerWidth);
-      // html bg, body bg, body text color: many apps keep body transparent and theme the root or the text
-      r.bg = await page.evaluate(() => [document.documentElement, document.body].map(e => getComputedStyle(e).backgroundColor)
-        .concat(getComputedStyle(document.body).color));
+      r.bg = await readBg();
+      if (j.light_probe) r.light_bg = probed[j.route];
       for (const s of j.steps) await step(s);
       r.text = await page.evaluate(() => document.body.innerText);
       if (j.full_page) r.truncated = await fullPage(j.out);
@@ -190,6 +205,8 @@ def build_plan(config, manifest, sides, work, screens=None, themes="light", only
                         job = {"key": key, "screen": s["name"], "state": stem, "route": s.get("route") or "/",
                                "steps": steps, "full_page": s.get("full_page", True),
                                "out": os.path.join(work, side, s["name"], vname, stem + ".png")}
+                        if dark and only and key[:-len("--dark")] not in only:
+                            job["light_probe"] = True  # no light shot to compare the dark check against
                         errs = [e for e in map(step_error, steps) if e]
                         if errs:
                             job["error"] = errs[0]
@@ -236,8 +253,8 @@ def collect(sessions, results, routes):
         if not sess["dark"]:
             continue
         light = name[:-len("-dark")]
-        pairs = [(by_key[(name, j["key"])].get("bg"), by_key.get((light, j["key"][:-len("--dark")]), {}).get("bg"))
-                 for j in sess["jobs"]]
+        pairs = [(by_key[(name, j["key"])].get("bg"), by_key.get((light, j["key"][:-len("--dark")]), {}).get("bg")
+                  or by_key[(name, j["key"])].get("light_bg")) for j in sess["jobs"]]
         pairs = [p for p in pairs if p[0] and p[1]]
         verdicts.setdefault(sess["viewport_name"], []).append(
             (sess["side"], bool(pairs) and all(a == b for a, b in pairs)))
@@ -376,6 +393,9 @@ def selftest():
             "head-desktop", "head-mobile"]
         only = build_plan(config, manifest, sides, w, themes="light+dark", only={"login/mobile/err--dark"})
         assert list(only) == ["head-mobile-dark", "base-mobile-dark"], list(only)
+        assert all(j.get("light_probe") for n in only for j in only[n]["jobs"])  # dark without its light shot
+        both = build_plan(config, manifest, sides, w, themes="light+dark", only={"login/mobile/err", "login/mobile/err--dark"})
+        assert not any(j.get("light_probe") for n in both for j in both[n]["jobs"])
         try:
             build_plan(config, manifest, sides, w, screens=["nope"])
             raise AssertionError("unknown screen accepted")
@@ -450,6 +470,17 @@ def selftest():
         assert any("wrong method" in f["error"] for f in rep["failed"] if f["session"] == "head-desktop-dark")
         rep = collect({n: sel[n] for n in ("base-desktop", "base-desktop-dark")}, results, routes)
         assert not any("wrong method" in f["error"] for f in rep["failed"])  # base-only call cannot judge
+        # --only of dark items: the light values come from each dark session's own probe
+        dk = {n: sel[n] for n in ("head-desktop-dark", "base-desktop-dark")}
+        for n in dk:
+            for r in results[n]:
+                r["light_bg"] = "rgb(255, 255, 255)"
+        rep = collect(dk, results, routes)
+        assert any("wrong method" in f["error"] for f in rep["failed"] if f["session"] == "head-desktop-dark"), rep
+        for r in results["head-desktop-dark"]:
+            r["bg"] = "rgb(17, 17, 17)"
+        rep = collect(dk, results, routes)
+        assert not any("wrong method" in f["error"] for f in rep["failed"]), rep
         rep = collect({"head-desktop": s["head-desktop"]}, {"head-desktop": "session head-desktop: boom"}, routes)
         assert len(rep["failed"]) == len(s["head-desktop"]["jobs"]) and not rep["written"]
         # base-only redirect (the page moved at head): entry says side base, head shot stays

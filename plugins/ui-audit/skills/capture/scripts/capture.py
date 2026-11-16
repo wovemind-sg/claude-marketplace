@@ -12,6 +12,7 @@ truncated (shots cut at 16000 px). Exit 1 when anything failed.
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -138,9 +139,25 @@ def viewport_info(v):
             "ua": v.get("user_agent") or (IPHONE_UA if v.get("is_mobile") else None)}
 
 
+def safe_name(kind, n):
+    """Config/manifest names become path parts under --work; the repo is untrusted, so no '/', '..' or absolute paths."""
+    if not (isinstance(n, str) and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", n) and ".." not in n):
+        raise ValueError(f"{kind} name {json.dumps(n)} must be letters, digits, '-', '_' or '.', no '..'")
+    return n
+
+
 def build_plan(config, manifest, sides, work, screens=None, themes="light", only=None):
     """Sessions {name: {side, base, viewport, viewport_name, dark, jobs}}; job key = <screen>/<viewport>/<state>[--dark]."""
     cfg_screens = config.get("screens", [])
+    for s in cfg_screens:
+        safe_name("screen", s["name"])
+        for st in s.get("states", []):
+            safe_name("state", st["name"])
+    for v in config["viewports"]:
+        safe_name("viewport", v)
+    for e in (manifest.get("screens") or {}).values():
+        for n in (e.get("recipes") or {}):
+            safe_name("recipe", n)
     names = [s["name"] for s in cfg_screens]
     unknown = sorted(set(screens or []) - set(names))
     if unknown:
@@ -360,8 +377,20 @@ def selftest():
             raise AssertionError("unknown screen accepted")
         except ValueError:
             pass
+        for bad in ({"screens": [{"name": "../x"}]}, {"screens": [{"name": "/etc"}]},
+                    {"screens": [{"name": "x", "states": [{"name": "a/../../b"}]}]}, {"viewports": {"..": {}}}):
+            try:
+                build_plan(dict(config, **bad), manifest, sides, w)
+                raise AssertionError(f"path name accepted: {bad}")
+            except ValueError:
+                pass
+        try:
+            build_plan(config, {"screens": {"home": {"recipes": {"../../evil": []}}}}, sides, w)
+            raise AssertionError("path recipe name accepted")
+        except ValueError:
+            pass
 
-        out = 'banner\n### Result\n"[{\\"key\\":\\"a\\",\\"text\\":\\"x\\\\ny\\"}]"\n### Ran Playwright code\n'
+        out ='banner\n### Result\n"[{\\"key\\":\\"a\\",\\"text\\":\\"x\\\\ny\\"}]"\n### Ran Playwright code\n'
         assert parse_result(out) == [{"key": "a", "text": "x\ny"}]
         routes = {"verify": "/verify.html", "sched": "/schedule.html?token=abc", "old": "/old.html"}
         assert redirect_target("http://h:1/verify.html", "old", routes) == "verify"

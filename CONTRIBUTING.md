@@ -19,7 +19,10 @@ scope before you write it. Then:
    (or "None"), and an example.
 4. Add an entry with `name` and `source` to `.claude-plugin/marketplace.json`.
    Do not set `version` there.
-5. Validate and test locally (see below), then open a pull request.
+5. Add a how-to spec for each skill or command at
+   `site/specs/<plugin>/<item>.json` (written with `/help-me-understand`,
+   page type `how-to`); `python3 site/build.py --selftest` fails without one.
+6. Validate and test locally (see below), then open a pull request.
 
 Details: [Adding New Plugins](CLAUDE.md#adding-new-plugins).
 

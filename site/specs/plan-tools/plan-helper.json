@@ -123,7 +123,7 @@
           "type": "list",
           "title": "How the level works",
           "items": [
-            "The level is the first question, unless you pass it as an argument (`/plan-tools:plan-helper material`) or a calling skill such as create-webapp already asked it.",
+            "The level is the first question, unless you pass it as an argument (`/plan-tools:plan-helper material`), a calling skill such as create-webapp already asked it, or Claude is revising a plan that records it.",
             "When Claude decides, it takes the answer the existing code points to, or else the option it would have recommended.",
             "Every decision Claude makes is listed in the plan under Assumed decisions, so you can veto it at review, and the list is copied into the PR body.",
             "A vague ask, and whether to include something that serves no ask, are asked at every level.",
@@ -210,7 +210,7 @@
           "steps": [
             {
               "title": "Pick the question level",
-              "text": "From your argument or the calling skill, or else asked as the first question: everything, balanced or material."
+              "text": "From your argument, the calling skill or the plan being revised, or else asked as the first question: everything, balanced or material."
             },
             {
               "title": "Capture the asks",

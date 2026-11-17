@@ -142,7 +142,7 @@ The skill only plans — it does not implement anything. It ends by showing a on
 
 ### `/plan-tools:plan-split-implment`
 
-Executes a session-split plan (as produced by `split-plan`). Reads `sessions/` and `progress.md`, then spawns one subagent per incomplete session, sequentially. Each subagent reads its session file, does the work, commits, updates `progress.md`, and exits. The orchestrator only delegates and monitors — it does not implement anything itself. If a subagent hits a decision its plan does not answer, it ends its run with the question; the orchestrator asks you and sends the answer back to that subagent.
+Executes a session-split plan (as produced by `split-plan`). Reads `sessions/` and `progress.md`, then spawns one subagent per incomplete session, sequentially. Each subagent reads its session file, does the work, commits, updates `progress.md`, and exits. The orchestrator only delegates and monitors — it does not implement anything itself. If a subagent hits a decision its plan does not answer and the plan's question level would ask, it ends its run with the question; the orchestrator asks you and sends the answer back to that subagent.
 
 Usage:
 

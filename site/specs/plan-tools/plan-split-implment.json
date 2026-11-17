@@ -224,7 +224,7 @@
             {
               "title": "A helper has a question",
               "state": "warn",
-              "text": "A session can hit a decision its plan does not answer.",
+              "text": "A session can hit a decision its plan does not answer and its question level would ask.",
               "points": [
                 {
                   "sign": "+",

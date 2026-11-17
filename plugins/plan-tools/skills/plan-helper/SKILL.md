@@ -1,6 +1,6 @@
 ---
 name: plan-helper
-description: Write and self-audit implementation plans so every decision the user has not made is either asked or listed in the plan, per the question level the user picks, never include unrequested changes, keep every change as small as it can be while still complete, and prove they cover everything asked. Use whenever you are writing, drafting, revising, or presenting an implementation plan — in plan mode, before ExitPlanMode, inside split-plan step 1b, or when the user says "plan this", "make a plan", "how would you implement" — even if the user doesn't mention plan-helper.
+description: Write and self-audit implementation plans so they ask or openly list every decision the user has not made (per the question level the user picks), never include unrequested changes, keep every change as small as it can be while still complete, and prove they cover everything asked. Use whenever you are writing, drafting, revising, or presenting an implementation plan — in plan mode, before ExitPlanMode, inside split-plan step 1b, or when the user says "plan this", "make a plan", "how would you implement" — even if the user doesn't mention plan-helper.
 argument-hint: "[everything|balanced|material]"
 ---
 
@@ -19,7 +19,7 @@ Follow the workflow in order. The plan is not ready to present until the self-au
 
 The level decides which open decisions (step 3) go to the user and which you decide yourself and list in the plan. On a simple plan, asking every decision means many rounds where the user picks the recommended answer almost every time; the level lets them trade some of those questions for a list they review with the plan.
 
-Take the level from the argument (`everything`, `balanced` or `material`) or from the calling skill, if either gives one. Otherwise ask it as the very first question, in one AskUserQuestion with these three options, each saying in plain English what it asks and what it decides for the user:
+Take the level from the argument (`everything`, `balanced` or `material`), from the calling skill, or from the `Question level:` line of the plan you are revising, if any of them gives one. Otherwise ask it as the very first question, in one AskUserQuestion with these three options, each saying in plain English what it asks and what it decides for the user:
 
 - **Everything**: every open decision is asked. Nothing is decided for the user.
 - **Balanced**: anything the user will see or experience, and anything costly to undo, is asked. Internal details are decided and listed in the plan.

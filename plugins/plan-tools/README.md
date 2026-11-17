@@ -71,7 +71,7 @@ To work through deferred issues labeled `backlog` instead of `ai`:
 
 ### `/plan-tools:create-webapp`
 
-Bootstraps a brand-new FastAPI + Jinja2 + HTMX + Alpine.js web app end to end. Gathers the feature list, an optional design reference, whether the app also ships as iOS/Android apps (then a Capacitor WebView shell loading the deployed server is planned and built too, per the `capacitor-core` skills), and the planning/implementing models. Decides which parts of the `fastapi-template` stack to scaffold (Postgres/Alembic, Redis, OpenRouter, Google login, arq), collects only the `.env` values those parts need, writes `.env` + `.env.example` and gitignores `.env`, then tests every external dependency (DB, Redis, API keys, toolchain) so the implementer never stalls. Spawns a `Plan` subagent (following `plan-helper`; its open decisions are relayed to the user via `AskUserQuestion` and answered back with `SendMessage`) to write the plan into `.planning/SPEC.md`, runs `split-plan` directly under `.planning/`, and after the user approves per-session commits, hands off to `plan-split-implment` (split) or a single implementing subagent (not split). Client-side choices follow `htmx-vs-alpine`.
+Bootstraps a brand-new FastAPI + Jinja2 + HTMX + Alpine.js web app end to end. Gathers the feature list, an optional design reference, whether the app also ships as iOS/Android apps (then a Capacitor WebView shell loading the deployed server is planned and built too, per the `capacitor-core` skills), the planning/implementing models, and the `plan-helper` question level for the planner. Decides which parts of the `fastapi-template` stack to scaffold (Postgres/Alembic, Redis, OpenRouter, Google login, arq), collects only the `.env` values those parts need, writes `.env` + `.env.example` and gitignores `.env`, then tests every external dependency (DB, Redis, API keys, toolchain) so the implementer never stalls. Spawns a `Plan` subagent (following `plan-helper`; its open decisions are relayed to the user via `AskUserQuestion` and answered back with `SendMessage`) to write the plan into `.planning/SPEC.md`, runs `split-plan` directly under `.planning/`, and after the user approves per-session commits, hands off to `plan-split-implment` (split) or a single implementing subagent (not split). Client-side choices follow `htmx-vs-alpine`.
 
 Usage:
 
@@ -83,7 +83,7 @@ Requires the `fastapi-template` and `htmx-vs-alpine` plugins from this marketpla
 
 ### `/plan-tools:create-app`
 
-Same end-to-end flow as `create-webapp`, for apps that are **mobile only** (no web UI): Expo SDK 57 + React Native 0.86 + React 19.2 + expo-router + TypeScript 6 + zustand, tested with Jest 29 / jest-expo, built and shipped with EAS Build + Submit (TestFlight, Play alpha). Gathers features, platforms, bundle id, design reference and models; picks only the needed Expo/RN libraries and local Expo Modules (Swift / Kotlin — e.g. an Apple Vision / LiteRT similarity engine, a PHImageManager / BitmapFactory thumbnail cache) from `skills/create-app/references/stack.md`; collects `EXPO_PUBLIC_*` env values and store credentials; checks Node, Xcode/CocoaPods, JDK 17 / Android SDK and EAS login; then plans, splits under `.planning/` and hands off to implementing subagents.
+Same end-to-end flow as `create-webapp`, for apps that are **mobile only** (no web UI): Expo SDK 57 + React Native 0.86 + React 19.2 + expo-router + TypeScript 6 + zustand, tested with Jest 29 / jest-expo, built and shipped with EAS Build + Submit (TestFlight, Play alpha). Gathers features, platforms, bundle id, design reference, models and the `plan-helper` question level; picks only the needed Expo/RN libraries and local Expo Modules (Swift / Kotlin — e.g. an Apple Vision / LiteRT similarity engine, a PHImageManager / BitmapFactory thumbnail cache) from `skills/create-app/references/stack.md`; collects `EXPO_PUBLIC_*` env values and store credentials; checks Node, Xcode/CocoaPods, JDK 17 / Android SDK and EAS login; then plans, splits under `.planning/` and hands off to implementing subagents.
 
 Usage:
 
@@ -95,17 +95,28 @@ Usage:
 
 Runs automatically whenever Claude writes an implementation plan (or invoke it directly). Makes the plan:
 
-- **Ask, not assume** — every decision your request or the code doesn't already dictate becomes an AskUserQuestion round (UX, behavior, naming, edge cases, libraries, structure).
+- **Ask, not assume** — every decision your request or the code doesn't already dictate is either asked in an AskUserQuestion round (UX, behavior, naming, edge cases, libraries, structure) or listed in the plan under **Assumed decisions**, depending on the question level you pick (see below).
 - **No unrequested changes** — each step cites which of your asks it serves (`Serves: A<n>`); anything without one is cut or asked about.
 - **Smallest complete change** — each step states why nothing smaller works; real smaller-vs-larger trade-offs are put to you as questions.
 - **Cover everything** — a requirement map lists each ask verbatim with its delivering step and verification, and verification includes running the real app/command, not only tests.
+
+The first question is the question level, unless you pass it as an argument:
+
+| Level | Asks you | Decides and lists under Assumed decisions |
+|---|---|---|
+| `everything` | Every open decision | Nothing |
+| `balanced` | Anything you will see or experience, and anything costly to undo (data shape, migration, new dependency, public API, security, size of the change) | Internal details: naming, file structure, internal error handling, test layout |
+| `material` | Only choices that change the direction of the work or cannot be cheaply undone: architecture, data model and migration, scope, public API, security, billing | Everything else, including small UX details |
+
+A vague ask and whether to include something that serves no ask are asked at every level. The plan records its level, implementers use the same bar for decisions that come up while they work, and the Assumed decisions list is copied into the PR body. A subagent given no level uses `everything`.
 
 The plan carries an `## Implementation rules` block that binds implementers; `split-plan` copies it into every session file.
 
 Usage:
 
 ```
-/plan-tools:plan-helper
+/plan-tools:plan-helper                # asks the question level first
+/plan-tools:plan-helper material       # or everything, balanced
 ```
 
 ### `/plan-tools:split-plan`
@@ -123,7 +134,7 @@ Claude will ask where the existing plan lives if it doesn't already know, then p
 - `SPEC.md` — the original plan, preserved as reference
 - `progress.md` — session status tracker (Session 1 starts "active")
 - `CLAUDE.md` — condensed project conventions (under 60 lines)
-- `sessions/session-01.md`, `session-02.md`, ... — one file per session with goal, prerequisites, numbered tasks, files touched, verification steps, and handoff instructions. When the plan came from `plan-helper`, each file also carries the `## Implementation rules` block, the applicable Decisions and the requirement-map rows that session delivers (rows are ticked in `SPEC.md`)
+- `sessions/session-01.md`, `session-02.md`, ... — one file per session with goal, prerequisites, numbered tasks, files touched, verification steps, and handoff instructions. When the plan came from `plan-helper`, each file also carries the `## Implementation rules` block, the plan's question level, the applicable Decisions and Assumed decisions, and the requirement-map rows that session delivers (rows are ticked in `SPEC.md`)
 
 With no plan, the skill drafts one following `plan-helper`.
 

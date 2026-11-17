@@ -143,7 +143,7 @@ html:not(.w-js) .w-tablist{display:none}
 
 /* Sections */
 .w-section{padding-block:clamp(48px,7vw,84px) 0}
-.w-section:last-of-type{padding-bottom:clamp(56px,8vw,96px)}
+.w-section:last-of-type,.w-plugin main>.w-wrap:last-child{padding-bottom:clamp(56px,8vw,96px)}
 .w-section-head{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}
 .w-section-head h2{font-size:clamp(26px,3.6vw,34px);letter-spacing:-.022em;font-weight:740;line-height:1.15}
 

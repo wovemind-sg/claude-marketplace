@@ -22,6 +22,7 @@ everything it could, then lists every problem at once.
 Standard library only; runs on Python 3.8+.
 """
 
+import importlib.util
 import json
 import os
 import re
@@ -171,7 +172,7 @@ def attach_specs(root, plugins, errors):
             item = next((i for i in plugin["items"] if i["name"] == stem), None)
             if item is None:
                 readme = os.path.join(plugin["dir"], "README.md")
-                if "`/" + stem not in (read_text(readme) if os.path.isfile(readme) else ""):
+                if not re.search(r"`/%s(?![\w-])" % re.escape(stem), read_text(readme) if os.path.isfile(readme) else ""):
                     errors.append("%s: %s has no skill or command %s, and its README never mentions `/%s`" % (rel, d, stem, stem))
                     continue
                 item = {"kind": "mod", "name": stem, "hint": "", "description": ""}
@@ -190,11 +191,19 @@ def attach_specs(root, plugins, errors):
 
 # ---------------------------------------------------------------- small helpers
 
+def _load_build_page():
+    spec = importlib.util.spec_from_file_location("build_page", os.path.join(ROOT, BUILD_PAGE))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
 def inline(text):
-    """Escape spec text and apply its two inline marks, `code` and **bold**."""
-    s = escape(text or "", quote=False)
-    s = re.sub(r"`([^`]+)`", r"<code>\1</code>", s)
-    return re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)
+    """Escape spec text and apply its two inline marks, `code` and **bold**, exactly as the how-to page does."""
+    return _build_page.inline(text or "")
+
+
+_build_page = _load_build_page()
 
 
 def plain(text):
@@ -223,6 +232,11 @@ def counts_label(items):
         if n.get(kind):
             parts.append("%d %s" % (n[kind], one if n[kind] == 1 else many))
     return ", ".join(parts) or "no skills"
+
+
+def version(plugin):
+    """plugin.json wins over the marketplace entry, as in Claude Code; either may hold it."""
+    return plugin["manifest"].get("version") or plugin["entry"].get("version") or "?"
 
 
 def rendered(plugin):
@@ -334,7 +348,7 @@ def plugin_card(p, rel, featured=False):
             '<p class="w-card-meta"><span>%s</span><span>v%s</span></p></a></li>'
             % (" w-card-feat" if featured else "", escape(cat), escape(words.lower()), rel, escape(p["name"]),
                glyph(cat), escape(cat), escape(category_label(cat)), escape(p["name"]), escape(entry.get("description", "")),
-               extra, counts_label(items), escape(p["manifest"].get("version", "?"))))
+               extra, counts_label(items), escape(version(p))))
 
 
 def render_index(plugins, market):
@@ -453,8 +467,8 @@ def render_plugin(p, plugins):
                           % (KIND_GROUP[kind], len(its), "".join(item_row(p, i, "") for i in its)))
     if not groups:
         groups.append('<p class="w-muted">This plugin has no skills or commands; it works through hooks.</p>')
-    source = "%s/tree/main/plugins/%s" % (REPO_URL, p["name"])
-    facts = [("Version", escape(m.get("version", "?"))), ("Category", escape(category_label(cat))),
+    source = "%s/tree/main/%s" % (REPO_URL, entry["source"][2:].rstrip("/"))
+    facts = [("Version", escape(version(p))), ("Category", escape(category_label(cat))),
              ("Licence", escape(m.get("license") or entry.get("license") or "?")),
              ("Includes", counts_label(p["items"])), ("Source", '<a href="%s">GitHub</a>' % escape(source))]
     home = m.get("homepage") or entry.get("homepage") or ""
@@ -499,7 +513,7 @@ def render_plugin(p, plugins):
 %s
 </main>""" % (crumbs(rel, [(p["name"], None)]), glyph(cat, "w-glyph w-glyph-lg"), escape(p["name"]),
               escape(m.get("description") or entry.get("description", "")), escape(cat), escape(category_label(cat)),
-              escape(m.get("version", "?")), escape(m.get("license") or entry.get("license") or ""), "".join(groups),
+              escape(version(p)), escape(m.get("license") or entry.get("license") or ""), "".join(groups),
               install_block(p["name"]), facts_html, req_html, related_html)
     return page(rel, "%s: Claude Code plugin" % p["name"], entry.get("description", ""), body, "w-site w-plugin")
 
@@ -583,6 +597,9 @@ def build(root, out):
         raise SystemExit("refusing to build into %s: it contains the repository" % out)
     errors = []
     if os.path.exists(out):
+        # Only wipe an empty dir or a previous build, so a mistyped --out (site, plugins, ~) never deletes sources.
+        if os.listdir(out) and not os.path.isfile(os.path.join(out, "assets", "site.js")):
+            raise SystemExit("refusing to replace %s: it is not empty and not a previous site build" % out)
         shutil.rmtree(out)
     os.makedirs(os.path.join(out, "assets"))
     for fn in ("site.css", "site.js"):
@@ -624,6 +641,7 @@ def selftest():
     assert parse_frontmatter("---\na: 'it''s'\nb: |\n  one\n  two\n---\n") == {"a": "it's", "b": "one\ntwo"}
     assert parse_frontmatter("no frontmatter\n") == {}
     assert inline("run `a<b>` **now**") == "run <code>a&lt;b&gt;</code> <strong>now</strong>"
+    assert inline("`f(**kw**)`") == "<code>f(**kw**)</code>"
 
     tmp = tempfile.mkdtemp()
     try:
@@ -636,7 +654,7 @@ def selftest():
         write(os.path.join(fake, "plugins", "demo", "skills", "has-spec", "SKILL.md"), "---\nname: has-spec\n---\n")
         write(os.path.join(fake, "plugins", "demo", "skills", "no-spec", "SKILL.md"), "---\nname: no-spec\nargument-hint: <x>\n---\n")
         write(os.path.join(fake, "plugins", "demo", "commands", "cmd.md"), "---\ndescription: c\n---\n")
-        for rel in ("demo/has-spec.json", "demo/cmd.json", "demo/pane.json", "demo/typo.json", "ghost/x.json"):
+        for rel in ("demo/has-spec.json", "demo/cmd.json", "demo/pane.json", "demo/pan.json", "ghost/x.json"):
             write(os.path.join(fake, "site", "specs", rel), "{}")
         errs = []
         _, plugins = discover(fake, errs)
@@ -645,7 +663,7 @@ def selftest():
         assert kinds == {"has-spec": "skill", "no-spec": "skill", "cmd": "command", "pane": "mod"}, kinds
         assert [i["name"] for i in plugins[0]["items"]] == ["has-spec", "no-spec", "cmd", "pane"]
         assert any(e.startswith("missing spec: site/specs/demo/no-spec.json") and "/demo:no-spec" in e for e in errs), errs
-        assert any("typo.json" in e for e in errs) and any("ghost" in e for e in errs), errs
+        assert any("pan.json" in e for e in errs) and any("ghost" in e for e in errs), errs  # `/pane` does not cover pan
         assert len(errs) == 3, errs
         assert invocation(plugins[0], plugins[0]["items"][3]) == "/pane"
 
@@ -657,6 +675,14 @@ def selftest():
         write(os.path.join(site, "assets", "s.css"), "")
         errs = check_links(site)
         assert len(errs) == 2 and "broken link b/" in errs[0] and "/a/ must be relative" in errs[1], errs
+
+        # --out never wipes a non-empty directory that is not a previous build.
+        try:
+            build(ROOT, fake)
+            raise AssertionError("build wiped a non-build directory")
+        except SystemExit:
+            pass
+        assert os.path.isfile(os.path.join(fake, "plugins", "demo", "README.md"))
 
         # The real site: every skill and command has a spec, every spec renders, every link resolves.
         errors, pages = build(ROOT, os.path.join(tmp, "out"))

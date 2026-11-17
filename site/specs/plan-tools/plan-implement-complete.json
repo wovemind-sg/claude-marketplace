@@ -1,0 +1,413 @@
+{
+  "title": "Ship a Whole Plan",
+  "page_type": "how-to",
+  "gist": {
+    "kind": "chain",
+    "nodes": [
+      {
+        "icon": "question",
+        "label": "Answer four questions"
+      },
+      {
+        "icon": "code",
+        "label": "Helpers build the plan",
+        "arrow": "then unattended"
+      },
+      {
+        "icon": "search",
+        "label": "finalize-pr reviews it",
+        "arrow": "once"
+      },
+      {
+        "icon": "rocket",
+        "label": "PR opened or merged",
+        "arrow": "then",
+        "outcome": true
+      }
+    ]
+  },
+  "bottom_line": "Run /plan-tools:plan-implement-complete, answer one round of questions, and Claude implements your plan, reviews it, opens the pull request and can watch it merge.",
+  "sections": [
+    {
+      "heading": "Start it with your plan, or let Claude find it",
+      "short": "Start it",
+      "blocks": [
+        {
+          "type": "code",
+          "code": "/plan-tools:plan-implement-complete [optional path to the plan file] [--branch <name>]",
+          "caption": "Without --branch, the work goes on a branch named plan/<feature-name>."
+        },
+        {
+          "type": "flow",
+          "title": "How Claude finds the plan",
+          "nodes": [
+            {
+              "id": "split",
+              "label": "A .planning folder with sessions?"
+            },
+            {
+              "id": "sp",
+              "label": "Split plan"
+            },
+            {
+              "id": "path",
+              "label": "The path you gave"
+            },
+            {
+              "id": "conv",
+              "label": "The plan in this conversation"
+            },
+            {
+              "id": "recent",
+              "label": "Newest file in ~/.claude/plans/"
+            },
+            {
+              "id": "single",
+              "label": "Single plan"
+            }
+          ],
+          "edges": [
+            {
+              "from": "split",
+              "to": "sp",
+              "label": "yes"
+            },
+            {
+              "from": "split",
+              "to": "path",
+              "label": "no"
+            },
+            {
+              "from": "path",
+              "to": "single",
+              "label": "given"
+            },
+            {
+              "from": "path",
+              "to": "conv",
+              "label": "none given"
+            },
+            {
+              "from": "conv",
+              "to": "single",
+              "label": "found"
+            },
+            {
+              "from": "conv",
+              "to": "recent",
+              "label": "none"
+            },
+            {
+              "from": "recent",
+              "to": "single",
+              "label": "you confirm"
+            }
+          ],
+          "caption": "A split plan is `.planning/progress.md` plus `.planning/sessions/`, written by /plan-tools:split-plan. If Claude had to guess the file, it confirms it with you."
+        },
+        {
+          "type": "text",
+          "text": "The plan in this conversation might be one you just approved in plan mode. If Claude finds no plan at all, it tells you and stops."
+        },
+        {
+          "type": "cards",
+          "title": "Before you start",
+          "cards": [
+            {
+              "title": "GitHub CLI signed in",
+              "state": "done",
+              "text": "`git` and the GitHub CLI (`gh`), signed in with `gh auth login`, with push access to the repository. Every issue, PR and status command goes through `gh`."
+            },
+            {
+              "title": "A plan to build",
+              "state": "done",
+              "text": "A split plan in `.planning/`, or a single plan file."
+            }
+          ]
+        },
+        {
+          "type": "glossary",
+          "terms": [
+            {
+              "term": "Pull request (PR)",
+              "definition": "A request on GitHub to merge a branch of code into the main code, where it can be reviewed and checked first."
+            },
+            {
+              "term": "Subagent",
+              "definition": "A separate Claude helper started for one job, such as building one session of the plan."
+            },
+            {
+              "term": "Auto-merge",
+              "definition": "A GitHub setting that merges the pull request by itself once its checks pass."
+            },
+            {
+              "term": "GitHub issue",
+              "definition": "A to-do item recorded on GitHub."
+            },
+            {
+              "term": "Commit",
+              "definition": "A saved snapshot of the code changes, with a message."
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "title": "Things you might say that call for it",
+          "items": [
+            "\"implement the plan end to end\"",
+            "\"implement and raise a PR\"",
+            "\"finish this plan\"",
+            "\"take the plan to a PR\"",
+            "\"implement it all and merge\"",
+            "any other way of asking for a plan to be built and shipped in one go rather than session by session"
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "You answer every question once, at the start",
+      "short": "Questions",
+      "blocks": [
+        {
+          "type": "stats",
+          "items": [
+            {
+              "value": "1",
+              "label": "round of questions",
+              "icon": "question",
+              "note": "4 questions at most"
+            },
+            {
+              "value": "0",
+              "label": "interruptions after that",
+              "icon": "pause",
+              "note": "except for real blockers"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "title": "The four questions",
+          "columns": [
+            "Question",
+            "Options"
+          ],
+          "rows": [
+            [
+              "Implementer model: which model builds the plan",
+              "Sonnet (Recommended), Opus, Haiku"
+            ],
+            [
+              "Finalize model: which model runs finalize-pr's review and test-plan helpers",
+              "Sonnet (Recommended), Opus, Haiku"
+            ],
+            [
+              "Git and merge: \"Do you give permission in advance for the commits, the push and opening the PR, and should the PR auto-merge once checks pass?\"",
+              "Yes, auto-merge (Recommended); Yes, stop at open PR; No, stop before pushing"
+            ],
+            [
+              "UI audit: \"If the implementation changes UI, run the UI audit?\" Asked only when the `ui-audit` plugin is installed.",
+              "Yes, config defaults (Recommended); No"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "title": "What each git and merge answer sets",
+          "columns": [
+            "Answer",
+            "Git permission",
+            "Auto-merge"
+          ],
+          "rows": [
+            [
+              "Yes, auto-merge (Recommended)",
+              "Yes",
+              "Yes"
+            ],
+            [
+              "Yes, stop at open PR",
+              "Yes",
+              "No"
+            ],
+            [
+              "No, stop before pushing",
+              "No",
+              "No"
+            ]
+          ]
+        },
+        {
+          "type": "text",
+          "text": "With git permission No, Claude still builds the plan and commits on your machine, so nothing leaves it. It stops before the push and hands back to you."
+        }
+      ]
+    },
+    {
+      "heading": "Helpers build the plan and fix related problems on the way",
+      "short": "Build",
+      "blocks": [
+        {
+          "type": "before_after",
+          "before": {
+            "label": "Split plan",
+            "text": "Claude runs /plan-tools:plan-split-implment. Sessions added during the run are picked up like any other."
+          },
+          "after": {
+            "label": "Single plan",
+            "text": "One helper builds the whole plan, committing as it goes. If the plan is clearly too big for one context, Claude runs /plan-tools:split-plan first and treats it as a split plan. If that helper ends with a question, Claude asks you and sends the answer back."
+          }
+        },
+        {
+          "type": "list",
+          "title": "Rules every building helper follows",
+          "items": [
+            "It uses the implementer model you chose.",
+            "A bug, gap or loose end related to the plan is fixed as part of the plan. No follow-up GitHub issue and no TODO for later.",
+            "If such a problem is too big for the current session, a new session file is added to the plan right after the current one.",
+            "Problems unrelated to the plan are left alone and mentioned in the final report.",
+            "Existing GitHub issues are never created, commented on, edited or closed."
+          ]
+        },
+        {
+          "type": "list",
+          "title": "Along the way",
+          "items": [
+            "Claude makes sure the work is on a feature branch. On `main` or `master` it creates `plan/<feature-name>`, or uses the name you passed with `--branch`.",
+            "If building stops in a broken state, Claude stops and reports. It does not push a half-built plan."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "finalize-pr runs once, and fixes things instead of filing them",
+      "short": "Finalize",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Your finalize model",
+              "state": "done",
+              "text": "finalize-pr's helpers use the finalize model you chose."
+            },
+            {
+              "title": "One test-plan pass",
+              "state": "done",
+              "text": "It runs the test plan once, fixes what it finds and moves on."
+            },
+            {
+              "title": "No follow-up issues",
+              "state": "done",
+              "text": "Each unresolved item related to the plan is fixed by a helper and committed before the PR opens. Unrelated items go into the PR description under \"Notes\"."
+            },
+            {
+              "title": "No new questions",
+              "state": "done",
+              "text": "Its push and UI-audit questions were already answered at the start, so it asks nothing."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "With git permission No, finalize-pr stops before pushing and does not open the pull request."
+        }
+      ]
+    },
+    {
+      "heading": "With auto-merge chosen, Claude watches the PR until it merges",
+      "short": "Merge",
+      "blocks": [
+        {
+          "type": "chain",
+          "nodes": [
+            {
+              "icon": "rocket",
+              "label": "PR opened"
+            },
+            {
+              "icon": "gear",
+              "label": "Auto-merge turned on",
+              "arrow": "then",
+              "note": "with a merge method the repo allows, squash if allowed"
+            },
+            {
+              "icon": "clock",
+              "label": "monitor-pr watches",
+              "arrow": "then"
+            },
+            {
+              "icon": "check-circle",
+              "label": "PR merged",
+              "arrow": "checks pass",
+              "outcome": true
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "This step runs only when you chose auto-merge and gave git permission. With git permission No there is no pull request, so it is skipped."
+        }
+      ]
+    },
+    {
+      "heading": "You get a short report at the end",
+      "short": "Report",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "PR link and state",
+              "state": "info",
+              "text": "Merged or still open."
+            },
+            {
+              "title": "Sessions run",
+              "state": "info",
+              "text": "Including any added during the run."
+            },
+            {
+              "title": "What finalize-pr fixed",
+              "state": "info"
+            },
+            {
+              "title": "Unrelated notes",
+              "state": "info",
+              "text": "Anything unrelated that was noted in the PR description."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "reference": [
+    {
+      "title": "Default conventions",
+      "items": [
+        "Plan work happens on a branch named `plan/<feature-name>`, shared with `plan-split-implment`. Change it with `--branch <name>`.",
+        "Helpers run on the `sonnet` model by default; plan-implement-complete asks you up front. Other skills set this their own way.",
+        "Auto-merge uses a merge method the repository allows: plan-implement-complete prefers squash, while monitor-pr asks when more than one is allowed. The repository's merge settings decide which are allowed."
+      ]
+    },
+    {
+      "title": "About the plan-tools plugin",
+      "items": [
+        "Plugin purpose: plan-driven workflow tools that bootstrap a new web or mobile app end to end, split implementation plans into context-sized resumable sessions, and drive them to PRs.",
+        "Installing plan-tools also installs the plugins it depends on: `ntfy`, `fastapi-template` and `htmx-vs-alpine`.",
+        "No environment variables are needed. The one setting, `designer_ui_review` (default `false`), is changed with `/plugin configure plan-tools@wovemind`. When it is `true` and the `ui-change-guard` plugin is installed, finalize-pr runs `/ui-change-guard:review-ui-change` before it raises the PR, and labels the PR `ui-risky` if the review still finds a problem.",
+        "A default only takes effect after you open the settings dialog and save it once. Until then the setting counts as off."
+      ]
+    }
+  ],
+  "next_action": {
+    "text": "Run /plan-tools:plan-implement-complete in the repo with your plan, and answer its four questions.",
+    "detail": "After that one round it runs unattended, stopping only for real blockers."
+  },
+  "sources": [
+    {
+      "label": "plan-tools on GitHub",
+      "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/plan-tools"
+    }
+  ]
+}

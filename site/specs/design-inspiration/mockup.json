@@ -1,0 +1,130 @@
+{
+  "title": "Mock Up Your Redesign",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "link", "label": "Run with shortlist link"},
+    {"icon": "question", "label": "Pick model and modes", "arrow": "asks once"},
+    {"icon": "gear", "label": "Pages built and checked", "arrow": "then"},
+    {"icon": "check-circle", "label": "Mockup to comment on", "arrow": "publishes", "outcome": true}
+  ]},
+  "bottom_line": "Run `/design-inspiration:mockup` on your rated shortlist to see your own pages in the look you loved, then comment to have it revised.",
+  "sections": [
+    {"heading": "Run it on a shortlist to create, on a mockup to revise", "short": "Run it", "blocks": [
+      {"type": "code", "code": "/design-inspiration:mockup [shortlist url | mockup url] [--model <name>]", "caption": "The command. Both parts in brackets are optional."},
+      {"type": "flow", "title": "What the link you give decides", "nodes": [
+        {"id": "run", "label": "You run mockup with a link"},
+        {"id": "create", "label": "Creates a new mockup"},
+        {"id": "revise", "label": "Revises it from comments"},
+        {"id": "stop", "label": "Stops and says why"}
+      ], "edges": [
+        {"from": "run", "to": "create", "label": "shortlist link"},
+        {"from": "run", "to": "revise", "label": "mockup link"},
+        {"from": "run", "to": "stop", "label": "any other page"}
+      ], "caption": "Any other page: it says it needs a shortlist or a mockup made by this plugin."},
+      {"type": "code", "title": "Examples", "code": "/design-inspiration:mockup https://claude.ai/code/artifact/<shortlist id>\n/design-inspiration:mockup https://claude.ai/code/artifact/<mockup id>\n/design-inspiration:mockup --model sonnet"},
+      {"type": "table", "title": "Arguments", "columns": ["Argument", "Default", "Meaning"], "rows": [
+        ["artifact URL", "The newest \"<app> Design Mockup\" or \"<app> Design Shortlist\" artifact for this repo (asks when several match; stops with a pointer to `/design-inspiration:find` when none does)", "A shortlist to build from, or a mockup to revise"],
+        ["`--model <name>`", "Asked, with Opus first", "Model of the subagent that builds the mockup"]
+      ]},
+      {"type": "text", "title": "When to use it", "text": "Use it when you have rated a shortlist and want to see the result first: \"show me what it would look like\", \"mock it up\", \"preview the redesign\", \"I left comments on the mockup\", or when you pass a shortlist or mockup Artifact link, even if you do not say \"mockup\"."}
+    ]},
+    {"heading": "It is an optional step between find and plan", "short": "Where it fits", "blocks": [
+      {"type": "chain", "title": "The three skills in order", "nodes": [
+        {"icon": "search", "label": "find: rate a shortlist"},
+        {"icon": "file", "label": "mockup: preview and comment", "arrow": "optional"},
+        {"icon": "rocket", "label": "plan: plan the build", "arrow": "when happy", "outcome": true}
+      ]},
+      {"type": "text", "text": "This step is optional. It shows you what you will get before anything is planned. `/design-inspiration:plan <mockup url>` later plans to build what the mockup shows."}
+    ]},
+    {"heading": "You need a shortlist with at least one Love", "short": "Before you start", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "A rated shortlist", "state": "done", "text": "A shortlist from `/design-inspiration:find` with at least one design rated Love."},
+        {"title": "Your app's repo", "state": "done", "text": "Run it from the root of the app's repo, because it reads that repo's templates and styles."},
+        {"title": "playwright-cli", "state": "done", "text": "The Playwright CLI, for checking the pages."},
+        {"title": "python3", "state": "done", "text": "For the mockup check's local server."},
+        {"title": "claude.ai Artifact tool", "state": "done", "text": "To publish the mockup."},
+        {"title": "plan-tools", "state": "done", "text": "The design-inspiration plugin depends on plan-tools, which is installed with it."}
+      ], "caption": "What the skill needs."}
+    ]},
+    {"heading": "On a shortlist it asks once, builds, checks and publishes", "short": "Create", "blocks": [
+      {"type": "stepper", "title": "What happens on a shortlist", "steps": [
+        {"title": "Reads your ratings and notes", "text": "It reads them the same way `plan` does. App pages with no Love card are left out and named. If no card is rated Love anywhere, it stops and tells you to rate at least one design Love first."},
+        {"title": "Asks once", "text": "It asks the model (Opus, the default, or Sonnet, cheaper and faster), and per app page \"Shallow redesign\", \"Deep redesign\" or \"Full redesign\". A note that plainly ends mid-sentence is not guessed at: it asks you for the full note."},
+        {"title": "Builds each app page", "text": "A subagent builds each app page in the look of your Love designs, with made-up sample data. A Maybe card contributes only what its note asks for, and each note is a requirement."},
+        {"title": "Answer any design questions", "text": "If the designs, notes and brief do not settle a design decision, it collects those questions and you are asked them together, once."},
+        {"title": "Checks three widths", "text": "The skill checks every page at desktop, tablet and phone width."},
+        {"title": "Publishes the mockup", "text": "It publishes one Artifact titled \"<app> Design Mockup\": a tab per app page and a Desktop / Tablet / Phone switch."}
+      ]},
+      {"type": "list", "title": "What it never does", "items": [
+        "It never reuses the source designs' images, logos or copy: it recreates the style in its own HTML and CSS.",
+        "It edits no file in your repo."
+      ]}
+    ]},
+    {"heading": "Pick how much of each page may change", "short": "The modes", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Shallow redesign", "state": "info", "text": "Keeps the page's structure and changes the look. Use it when the page works and mainly needs to look better."},
+        {"title": "Deep redesign", "state": "info", "text": "Keeps every feature and all the data, and may present them differently. Use it when the content is right but should be shown differently."},
+        {"title": "Full redesign", "state": "info", "text": "Anything may change. Use it when the page itself should change."}
+      ], "caption": "You pick one mode per app page."},
+      {"type": "table", "title": "The three modes in full", "columns": ["Mode", "What it keeps", "What may change", "Use it when"], "rows": [
+        ["Shallow redesign", "The real page's structure: a table stays a table, a list stays a list, and every section, field and control stays. Adds nothing and removes nothing.", "The look, the spacing, the order and what the headers do", "The page works and mainly needs to look better"],
+        ["Deep redesign", "Every feature and all the data the page shows. Removes nothing.", "How they are presented: reordering, a table turned into cards or a graph of the same data, new elements", "The page has the right content but should present it differently"],
+        ["Full redesign", "Nothing is fixed", "Anything", "The page itself should change"]
+      ]}
+    ]},
+    {"heading": "The responsive mockup shows every page at three sizes", "short": "The mockup", "blocks": [
+      {"type": "stats", "items": [
+        {"value": "3", "label": "Width settings per page", "icon": "chart", "note": "Desktop, Tablet and Phone"},
+        {"value": "44px", "label": "Smallest control size", "icon": "check", "note": "high and wide, at phone and tablet widths"}
+      ]},
+      {"type": "list", "title": "What each mockup page holds", "items": [
+        "A tab per app page, and a Desktop / Tablet / Phone switch to see each app page at each size.",
+        "Per page, \"Deliberate changes\": every change the mockup makes on purpose beyond the look.",
+        "Per page, \"Differences from the real page\": what the mockup cannot show faithfully.",
+        "Every button, link and other control stays at least 44px high and wide at phone and tablet widths. A request for \"less space\" is met with layout, never by going under that size.",
+        "Artifacts are private by default."
+      ]}
+    ]},
+    {"heading": "Comment on the mockup, then run it again on the mockup link", "short": "Revise", "blocks": [
+      {"type": "stepper", "title": "The comment loop", "steps": [
+        {"title": "Comment in claude.ai", "text": "Comment on the mockup in claude.ai, on any tab."},
+        {"title": "Send each thread to Claude", "text": "Reply with \"Send to Claude\" or mention @claude."},
+        {"title": "Run mockup on the mockup link", "text": "Run the command with the mockup's link.", "block": {"type": "code", "code": "/design-inspiration:mockup <mockup url>"}},
+        {"title": "It changes only what you asked", "text": "It ties each comment to its app page (and asks you when it cannot tell), changes only what you asked, republishes at the same link, and replies to and resolves each thread."}
+      ]},
+      {"type": "list", "title": "Good to know", "items": [
+        "Threads you did not send to Claude are still acted on, but stay open and are listed for you.",
+        "A comment whose request is unclear is not guessed at: it gets one question back and stays open.",
+        "If there are no open comments, it tells you there is nothing to revise."
+      ]}
+    ]},
+    {"heading": "A failed Claude reply under a comment loses nothing", "short": "If stuck", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "\"Claude tried to reply\"", "state": "warn", "text": "When no session is watching the mockup, claude.ai shows this message under a comment sent to Claude.", "points": [
+          {"sign": "+", "text": "The comment is still saved."},
+          {"sign": "+", "text": "Running mockup on the mockup link picks up every open comment."}
+        ]},
+        {"title": "No Love card", "state": "warn", "text": "If no card is rated Love anywhere, it stops.", "points": [
+          {"sign": "+", "text": "Rate at least one design Love on the shortlist, then run it again."}
+        ]},
+        {"title": "No shortlist or mockup found", "state": "warn", "text": "With no link and no matching artifact for this repo, it stops.", "points": [
+          {"sign": "+", "text": "Run `/design-inspiration:find` first."}
+        ]}
+      ]},
+      {"type": "text", "title": "The exact message", "text": "\"Claude tried to reply but couldn't. To retry, reply to the comment and send the reply to Claude.\" Running `/design-inspiration:mockup <mockup url>` picks up every open comment."}
+    ]},
+    {"heading": "When you are happy, plan from the mockup", "short": "Next", "blocks": [
+      {"type": "before_after",
+        "before": {"label": "Mockup", "text": "A preview of your pages in the chosen look, revised from your comments."},
+        "after": {"label": "Plan", "text": "`/design-inspiration:plan <mockup url>` plans to build what the mockup shows."}},
+      {"type": "code", "code": "/design-inspiration:plan <mockup url>"}
+    ]}
+  ],
+  "next_action": {
+    "text": "From your app's repo root, run `/design-inspiration:mockup` with your rated shortlist's link.",
+    "detail": "The shortlist needs at least one design rated Love."
+  },
+  "sources": [
+    {"label": "design-inspiration plugin on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/design-inspiration"}
+  ]
+}

@@ -1,0 +1,490 @@
+{
+  "title": "Test User Flows",
+  "page_type": "how-to",
+  "gist": {
+    "kind": "chain",
+    "nodes": [
+      {
+        "icon": "file",
+        "label": "Your user-flows.md"
+      },
+      {
+        "icon": "code",
+        "label": "Run test-user-flow",
+        "arrow": "then"
+      },
+      {
+        "icon": "check-circle",
+        "label": "One test per flow",
+        "arrow": "writes",
+        "outcome": true
+      }
+    ]
+  },
+  "bottom_line": "Run this command and Claude writes one browser test per flow in user-flows.md, then keeps the tests in sync as the flows change.",
+  "sections": [
+    {
+      "heading": "Type the command, with an optional mode and area",
+      "short": "Run it",
+      "blocks": [
+        {
+          "type": "code",
+          "code": "/user-flows:test-user-flow [--mode local|remote] [optional area filter, e.g. 'checkout']",
+          "caption": "Both extras are optional."
+        },
+        {
+          "type": "table",
+          "title": "The two optional extras",
+          "columns": [
+            "Extra",
+            "What it does"
+          ],
+          "rows": [
+            [
+              "`--mode local` or `--mode remote`",
+              "Chooses whether the tests run against your own dev server or a real deployment. You can also say it in words, such as \"test against the deployed app\" or \"test against my dev server\"."
+            ],
+            [
+              "Area, such as `checkout`",
+              "Free text. Only the flows and tests under that area heading are handled, and the report says so."
+            ]
+          ]
+        },
+        {
+          "type": "code",
+          "title": "Examples",
+          "code": "/user-flows:test-user-flow\n/user-flows:test-user-flow checkout"
+        },
+        {
+          "type": "cards",
+          "title": "Before you start",
+          "cards": [
+            {
+              "title": "A user-flows.md",
+              "state": "done",
+              "text": "Made by `/user-flows:extract-user-flows`. If it is missing, the skill stops and tells you to run that first. The list is the contract; it never invents flows from the code."
+            },
+            {
+              "title": "uv and Python 3",
+              "state": "done",
+              "text": "The tests are Python and run through `uv`. On first run it adds `pytest-playwright` as a dev dependency and installs the Playwright browser."
+            },
+            {
+              "title": "make",
+              "state": "done",
+              "text": "Used for the generated `make test-user-flows` target."
+            },
+            {
+              "title": "A running app",
+              "state": "done",
+              "text": "The app must be startable locally, or reachable at a deployed URL."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "Use it when you want to generate, write, sync or update tests for your user flows, for example after `user-flows.md` changes (\"sync the flow tests\", \"cover the new flows\"), or to run flow tests against a deployed, staging or production environment."
+        }
+      ]
+    },
+    {
+      "heading": "Each flow in the list becomes one end-to-end test",
+      "short": "Flow to test",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "How each part of a flow is used",
+          "columns": [
+            "Part of the flow",
+            "Becomes in the test"
+          ],
+          "rows": [
+            [
+              "Precondition",
+              "Setup"
+            ],
+            [
+              "Steps",
+              "Actions"
+            ],
+            [
+              "Expected",
+              "Assertions, the checks the test makes"
+            ],
+            [
+              "Source",
+              "Where to look when a button name or route is unclear"
+            ]
+          ]
+        },
+        {
+          "type": "text",
+          "text": "The tests are end-to-end (E2E) tests: they drive the app in a real browser. The goal is one test per flow, no test without a flow and no flow left uncovered without notice. Tests check exactly what the flow's Expected line says can be observed."
+        },
+        {
+          "type": "code",
+          "title": "What a test looks like",
+          "code": "# user-flow: UF-001 hash: a1b2c3d4e5f6\ndef test_uf_001_login_with_valid_credentials(page: Page):\n    \"\"\"UF-001: Login with valid credentials\"\"\"",
+          "caption": "Each test is named after its flow ID and name, with the exact flow title inside, so a failure traces straight back to the list."
+        },
+        {
+          "type": "list",
+          "title": "Good to know",
+          "items": [
+            "Tests are grouped into one file per area, `test_<area_slug>.py`, with one test function per flow.",
+            "The `# user-flow: UF-NNN hash: ...` line above each test is a sync marker. The hash is the start of a sha256 fingerprint of the flow's entry. Do not edit it by hand; run the skill again to resync.",
+            "If a test's starting state cannot be set up (it needs production data, a paid account, a third-party callback, or in remote mode database state with no way to reach it), the test is still written but marked `@pytest.mark.skip(reason=\"...\")` with a one-line reason. A visible gap is better than a fake pass."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Local mode may touch the database, remote mode may not",
+      "short": "Local or remote",
+      "blocks": [
+        {
+          "type": "table",
+          "columns": [
+            "",
+            "Local mode",
+            "Remote mode"
+          ],
+          "rows": [
+            [
+              "Runs against",
+              "A dev server the suite starts, or one already running",
+              "A real deployment of the app"
+            ],
+            [
+              "Tests may use",
+              "Playwright, plus Redis and Postgres directly (fixtures, seed scripts, database-level checks), for example to seed a starting row or check a record was saved",
+              "Only Playwright (the browser) and plain HTTP calls to the app's own endpoints, such as its API or the webhooks it exposes"
+            ],
+            [
+              "Never",
+              "Direct Redis and Postgres access is allowed",
+              "A direct database or cache connection, even if credentials happen to be available"
+            ],
+            [
+              "Starting the app",
+              "Started by the tests when it is not already responding, and stopped after",
+              "Never started or stopped; the URL is assumed to be serving already"
+            ]
+          ]
+        },
+        {
+          "type": "flow",
+          "title": "How the mode is chosen",
+          "nodes": [
+            {
+              "id": "said",
+              "label": "Did you name a mode?"
+            },
+            {
+              "id": "use",
+              "label": "Use that mode"
+            },
+            {
+              "id": "url",
+              "label": "Look at the configured base URL"
+            },
+            {
+              "id": "remote",
+              "label": "Remote"
+            },
+            {
+              "id": "local",
+              "label": "Local"
+            },
+            {
+              "id": "ask",
+              "label": "Ask you"
+            }
+          ],
+          "edges": [
+            {
+              "from": "said",
+              "to": "use",
+              "label": "yes"
+            },
+            {
+              "from": "said",
+              "to": "url",
+              "label": "no"
+            },
+            {
+              "from": "url",
+              "to": "remote",
+              "label": "deployed URL"
+            },
+            {
+              "from": "url",
+              "to": "local",
+              "label": "localhost or none"
+            },
+            {
+              "from": "url",
+              "to": "ask",
+              "label": "truly unclear"
+            }
+          ],
+          "caption": "The base URL comes from `conftest.py` or `pyproject.toml`. Unclear means a first run with no clues. A localhost or 127.0.0.1 URL, or no config yet, means local."
+        },
+        {
+          "type": "text",
+          "text": "The same test files serve both modes. The report says which mode was used and how it was chosen."
+        }
+      ]
+    },
+    {
+      "heading": "The first run sets up Playwright for you",
+      "short": "First run",
+      "blocks": [
+        {
+          "type": "stepper",
+          "steps": [
+            {
+              "title": "Install the test tools",
+              "text": "If `pytest-playwright` is not among the project's dependencies, it runs these. If the project is not a uv project yet, it runs `uv init` first.",
+              "block": {
+                "type": "code",
+                "code": "uv add --dev pytest-playwright\nuv run playwright install chromium"
+              }
+            },
+            {
+              "title": "Record the app's address",
+              "text": "The base URL goes into `pyproject.toml` as `--base-url=<app url>` in `addopts` under `[tool.pytest.ini_options]`. In local mode it works out the dev server's URL and start command from the repo. In remote mode it uses the deployment's real URL and asks you for it if it is not in the repo's config or environment."
+            },
+            {
+              "title": "Arrange starting the app",
+              "text": "Local mode: a fixture in `conftest.py` starts the app when it is not responding and stops it after. If the start command cannot be worked out, the report says the app must be running before the tests. Remote mode: nothing is started."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "If Python Playwright is already set up, it uses the existing config, browsers and conventions instead of adding a second setup."
+        }
+      ]
+    },
+    {
+      "heading": "Every run makes sure three project pieces exist",
+      "short": "Project setup",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Left out by default",
+              "state": "done",
+              "text": "A `user_flow` marker in `pyproject.toml`, plus `-m \"not user_flow\"` in `addopts`, keeps these slow browser tests out of a plain `pytest` run. Adding `-m user_flow` includes them."
+            },
+            {
+              "title": "A make target",
+              "state": "done",
+              "text": "A `test-user-flows` target in the project's `Makefile`, which is created if there is none."
+            },
+            {
+              "title": "A CLAUDE.md note",
+              "state": "done",
+              "text": "A short section on where the tests live, how they are made, why they are left out by default and how to run them."
+            }
+          ],
+          "caption": "Only missing pieces are added. If the project already leaves tests out another way, that way is kept."
+        },
+        {
+          "type": "code",
+          "title": "The make target",
+          "code": ".PHONY: test-user-flows\ntest-user-flows:\n\tuv run pytest -m user_flow <tests-dir>"
+        },
+        {
+          "type": "text",
+          "title": "What the CLAUDE.md note says",
+          "text": "User-flow tests live in the tests folder, are made from `user-flows.md` by `/user-flows:test-user-flow`, are left out of the default pytest run by the `user_flow` marker, and run with `make test-user-flows`. The `# user-flow: UF-NNN hash: ...` comments are sync markers that must not be edited by hand."
+        }
+      ]
+    },
+    {
+      "heading": "Running it again only changes tests whose flow changed",
+      "short": "Running again",
+      "blocks": [
+        {
+          "type": "table",
+          "columns": [
+            "Flow in user-flows.md",
+            "What happens to its test"
+          ],
+          "rows": [
+            [
+              "New flow",
+              "A test is created."
+            ],
+            [
+              "Changed flow",
+              "The existing test is edited in place, keeping manual improvements that do not contradict the new flow."
+            ],
+            [
+              "Removed flow",
+              "The test is deleted. An area file is deleted only when no tests remain in it."
+            ],
+            [
+              "Unchanged flow",
+              "The test is left exactly as it was."
+            ],
+            [
+              "Hand-written test with no marker",
+              "Never touched."
+            ]
+          ]
+        },
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Suspicious deletion",
+              "state": "warn",
+              "text": "If a removed flow's feature clearly still exists in the code, the test is flagged instead of deleted.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "The likely fault is an outdated user-flows.md: run `/user-flows:update-user-flows`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "title": "Where the tests live",
+          "ordered": true,
+          "items": [
+            "An existing folder that already holds `user-flow:` markers.",
+            "Otherwise, the project's Playwright test folder.",
+            "Otherwise, `tests/user_flows/`."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "It checks its own work before reporting",
+      "short": "Checks",
+      "blocks": [
+        {
+          "type": "stepper",
+          "steps": [
+            {
+              "title": "Every flow in sync",
+              "text": "Every flow must now show as in sync with its test."
+            },
+            {
+              "title": "Every test file loads",
+              "text": "This catches syntax and loading errors in every test file.",
+              "block": {
+                "type": "code",
+                "code": "uv run pytest --collect-only -m user_flow <tests-dir>"
+              }
+            },
+            {
+              "title": "New and changed tests run",
+              "text": "If the app cannot be started here, it says so. A test that fails because the app really does not do what the flow says is reported as a finding, not bent until it passes.",
+              "block": {
+                "type": "code",
+                "code": "uv run pytest -m user_flow <changed files>"
+              }
+            },
+            {
+              "title": "Normal test run unaffected",
+              "text": "A plain collect still leaves out the user-flow tests and collects the rest of the suite.",
+              "block": {
+                "type": "code",
+                "code": "uv run pytest --collect-only"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Run the tests any time with make test-user-flows",
+      "short": "Report and run",
+      "blocks": [
+        {
+          "type": "code",
+          "code": "make test-user-flows"
+        },
+        {
+          "type": "cards",
+          "title": "What the report tells you",
+          "cards": [
+            {
+              "title": "Mode",
+              "state": "info",
+              "text": "Local or remote, and how it was chosen."
+            },
+            {
+              "title": "Tests by outcome",
+              "state": "info",
+              "text": "Created (IDs), updated (IDs and what changed), deleted (IDs and files), skipped (IDs and reason), and the unchanged count."
+            },
+            {
+              "title": "Other files touched",
+              "state": "info",
+              "text": "Project files changed outside the tests folder: `pyproject.toml`, `Makefile`, `CLAUDE.md`."
+            },
+            {
+              "title": "Check results",
+              "state": "info",
+              "text": "Whether the tests loaded, ran, or could not run, and why."
+            }
+          ],
+          "caption": "It reminds you that the suite runs with `make test-user-flows`, and does not paste whole test files into the conversation."
+        }
+      ]
+    },
+    {
+      "heading": "The defaults and how to change them",
+      "short": "Defaults",
+      "blocks": [
+        {
+          "type": "table",
+          "columns": [
+            "Default",
+            "Change it with"
+          ],
+          "rows": [
+            [
+              "Tests are Python Playwright (`pytest-playwright`) run through `uv`",
+              "Not configurable"
+            ],
+            [
+              "Tests live in `tests/user_flows/`",
+              "An existing folder with `user-flow:` markers, or the project's Playwright test folder, is used instead"
+            ],
+            [
+              "Tests are marked `user_flow` and left out of the normal `pytest` run",
+              "Run them with `make test-user-flows`"
+            ],
+            [
+              "Local mode (tests may seed Redis or Postgres directly) when the base URL is localhost; remote mode (UI and HTTP only) for a deployed URL",
+              "Say `--mode local` or `--mode remote`"
+            ]
+          ]
+        },
+        {
+          "type": "text",
+          "text": "There are no environment variables and no plugin settings. The base URL the tests use is written to `pyproject.toml`."
+        }
+      ]
+    }
+  ],
+  "next_action": {
+    "text": "With a `user-flows.md` in your project, run `/user-flows:test-user-flow`.",
+    "detail": "If there is no user-flows.md yet, run `/user-flows:extract-user-flows` first."
+  },
+  "sources": [
+    {
+      "label": "user-flows plugin on GitHub",
+      "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/user-flows"
+    }
+  ]
+}

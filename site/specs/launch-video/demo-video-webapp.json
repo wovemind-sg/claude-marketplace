@@ -1,0 +1,83 @@
+{
+  "title": "Web App Demo Clips",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "rocket", "label": "Run the command"},
+    {"icon": "file", "label": "Claude records one take", "arrow": "plans the beats"},
+    {"icon": "user", "label": "You review take, beats", "arrow": "opens in browser"},
+    {"icon": "check-circle", "label": "Silent clip per beat", "arrow": "Claude cuts it", "outcome": true}
+  ]},
+  "bottom_line": "Run the command in your web repo. Claude records the app and, once you approve the take and each beat, cuts silent clips per feature.",
+  "sections": [
+    {"heading": "Type one command inside your web app's repo", "short": "Start", "blocks": [
+      {"type": "text", "text": "In Claude Code, open your web app's repo and type the command below. It takes no arguments. Claude asks you to do exactly one thing at a time and waits."},
+      {"type": "code", "code": "/launch-video:demo-video-webapp", "caption": "Just the silent demo beats, web app."},
+      {"type": "before_after",
+        "before": {"label": "Full launch video", "text": "`launch-video-webapp`: AI presenter intro and outro, voice-over, captions and one assembled video."},
+        "after": {"label": "This skill", "text": "`demo-video-webapp`: just the screen-recording half. Silent, per-feature clips, with no AI presenter, no voice-over and no assembled final video."},
+        "caption": "Use this when raw demo footage or beat clips without narration is all you need."},
+      {"type": "cards", "title": "Who does what", "cards": [
+        {"title": "Claude does", "state": "done", "text": "Everything that can be done from the terminal: starting the app locally, writing the recording steps, recording."},
+        {"title": "You do", "state": "open", "text": "Only what needs a human: credentials, reviewing the take."}
+      ]},
+      {"type": "text", "text": "You may be non-technical. For Android apps, use `demo-video-app` instead, which makes the same silent beat clips."},
+      {"type": "glossary", "terms": [
+        {"term": "Beat", "definition": "One feature shown on screen, recorded as its own short clip."},
+        {"term": "Take", "definition": "The single screen recording of the whole demo, later cut into one clip per beat."}
+      ]}
+    ]},
+    {"heading": "Run the setup skill first if a tool is missing", "short": "Before you start", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Video tools", "state": "info", "text": "ffmpeg built with libass (for captions), Python 3.9+ and pillow."},
+        {"title": "Browser recording", "state": "info", "text": "Playwright and Chromium."}
+      ]},
+      {"type": "text", "text": "The first thing Claude does is check the tools. If anything is MISSING, it stops and gives you one action: run `/launch-video:launch-video-setup`. It does not continue until the check passes. The setup skill installs or checks everything above. The ElevenLabs key is not needed here."},
+      {"type": "text", "title": "Your computer", "text": "The scripts are bash and run on macOS and Linux. On Windows, use WSL (Ubuntu)."},
+      {"type": "text", "title": "Shared with the full launch video", "text": "The plugin turns an app repo into a launch/promo video: AI presenter intro/outro, real screen recordings, voice-over, and captions. All five skills ship in it, and this one reuses the recording scripts from `launch-video-webapp`. The plugin has no plugin settings, no dependencies and no userConfig."}
+    ]},
+    {"heading": "Claude works through six steps, asking you only at a few", "short": "The steps", "blocks": [
+      {"type": "stepper", "steps": [
+        {"title": "Check the tools", "text": "If anything is MISSING, your one action is to run `/launch-video:launch-video-setup`."},
+        {"title": "Plan the beats", "text": "Claude picks the 2–4 things a first-time viewer must see and writes the shot list in `video/script.md`, one short line per beat describing what happens on screen."},
+        {"title": "Record the demo", "text": "Claude starts the app locally, fills it with fictional data so screens are not empty, and records the whole demo in one browser take, paced for a human watching for the first time."},
+        {"title": "Review the take in your browser", "text": "A page opens with the take on a timeline. Mark anything too long, leave notes where you want something changed, then send it back or mark it ready. Claude fixes it and shows you again until you mark it ready, then cuts one clip per beat."},
+        {"title": "Review each beat", "text": "Another page lists every beat clip. Watch each one, tick 'Looks good' or leave a note, then send it back or mark them all good. Claude fixes each note and asks again until every beat is ticked good."},
+        {"title": "Get your clips", "text": "The clips are at `video/recordings/beat-NN.mp4`, and Claude tells you where they are."}
+      ]},
+      {"type": "text", "title": "If a login or key is needed", "text": "Claude starts the app with whatever database or settings it needs. If a value is needed that is not in the repo, such as an API key or a test login, you are asked once: \"To record I need a test account to sign in with. What email/phone and password should I use? (Not a real customer's.)\""},
+      {"type": "text", "title": "How your review is used", "text": "A note changes what happens in that beat. A part you mark too long is shortened, or cut from the take. The beat review catches anything that only shows up once a beat is on its own, such as an awkward start or end frame. Your per-beat sign-off is saved in `video/beats_review.json`."},
+      {"type": "text", "title": "The one-step rule", "text": "You are never asked to do more than one thing in a single message. Each message ends with exactly one action, then \"Tell me when that's done\". Claude checks your step before moving on. There are no to-do lists, and Claude does not show commands or code unless you ask."}
+    ]},
+    {"heading": "The shot list in video/script.md sets what gets recorded", "short": "Shot list", "blocks": [
+      {"type": "table", "columns": ["Part", "What it holds"], "rows": [
+        ["`Format:`", "`vertical` (phone-sized browser) unless the product is desktop-only, then `landscape`"],
+        ["`Base URL:`", "Where the app will run locally"],
+        ["`## N. Title (demo)`", "One section per beat, in order. There are no avatar sections."],
+        ["The line under each title", "One short line describing what happens on screen. It is not spoken text."]
+      ]},
+      {"type": "code", "code": "# Demo video — APP NAME\n\nFormat: vertical\nBase URL: http://localhost:8000\n\n## 1. Create an invoice (demo)\nOpen the app, click New Invoice, pick the customer, and enter the amount.\n\n## 2. Send and get paid (demo)\nClick Send. The customer gets an email with a payment link.", "caption": "An example shot list."},
+      {"type": "table", "title": "Default and how to change it", "columns": ["Default", "Change it with"], "rows": [
+        ["Vertical 9:16 video (a phone-sized browser for web apps)", "`Format: landscape` in `video/script.md`"]
+      ]}
+    ]},
+    {"heading": "You get silent clips, one per feature", "short": "What you get", "blocks": [
+      {"type": "before_after",
+        "before": {"label": "You start with", "text": "A web app repo and no footage."},
+        "after": {"label": "You end with", "text": "`video/recordings/beat-NN.mp4`: silent clips, one per feature, from a take and beats you approved."}},
+      {"type": "list", "title": "Files in your repo", "items": [
+        "`video/script.md`: the shot list (one line per beat)",
+        "`video/recordings/`: `full.mp4` (the whole take) and `beat-NN.mp4` (silent clips cut from it)",
+        "`video/progress.md`: Claude's checklist, updated after every completed step"
+      ]},
+      {"type": "text", "text": "The clips have no audio track. Nothing here writes voice-over or avatar files."},
+      {"type": "text", "title": "Coming back later", "text": "If `video/progress.md` exists, Claude continues from the first unchecked item and does not re-ask things already answered."}
+    ]}
+  ],
+  "next_action": {
+    "text": "Open your web app's repo in Claude Code and run `/launch-video:demo-video-webapp`.",
+    "detail": "If a tool is missing, Claude asks you to run `/launch-video:launch-video-setup` first."
+  },
+  "sources": [
+    {"label": "launch-video plugin on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/launch-video"}
+  ]
+}

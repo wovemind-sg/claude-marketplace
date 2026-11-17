@@ -1,0 +1,141 @@
+{
+  "title": "Scaffold a Go App",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "code", "label": "Type the command"},
+    {"icon": "question", "label": "Answer three questions", "arrow": "Claude asks"},
+    {"icon": "check-circle", "label": "Files written and tested", "arrow": "generates, builds"},
+    {"icon": "rocket", "label": "App runs locally", "arrow": "make dev", "outcome": true}
+  ]},
+  "bottom_line": "Type one command, answer a few questions, and Claude writes, builds and tests a Go web app. Fill in `.env`, migrate, then run `make dev`.",
+  "sections": [
+    {"heading": "One command starts a new Go web app", "short": "The command", "blocks": [
+      {"type": "code", "code": "/go-webapp-template:go-webapp-template [--host railway|generic] [--ai-model <openrouter model id>]", "caption": "Both flags are optional. Without them the app targets Railway and uses the AI model openai/gpt-4o-mini."},
+      {"type": "text", "text": "The skill scaffolds a complete Go web application skeleton. **Scaffolding** means writing the starting files and folders of a new project. It is the Go counterpart of `fastapi-template`, with the same features, env var names and frontend, and no Python anywhere."},
+      {"type": "cards", "title": "Three ways to start it", "cards": [
+        {"title": "Name the app", "state": "info", "text": "`/go-webapp-template:go-webapp-template create a new app called my-app`"},
+        {"title": "Add flags", "state": "info", "text": "`/go-webapp-template:go-webapp-template [--host railway|generic] [--ai-model <openrouter model id>]`. The defaults are railway and openai/gpt-4o-mini."},
+        {"title": "Just describe it", "state": "info", "text": "Say what you want in plain words, for example: \"Scaffold a new Go web app with HTMX for a task management tool\"."}
+      ]},
+      {"type": "text", "text": "Claude also uses this skill on its own when you ask for a new Go web app, to scaffold a Go project, start a Go server, Go + HTMX, a golang backend, a net/http app with templates, or anything about bootstrapping a Go web application from scratch. If you ask for Python/FastAPI, Claude uses fastapi-template instead."},
+      {"type": "text", "text": "The plugin needs no environment variables and has no plugin settings. Its second skill, fastapi-go-migration, migrates existing fastapi-template projects to this stack in place."}
+    ]},
+    {"heading": "Two flags change where it deploys and which AI model it uses", "short": "The flags", "blocks": [
+      {"type": "table", "columns": ["Flag", "Default", "What it changes"], "rows": [
+        ["`--host railway|generic`", "`railway`", "With `generic`, the skill leaves out `Procfile`, `railpack.json`, the `internal/wake` package, the Railway pre-deploy command `./out migrate up`, and the Railway deploy instructions."],
+        ["`--ai-model <openrouter model id>`", "`openai/gpt-4o-mini`", "The default AI model the app sends requests to through OpenRouter."]
+      ]},
+      {"type": "text", "text": "With `--host generic` you deploy the `./out` binary to any host. The app still reads `PORT` and its connection strings from the environment. Migrations then run by hand (`./out migrate up` against the production `ENGINE_URL`) or in the host's release step."},
+      {"type": "table", "title": "Opinionated defaults and how to change them", "columns": ["Default", "Change it with"], "rows": [
+        ["Deploy to Railway: `Procfile`, `railpack.json`, the `internal/wake` package that retries a sleeping Railway database or Redis, and `./out migrate up` as Railway's pre-deploy command", "`--host generic` (then run `./out migrate up` by hand or in your host's release step)"],
+        ["AI calls go to OpenRouter with the model `openai/gpt-4o-mini`", "`--ai-model <openrouter model id>`"],
+        ["Server listens on port 8000", "`PORT` in the environment"]
+      ]}
+    ]},
+    {"heading": "Claude asks three questions, then writes, builds and tests the app", "short": "What happens", "blocks": [
+      {"type": "stepper", "steps": [
+        {"title": "The app name", "text": "Claude asks for the app name in kebab-case (lowercase words joined by hyphens) if you did not give one. It is also the Go module path. The display name in pages is the Title Case of it (`my-app` becomes `My App`) unless you give one."},
+        {"title": "Which features to include", "text": "Claude confirms which optional parts go in: the database, AI through OpenRouter, and Redis caching. The defaults are in the table below."},
+        {"title": "Where to put it", "text": "Claude asks for the target directory. The default is the current directory."},
+        {"title": "Files are generated", "text": "Claude writes all the files, then copies `.env.example` to `.env` (which git ignores) so `make dev` works out of the box."},
+        {"title": "It builds and tests the app", "text": "Claude runs these checks in the new folder. `go mod tidy` may raise the `go` version line in `go.mod`; that is expected.", "block": {"type": "code", "code": "go mod tidy && gofmt -l . && go build ./... && go vet ./... && go test ./..."}}
+      ]},
+      {"type": "table", "title": "Optional features and their defaults", "columns": ["Feature", "Default"], "rows": [
+        ["Database/goose", "yes"],
+        ["AI/OpenRouter", "ask"],
+        ["Redis caching", "yes if AI is included, otherwise ask"]
+      ]}
+    ]},
+    {"heading": "You get a full Go project with server, pages and database", "short": "What you get", "blocks": [
+      {"type": "table", "title": "The stack inside the generated app", "columns": ["Part", "What it uses"], "rows": [
+        ["Server", "Go `net/http` + `html/template` (server-side rendering)"],
+        ["Client", "HTMX 2.x + Alpine.js 3.x"],
+        ["Database", "PostgreSQL via pgx/v5 + goose SQL migrations (embedded, run by the server binary)"],
+        ["AI", "OpenRouter + `text/template` prompt templates + Redis caching"],
+        ["Cache", "Redis via go-redis/v9 + generic `Cached[T]` helper"],
+        ["Auth/session state", "HMAC-signed cookies (`internal/auth`), no session store"],
+        ["Logging", "`log/slog`"],
+        ["Deploy", "Railway (Procfile + `railpack.json` with an explicit `go build -o out ./cmd/server`) by default; with `--host generic`, none of the Railway files or wake-up code"]
+      ]},
+      {"type": "glossary", "terms": [
+        {"term": "Go", "definition": "The programming language the whole app is written in."},
+        {"term": "HTMX", "definition": "A small library that lets links and forms fetch new HTML from the server without reloading the page."},
+        {"term": "Alpine.js", "definition": "A small library for interface behaviour that stays in the browser, such as opening a menu."},
+        {"term": "Migration", "definition": "A file that changes the database structure; goose applies them in order."},
+        {"term": "Redis", "definition": "A fast in-memory store, used here as a cache."},
+        {"term": "OpenRouter", "definition": "A service that forwards AI requests to many AI models through one API key."},
+        {"term": "Railway", "definition": "A hosting service, the default place the app deploys to."},
+        {"term": "Binary", "definition": "The single program file the build produces, here called `./out`."}
+      ]},
+      {"type": "list", "title": "What the generated app already does", "items": [
+        "Every link and form navigates without a full-page reload (hx-boost on the page body), which matters most when the app is wrapped with Capacitor.",
+        "A failed request (server error, network/offline, timeout) shows the user visible feedback instead of leaving the page looking stuck.",
+        "Logins and other per-user state are kept in signed cookies, keyed by `SESSION_SECRET`.",
+        "Missing required environment variables make the app fail at startup, not on the first request.",
+        "`DEV_MODE=ON` gives DEBUG logging, cookies that work on http://localhost, a `-dev` cache prefix, and template/CSS edits that show without a rebuild.",
+        "With host `railway`, a sleeping Railway Postgres or Redis is woken up before use.",
+        "Migrations are built into the server binary: `make migrate-up` locally, `make migrate-create name=add_users` for a new migration file. The deploy image has only the binary (no `make`).",
+        "AI answers are cached in Redis."
+      ]},
+      {"type": "code", "title": "Generated structure", "code": "<app-name>/\n├── cmd/server/main.go       # serve, or `migrate up|down|status|create <name>`\n├── embed.go                 # embeds templates/, static/, migrations/\n├── internal/\n│   ├── config/\n│   ├── wake/                # ping-with-retry for a sleeping Railway DB/Redis (railway host only)\n│   ├── auth/                # signed cookies\n│   ├── db/                  # pgxpool, goose, example queries\n│   ├── cache/\n│   ├── ai/\n│   └── server/              # routes, middleware, errors, rendering, tests\n├── migrations/\n├── templates/\n│   ├── base.html\n│   ├── index.html\n│   └── prompts/\n├── static/\n├── go.mod\n├── Makefile\n├── Procfile                 # railway host only (the default)\n├── .env.example\n└── .gitignore", "caption": "The wake folder and the Procfile only appear with the default railway host."}
+    ]},
+    {"heading": "Have these ready before you run the generated app", "short": "Before you run", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Go", "state": "done", "text": "The generated `go.mod` says `go 1.26`; Go 1.21 or newer downloads that toolchain automatically. The code itself needs 1.22+ for its route patterns."},
+        {"title": "make", "state": "done", "text": "For the `make dev`, `make test` and migration targets."},
+        {"title": "PostgreSQL and Redis", "state": "done", "text": "A PostgreSQL database and a Redis server, when those parts are included."},
+        {"title": "OpenRouter API key", "state": "done", "text": "Needed when the AI part is included."},
+        {"title": "Railway account", "state": "done", "text": "For deploying with the default host."}
+      ]}
+    ]},
+    {"heading": "Fill in .env, apply migrations, then start the server", "short": "Start the app", "blocks": [
+      {"type": "stepper", "steps": [
+        {"title": "Go into the project", "text": "Open a terminal in the new folder.", "block": {"type": "code", "code": "cd <app-name>"}},
+        {"title": "Set up your .env file", "text": "Copy the example settings file, then edit `.env` with real values (see the table below). The skill already made this copy when it generated the files.", "block": {"type": "code", "code": "cp .env.example .env\n# edit .env with real values"}},
+        {"title": "Fetch dependencies", "text": "This resolves the Go dependencies.", "block": {"type": "code", "code": "go mod tidy"}},
+        {"title": "Apply migrations", "text": "This applies the database migrations.", "block": {"type": "code", "code": "make migrate-up   # apply migrations"}},
+        {"title": "Start the dev server", "text": "The app is now running at localhost:8000.", "block": {"type": "code", "code": "make dev          # start dev server at localhost:8000"}},
+        {"title": "Run the tests", "text": "This runs `go test ./...`.", "block": {"type": "code", "code": "make test         # go test ./..."}}
+      ]},
+      {"type": "table", "title": "Environment variables the generated app reads from .env", "columns": ["Variable", "Description"], "rows": [
+        ["`ENGINE_URL`", "PostgreSQL connection string"],
+        ["`REDIS_CONNECTION_STRING`", "Redis URL"],
+        ["`SESSION_SECRET`", "Random secret for HMAC-signing cookies (`internal/auth`)"],
+        ["`OPENROUTER_API_KEY`", "OpenRouter API key (if using AI)"],
+        ["`DEV_MODE`", "Set to `ON` for development"],
+        ["`PORT`", "Listen port (default `8000`; Railway sets it)"]
+      ]},
+      {"type": "code", "title": "Quick Start in one block", "code": "cd <app-name>\ncp .env.example .env\n# edit .env with real values\ngo mod tidy\nmake migrate-up   # apply migrations\nmake dev          # start dev server at localhost:8000\nmake test         # go test ./..."}
+    ]},
+    {"heading": "Production migrations need one setup step from you", "short": "Deploy", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Railway host (default)", "state": "info", "text": "Set `./out migrate up` as the service's pre-deploy command in the Railway dashboard (Settings → Deploy → Pre-deploy Command) so it runs on every deploy."},
+        {"title": "Generic host", "state": "info", "text": "Run `./out migrate up` against the production `ENGINE_URL` yourself, or in your host's release step."}
+      ]},
+      {"type": "code", "title": "Run the migration by hand on Railway", "code": "railway ssh --service \"<service name>\" -- ./out migrate up"}
+    ]},
+    {"heading": "Replace the example parts with your own", "short": "Make it yours", "blocks": [
+      {"type": "cards", "caption": "After generating, Claude reminds you of these steps.", "cards": [
+        {"title": "Fill in .env", "state": "open", "text": "Put real values in `.env`: `ENGINE_URL`, `REDIS_CONNECTION_STRING`, `SESSION_SECRET`, `OPENROUTER_API_KEY`."},
+        {"title": "Replace the example table", "state": "open", "text": "Delete the example `internal/db/items.go` and `migrations/00001_create_items.sql`, then run `make migrate-create name=<first_table>` and write real SQL."},
+        {"title": "Write your prompts", "state": "open", "text": "Replace `templates/prompts/example.txt` with real prompt templates."},
+        {"title": "Migrate after changes", "state": "open", "text": "Run `make migrate-up` after adding migrations."},
+        {"title": "Railway pre-deploy command", "state": "open", "text": "With a database and host `railway`: open the service → Settings → Deploy → Pre-deploy Command and set `./out migrate up` before the first deploy.", "points": [{"sign": "+", "text": "This skill uses no `railway.json` (config-as-code), so you set it in the dashboard."}]},
+        {"title": "Generic host migrations", "state": "open", "text": "With a database and host `generic`: run `./out migrate up` by hand or in the host's release step on every deploy."},
+        {"title": "Start the server", "state": "open", "text": "Run `make dev` to start the dev server."}
+      ]}
+    ]},
+    {"heading": "Example: a recipe app for any host", "short": "Example", "blocks": [
+      {"type": "before_after", "before": {"label": "You type", "text": "`/go-webapp-template:go-webapp-template create a new app called recipe-box --host generic`"}, "after": {"label": "You get", "text": "A `recipe-box/` folder with no `Procfile`, `railpack.json` or `internal/wake`."}},
+      {"type": "code", "code": "/go-webapp-template:go-webapp-template create a new app called recipe-box --host generic"},
+      {"type": "text", "text": "Follow the Quick Start steps above, then build with `go build -o out ./cmd/server` and run `./out` on your host."}
+    ]}
+  ],
+  "next_action": {
+    "text": "Type `/go-webapp-template:go-webapp-template create a new app called my-app` in Claude Code, using your own app name.",
+    "detail": "Claude then asks which features to include and where to put the project."
+  },
+  "sources": [
+    {"label": "go-webapp-template plugin on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/go-webapp-template"}
+  ]
+}

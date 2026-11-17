@@ -1,0 +1,154 @@
+{
+  "title": "Set Up ntfy",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "server", "label": "Choose your server"},
+    {"icon": "key", "label": "Auth and token", "arrow": "self-hosted only"},
+    {"icon": "gear", "label": "Phone app, plugin settings", "arrow": "then"},
+    {"icon": "bolt", "label": "Test push arrives", "arrow": "test send", "outcome": true}
+  ]},
+  "bottom_line": "Run /ntfy:configure and Claude walks you, one step at a time, from nothing to a test push arriving on your phone.",
+  "sections": [
+    {"heading": "Start the walkthrough, naming your path if you know it", "short": "Start it", "blocks": [
+      {"type": "code", "code": "/ntfy:configure [ntfy.sh | self-hosted | railway]", "caption": "The argument is optional. If it names your path, Claude skips the questions it answers. You can also just ask \"set up ntfy on my phone\"."},
+      {"type": "table", "title": "The three paths you can name", "columns": ["Argument", "Path"], "rows": [
+        ["`ntfy.sh`", "The public ntfy.sh server. No server work and no token."],
+        ["`self-hosted`", "Your own ntfy server, already installed. Claude guides you through turning on auth."],
+        ["`railway`", "Your own ntfy server running on Railway. Claude makes the Railway changes for you, after you approve each one."]
+      ]},
+      {"type": "list", "title": "Also use it when", "items": [
+        "\"set up ntfy\"",
+        "\"configure notifications\"",
+        "\"connect the ntfy app\"",
+        "\"notifications aren't arriving on my phone\"",
+        "\"add auth/a token to my ntfy server\""
+      ]},
+      {"type": "text", "text": "Claude uses it for these requests even if you don't say \"ntfy\"."}
+    ]},
+    {"heading": "Claude does what it can and waits for your hands", "short": "How it works", "blocks": [
+      {"type": "stepper", "title": "The seven steps", "steps": [
+        {"title": "Find out where you stand", "text": "Claude checks your saved settings and whether `~/.ntfy` exists, then asks you a few questions in one message."},
+        {"title": "Public ntfy.sh", "text": "If you chose ntfy.sh: pick a long random topic. No server work and no token. Then skip to step 5."},
+        {"title": "Self-hosted: turn on auth", "text": "If you run your own server: turn on access control, create a user for the phone and a `tk_...` token for Claude."},
+        {"title": "Save the token to ~/.ntfy", "text": "The token goes into the file `~/.ntfy` without being shown in the chat. The one line in that file is sent as a Bearer token."},
+        {"title": "Phone app", "text": "Install the ntfy app, add your server if self-hosted, and subscribe to the topic. Claude waits for you to confirm."},
+        {"title": "Plugin settings", "text": "You run `/plugin configure ntfy@wovemind` and enter `server` and `topic`."},
+        {"title": "Test push", "text": "Claude sends a test notification and asks whether it arrived on your phone."}
+      ]},
+      {"type": "text", "text": "At each step Claude says what the step does and why, does what it can itself, and waits for you to confirm before moving past any step that needs your hands: phone, dashboard or plugin dialog."},
+      {"type": "text", "text": "Claude never prints a token or password into the chat transcript."},
+      {"type": "cards", "title": "Before you start", "cards": [
+        {"title": "curl and bash", "state": "done", "text": "The plugin's `ntfy-send` script uses both."},
+        {"title": "Your phone", "state": "done", "text": "iOS or Android, to install the ntfy app on. To receive notifications you need an ntfy app or web client subscribed to your topic."},
+        {"title": "Server already installed", "state": "done", "text": "Only if self-hosting: the walkthrough assumes ntfy is already installed on your server."}
+      ]}
+    ]},
+    {"heading": "First, Claude asks which server and which phone", "short": "Where you stand", "blocks": [
+      {"type": "flow", "title": "Which path you take", "nodes": [
+        {"id": "q", "label": "Public ntfy.sh or own server?"},
+        {"id": "pub", "label": "Public ntfy.sh path"},
+        {"id": "own", "label": "Own server: where is it?"},
+        {"id": "rail", "label": "Railway: Claude makes changes"},
+        {"id": "else", "label": "Elsewhere: you run commands"},
+        {"id": "app", "label": "Phone app step"}
+      ], "edges": [
+        {"from": "q", "to": "pub", "label": "ntfy.sh"},
+        {"from": "q", "to": "own", "label": "own server"},
+        {"from": "own", "to": "rail", "label": "on Railway"},
+        {"from": "own", "to": "else", "label": "somewhere else"},
+        {"from": "pub", "to": "app", "label": "skip auth"},
+        {"from": "rail", "to": "app", "label": "token saved"},
+        {"from": "else", "to": "app", "label": "token saved"}
+      ], "caption": "Both self-hosted paths save the token to ~/.ntfy (step 4) before the phone app step."},
+      {"type": "list", "title": "The questions, asked in one message", "items": [
+        "Public ntfy.sh or your own server?",
+        "If your own: is it on Railway or somewhere else, and what is its public URL?",
+        "Phone: iOS or Android?",
+        "If `~/.ntfy` exists: which server does that token belong to?"
+      ]},
+      {"type": "text", "text": "Claude also looks at your saved `server` and `topic` settings and checks whether `~/.ntfy` exists. Unsaved settings do not stop it: saving them is part of this walkthrough."}
+    ]},
+    {"heading": "On public ntfy.sh, the topic name is the password", "short": "Public ntfy.sh", "blocks": [
+      {"type": "before_after", "before": {"label": "Easy to guess", "text": "Plain `claude` as the topic. Anyone who knows the topic name can read and send to it."}, "after": {"label": "Long random topic", "text": "Claude suggests a long random topic and shows it to you, because you need to type it on the phone. A topic is not a token."}},
+      {"type": "code", "title": "The suggested topic, for example", "code": "claude-$(openssl rand -hex 12)"},
+      {"type": "text", "title": "If you already have a token file", "text": "If `~/.ntfy` exists and belongs to another server, it would be sent to ntfy.sh too. With your OK, Claude moves it aside to `~/.ntfy.bak`, checking first that no existing `~/.ntfy.bak` would be overwritten."},
+      {"type": "code", "code": "mv ~/.ntfy ~/.ntfy.bak"},
+      {"type": "text", "text": "Your server is then `https://ntfy.sh`, and the walkthrough goes straight to the phone app step."}
+    ]},
+    {"heading": "On your own server, turn on auth so strangers stay out", "short": "Self-hosted auth", "blocks": [
+      {"type": "chain", "title": "What this step leaves you with", "nodes": [
+        {"icon": "lock", "label": "Auth-enabled server", "note": "Access control on, so strangers can't read or post to your topics."},
+        {"icon": "user", "label": "A user for phone", "arrow": "then", "note": "The user the phone logs in as."},
+        {"icon": "key", "label": "A tk_... token", "arrow": "then", "outcome": true, "note": "The access token Claude uses to send."}
+      ]},
+      {"type": "text", "text": "The server is already installed; this step only configures access control. Pick the topic first. Any name works, for example `claude`, because with `deny-all` only logged-in users can use it. A non-admin user needs access to that topic."},
+      {"type": "text", "title": "On Railway", "text": "Claude suggests you run `/use-railway` (or `/railway:use-railway`, depending on how it was installed) so its Railway know-how is loaded. Claude then reads the service's variables, volumes and public domain, shows you the exact list of changes, sets only what is missing or wrong, and redeploys, with your OK."},
+      {"type": "table", "title": "Railway variables Claude sets", "columns": ["Variable", "Value"], "rows": [
+        ["`NTFY_BASE_URL`", "`https://<public domain>`"],
+        ["`NTFY_AUTH_FILE`", "a file inside the volume, for example `/var/lib/ntfy/auth.db` (skipped if `NTFY_DATABASE_URL` is set: users then live in Postgres)"],
+        ["`NTFY_AUTH_DEFAULT_ACCESS`", "`deny-all`"],
+        ["`NTFY_BEHIND_PROXY`", "`true` (Railway's edge proxies every request)"],
+        ["`NTFY_UPSTREAM_BASE_URL`", "`https://ntfy.sh` (if you have an iPhone)"]
+      ]},
+      {"type": "text", "text": "**Volume**: without `NTFY_DATABASE_URL`, the auth database must sit on a volume, or every user and token disappears on the next deploy. Anything Claude cannot do from the command line, such as a setting that only exists in the dashboard, it lists for you with exact instructions and waits."},
+      {"type": "code", "title": "You create the user in your own terminal", "code": "railway ssh --service <svc>\nntfy user add --role=admin <user>    # inside the container; prompts for the password\nexit", "caption": "Claude cannot answer the password prompt, and this keeps the password out of the transcript. Claude then creates the token itself."},
+      {"type": "text", "title": "Anywhere else", "text": "Claude guides you through `server.yml` and the `ntfy user` and `ntfy token` commands on your server. It usually has no shell there, so it gives you exact commands and waits."},
+      {"type": "code", "title": "Keys to add or change in server.yml", "code": "base-url: \"https://ntfy.example.com\"   # the public URL the phone uses\nauth-file: \"/var/lib/ntfy/auth.db\"     # setting this turns on auth (SQLite)\nauth-default-access: \"deny-all\"        # default is read-write: anyone could read/post\nbehind-proxy: true                     # only if behind nginx/Caddy/Traefik/a PaaS edge\nupstream-base-url: \"https://ntfy.sh\"   # needed for instant iOS pushes"},
+      {"type": "list", "title": "Then, on the server", "items": [
+        "Restart ntfy after editing, for example `sudo systemctl restart ntfy`, or restart the container.",
+        "Simplest: one admin user, who can read and write every topic: `ntfy user add --role=admin <user>` (prompts for the password).",
+        "Or a regular user limited to the topic: `ntfy user add <user>`, then `ntfy access <user> <topic> rw`.",
+        "The token: `ntfy token add --label claude-code <user>` prints `token tk_... created for user <user>, never expires`. Add `--expires=30d` to make it expire."
+      ]}
+    ]},
+    {"heading": "The token is saved to ~/.ntfy without appearing in chat", "short": "Save the token", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Claude can run it", "state": "info", "text": "On Railway, or a server reachable over ssh: Claude pipes the new token straight into the file."},
+        {"title": "You made it by hand", "state": "info", "text": "You run a short command in your own terminal and paste the token there, so it never passes through Claude."}
+      ], "caption": "If ~/.ntfy already exists and belongs to another server, Claude asks before overwriting it."},
+      {"type": "code", "title": "The command you run locally", "code": "bash -c 'umask 077; read -rs -p \"Token: \" t && [[ $t == tk_* ]] && printf \"%s\\n\" \"$t\" > ~/.ntfy.new && mv ~/.ntfy.new ~/.ntfy || echo \" not saved: expected tk_...\"'"},
+      {"type": "text", "text": "Anything that does not start with `tk_`, such as an empty line or the password, leaves an existing `~/.ntfy` untouched. Claude then checks the file."}
+    ]},
+    {"heading": "Install the ntfy app and subscribe to your topic", "short": "Phone app", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "iOS", "state": "info", "text": "Install \"ntfy\" from the App Store.", "points": [{"sign": "-", "text": "Self-hosted: instant pushes need upstream-base-url: https://ntfy.sh on the server."}, {"sign": "-", "text": "Without it, delivery can take hours."}]},
+        {"title": "Android", "state": "info", "text": "Install \"ntfy\" from Google Play or F-Droid.", "points": [{"sign": "-", "text": "Self-hosted: keep \"instant delivery\" on and let the app ignore battery optimization."}, {"sign": "-", "text": "Otherwise pushes can arrive late."}]}
+      ]},
+      {"type": "list", "title": "Then, in the app", "items": [
+        "Self-hosted: add the server URL and the username and password from the auth step. The app's settings let you set a default server and add users; when subscribing you can also pick a server other than ntfy.sh. Menu labels vary by app version.",
+        "Subscribe to the topic chosen for this setup.",
+        "On Android, Google Play builds use Firebase only for ntfy.sh; F-Droid always uses instant delivery."
+      ]},
+      {"type": "text", "text": "Claude waits for you to confirm the app is subscribed."}
+    ]},
+    {"heading": "You save the server and topic in the plugin dialog", "short": "Plugin settings", "blocks": [
+      {"type": "code", "code": "/plugin configure ntfy@wovemind", "caption": "Claude cannot open the plugin dialog, so it asks you to run this."},
+      {"type": "table", "title": "What to enter", "columns": ["Setting", "Default", "What it does", "Enter"], "rows": [
+        ["`server`", "`https://ntfy.sh`", "The ntfy server every notification is published to. Point it at your own instance if you self-host.", "`https://ntfy.sh` or your server's URL, with no topic on the end."],
+        ["`topic`", "`claude`", "The topic notifications go to unless you name another one in a request.", "The topic from the ntfy.sh or auth step, the one you subscribed to in the app."]
+      ]},
+      {"type": "text", "text": "The new values reach the plugin's skills after `/reload-plugins` or a new session. For the test push, Claude uses the values you just entered."}
+    ]},
+    {"heading": "A test push confirms the whole chain works", "short": "Test push", "blocks": [
+      {"type": "code", "code": "ntfy-send -s <server> -o <topic> -t \"ntfy configured\" -- \"Test from Claude Code\"", "caption": "Success prints a JSON line with an \"id\". Claude then asks you whether it arrived."},
+      {"type": "cards", "title": "If something goes wrong", "cards": [
+        {"title": "HTTP 401", "state": "warn", "text": "`~/.ntfy` is empty, wrong, or for another server."},
+        {"title": "HTTP 403", "state": "warn", "text": "`~/.ntfy` is missing (anonymous on a `deny-all` server), or the user has no write access to the topic.", "points": [{"sign": "+", "text": "Fix: ntfy access <user> <topic> rw, or make the user admin."}]},
+        {"title": "id printed, phone silent", "state": "warn", "text": "The phone is subscribed to another server or topic, or not logged in as a user with read access."},
+        {"title": "Android yes, iOS no", "state": "warn", "text": "Arrives on Android but not on iOS, or hours late there: `upstream-base-url` is not set on the server."},
+        {"title": "Late on Android", "state": "warn", "text": "Instant delivery is off or battery optimization is on."}
+      ]},
+      {"type": "text", "title": "When the test is skipped", "text": "The test is sent only if `~/.ntfy` is absent or holds the token for your server. If you kept a token for another server, by declining to move or overwrite it, Claude skips the test and says why. It warns that every later push to your server would send that token too until `~/.ntfy` is moved."}
+    ]},
+    {"heading": "Once it arrives, notifications use these settings", "short": "Done", "blocks": [
+      {"type": "before_after", "before": {"label": "Before", "text": "Starting from nothing: no notifications reach your phone."}, "after": {"label": "After", "text": "A test push arrived on your phone. Claude tells you that `/ntfy:notify-me` and the `ntfy` skill now use these settings."}}
+    ]}
+  ],
+  "next_action": {
+    "text": "Type /ntfy:configure, adding ntfy.sh, self-hosted or railway if you already know your path.",
+    "detail": "During the walkthrough you install the ntfy app on your phone and confirm the test push."
+  },
+  "sources": [
+    {"label": "ntfy plugin on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/ntfy"}
+  ]
+}

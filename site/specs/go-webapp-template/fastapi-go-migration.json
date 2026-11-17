@@ -1,0 +1,123 @@
+{
+  "title": "Migrate FastAPI to Go",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "code", "label": "Run in your project"},
+    {"icon": "search", "label": "Inventory and plan", "arrow": "reads the app"},
+    {"icon": "shield", "label": "Port, then pass gates", "arrow": "session by session"},
+    {"icon": "rocket", "label": "Go app, Python removed", "arrow": "cutover", "outcome": true}
+  ]},
+  "bottom_line": "Run one command inside a fastapi-template project and Claude rewrites it in Go on its own branch, keeping routes, pages and logins, then removes Python.",
+  "sections": [
+    {"heading": "Run one command inside your FastAPI project", "short": "The command", "blocks": [
+      {"type": "code", "code": "/go-webapp-template:fastapi-go-migration [--branch <name>]   # default branch go-migration"},
+      {"type": "before_after", "before": {"label": "You start with", "text": "A project scaffolded with `fastapi-template`: FastAPI, Jinja2, SQLModel/Alembic, fastapi-cache2, OpenRouter and signed cookies, all in Python."}, "after": {"label": "You end with", "text": "The same project on the `go-webapp-template` stack (net/http, html/template, pgx/goose, go-redis, slog), in the same repository, with Python deleted at the end."}, "caption": "Python is deleted only after the Go build passes every gate."},
+      {"type": "cards", "title": "Two ways to start it", "cards": [
+        {"title": "Type the command", "state": "info", "text": "`/go-webapp-template:fastapi-go-migration`, optionally with `--branch <name>` to work on a branch other than `go-migration`."},
+        {"title": "Just ask", "state": "info", "text": "Say \"migrate this app to Go\" inside the project."}
+      ]},
+      {"type": "text", "text": "This is the second skill of the go-webapp-template plugin. Claude also uses it on its own when you want to move, port, convert, rewrite or migrate a Python/FastAPI backend to Go or golang, even without naming either template."},
+      {"type": "text", "text": "It also starts when you say \"replace FastAPI with Go\", \"rewrite the backend in Go\", \"fastapi to go\" or \"make this a Go app\", or ask what it would take to drop Python from a web app."},
+      {"type": "list", "title": "Not for", "items": [
+        "Scaffolding a brand-new Go app. Use go-webapp-template for that.",
+        "Python-only changes."
+      ]}
+    ]},
+    {"heading": "Everything users see stays the same", "short": "What stays", "blocks": [
+      {"type": "table", "columns": ["Kept the same", "What that means"], "rows": [
+        ["Routes", "Every page address the Python app had exists in the Go app."],
+        ["Templates", "The same pages, converted from Jinja2 to Go's `html/template`."],
+        ["Env var names", "The same environment variables."],
+        ["Cookies", "Existing sessions survive, so logged-in users stay logged in."],
+        ["Railway service", "The same Railway service."]
+      ]},
+      {"type": "glossary", "terms": [
+        {"term": "Route", "definition": "A page or address the app answers, such as `/` or a form's target."},
+        {"term": "Migration", "definition": "A file that changes the database structure. Alembic runs them in Python; goose runs them in Go."},
+        {"term": "Baseline", "definition": "One goose migration that describes the whole existing database."},
+        {"term": "Gate", "definition": "A check that must pass before Python is removed."},
+        {"term": "Cutover", "definition": "The final switch: Python is deleted and deploys run the Go program."},
+        {"term": "e2e tests", "definition": "End-to-end tests that drive the running app like a user would, through a browser (Playwright)."}
+      ]},
+      {"type": "list", "title": "Decisions already made (Claude does not ask about these)", "items": [
+        "The work happens in place, on a `go-migration` branch, or the name you give with `--branch <name>`. Nothing is committed without your ok, and nothing is deployed by the skill.",
+        "Alembic is replaced by one idempotent goose baseline: a no-op on the production database Alembic already migrated, and a full schema on a fresh one. The `alembic_version` table stays until a later migration drops it.",
+        "Python Playwright e2e tests under `tests/` are kept (they are black-box HTTP tests) and pointed at the Go binary. They are the only Python left, so `uv` stays for them.",
+        "Python unit tests are ported to Go or deleted, file by file."
+      ]}
+    ]},
+    {"heading": "Have Go, uv, Postgres and a clean git tree ready", "short": "Before you start", "blocks": [
+      {"type": "cards", "title": "Requirements", "cards": [
+        {"title": "Go 1.22 or newer", "state": "done", "text": "Checked with `go version`. If Go is missing, Claude tells you how to install it and stops."},
+        {"title": "uv", "state": "done", "text": "The Python package tool. It stays after the migration for the e2e tests."},
+        {"title": "A reachable Postgres", "state": "done", "text": "`psql` or a Docker Postgres Claude can reach, needed to prove the baseline."},
+        {"title": "Redis", "state": "done", "text": "Reachable, if the app uses it."},
+        {"title": "Clean git status", "state": "done", "text": "`git status` must be clean. Claude creates or switches to the `go-migration` branch."},
+        {"title": "plan-tools for big repos", "state": "done", "text": "The skill uses the plan-tools plugin for big repos. If it is missing, Claude asks you to install it and waits."}
+      ]},
+      {"type": "text", "title": "It stops if this is not a fastapi-template project", "text": "Claude first confirms the project has the fastapi-template shape: `app/__init__.py` with `_assert_env`, `app/main.py`, `alembic/` and `pyproject.toml`. If not, it says so and stops."},
+      {"type": "text", "text": "It also reads the project's `CLAUDE.md`, `README.md`, `Procfile` / `start.sh`, `Makefile`, CI workflows, `tests/conftest.py` and `.env.example`, because these say how the app is actually run and deployed."}
+    ]},
+    {"heading": "The migration runs in six phases", "short": "Six phases", "blocks": [
+      {"type": "stepper", "steps": [
+        {"title": "Inventory", "text": "Lists every route, model, Jinja construct, custom filter, env var, grown feature (arq, OAuth, email, …), and how tests and deploy start the app. Written to `.planning/inventory.md` so later sessions never need the Python source wholesale."},
+        {"title": "Baseline migration", "text": "Writes `migrations/00001_baseline.sql` from the SQLModel metadata with `CREATE … IF NOT EXISTS`: a no-op on the production database Alembic already migrated, a full schema on a fresh one. Its `Down` part is intentionally empty."},
+        {"title": "Plan", "text": "Writes `.planning/SPEC.md`: sessions per router group, Go functions for custom filters (a FuncMap), a cookie-signer check, and which unit tests to port or delete. Every feature with no Go counterpart is resolved with you in one question."},
+        {"title": "Port", "text": "Session by session: database code (`internal/db/<table>.go`), then handlers, then templates (Jinja2 to `html/template`). After each session it runs `go build/vet/test` and a Python-vs-Go route parity check."},
+        {"title": "Gates", "text": "Route parity, a cookie test (existing sessions survive), every page rendered with `missingkey=error`, the baseline applied twice, and the e2e suite green against the Go binary."},
+        {"title": "Cutover", "text": "Rewrites `tests/conftest.py` to run `./out`, makes `pyproject.toml` tests-only, adds `railpack.json`, deletes `app/` and `alembic/`, updates CI, README and CLAUDE.md, and prints the deploy checklist."}
+      ]},
+      {"type": "text", "title": "Files it writes for you to read", "text": "`.planning/inventory.md` (what must be ported), `.planning/SPEC.md` (the plan and your answers), `migrations/00001_baseline.sql` (the database baseline) and `.planning/progress.md` (progress and gate results)."},
+      {"type": "text", "title": "Why railpack.json", "text": "It names the Go provider plus an explicit `./cmd/server` build command, so Railway neither picks Python nor builds the root `embed.go` package."},
+      {"type": "cards", "title": "Small or big project", "cards": [
+        {"title": "3 routers or fewer", "state": "info", "text": "With no grown features, one run works through the sessions in order."},
+        {"title": "Anything bigger", "state": "info", "text": "More than 3 routers, or any grown feature: the plan is split into sessions with the plan-tools plugin (`plan-tools:split-plan`).", "points": [{"sign": "+", "text": "Progress lives in `.planning/progress.md` and in the repo itself, so any later session can resume."}]}
+      ]}
+    ]},
+    {"heading": "Claude stops and asks you before these decisions", "short": "Its questions", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Features without a Go match", "state": "warn", "text": "numpy/pandas, websockets, i18n, HEIC/WebP encoding, MCP OAuth server, long-lived arq jobs. All such questions come in one round."},
+        {"title": "Changed cookie signer", "state": "warn", "text": "If `app/utils.py` signs cookies differently from the template and the project has live users, Claude confirms the port before touching sessions."},
+        {"title": "Timed links in flight", "state": "warn", "text": "`itsdangerous` timed links (email verification, unsubscribe): replicate their format or invalidate them."},
+        {"title": "Commits", "state": "warn", "text": "It commits at the end of a session only if you said commits are pre-approved for the branch; otherwise it stops and asks once for the whole branch."},
+        {"title": "Production and Railway", "state": "warn", "text": "Anything that touches the production database or Railway."}
+      ]}
+    ]},
+    {"heading": "Nine gates must pass before Python is removed", "short": "The gates", "blocks": [
+      {"type": "stats", "items": [
+        {"value": "9", "label": "gates before cutover", "icon": "shield", "note": "a failed gate is fixed and re-run, never skipped"}
+      ]},
+      {"type": "table", "columns": ["Gate", "Proof"], "rows": [
+        ["Build, vet, tests", "`gofmt -l .` prints nothing; `go vet ./...`; `go test ./...`"],
+        ["Route parity", "every Python route exists in Go"],
+        ["Cookies", "a browser with a Python-era cookie is still logged in on the Go server"],
+        ["Templates", "every page renders with `missingkey=error`, with no blank spots"],
+        ["Baseline", "applied twice to a scratch database; no-op on a prod-schema copy; `./out migrate status` shows it"],
+        ["Python-side defaults", "every column with a Python-side default is supplied in the Go `INSERT`/`UPDATE`"],
+        ["e2e", "`uv run pytest tests` green against the Go binary; collected test count unchanged"],
+        ["Grown features", "each answer you gave is implemented as recorded in SPEC.md"],
+        ["Manual smoke", "`make dev`; log in, hit each top-level page, one HTMX fragment, one form post"]
+      ]},
+      {"type": "text", "text": "The results are written into `.planning/progress.md`."}
+    ]},
+    {"heading": "You deploy it; the skill only prints the checklist", "short": "Deploy", "blocks": [
+      {"type": "chain", "nodes": [
+        {"icon": "file", "label": "Skill prints checklist", "note": "At the end of cutover."},
+        {"icon": "gear", "label": "You set pre-deploy", "arrow": "then", "note": "`./out migrate up` in the Railway dashboard."},
+        {"icon": "rocket", "label": "First deploy migrates", "arrow": "you deploy", "outcome": true, "note": "The pre-deploy command runs the migration."}
+      ]},
+      {"type": "list", "items": [
+        "The skill never deploys and never touches the production database.",
+        "It does not run `migrate up` against production itself. The first deploy does, via the pre-deploy command you set in the Railway dashboard.",
+        "Nothing is committed without your ok."
+      ]}
+    ]}
+  ],
+  "next_action": {
+    "text": "Open your fastapi-template project with a clean git status and type `/go-webapp-template:fastapi-go-migration`.",
+    "detail": "Claude first checks the project shape, creates or switches to the `go-migration` branch, then checks your tools."
+  },
+  "sources": [
+    {"label": "go-webapp-template plugin on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/go-webapp-template"}
+  ]
+}

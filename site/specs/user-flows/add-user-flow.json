@@ -1,0 +1,318 @@
+{
+  "title": "Add a User Flow",
+  "page_type": "how-to",
+  "gist": {
+    "kind": "chain",
+    "nodes": [
+      {
+        "icon": "user",
+        "label": "Describe the new flow"
+      },
+      {
+        "icon": "search",
+        "label": "Check it is new",
+        "arrow": "then"
+      },
+      {
+        "icon": "plus",
+        "label": "Flow added with ID",
+        "arrow": "then",
+        "outcome": true
+      }
+    ]
+  },
+  "bottom_line": "Describe one new flow. Claude checks it is not already listed, confirms it exists in the code, and adds it to user-flows.md.",
+  "sections": [
+    {
+      "heading": "Type the command followed by a description of the flow",
+      "short": "Run it",
+      "blocks": [
+        {
+          "type": "code",
+          "code": "/user-flows:add-user-flow <free-text description of the new user flow>",
+          "caption": "The description is free text."
+        },
+        {
+          "type": "code",
+          "title": "Example",
+          "code": "/user-flows:add-user-flow let users export their order history as CSV"
+        },
+        {
+          "type": "table",
+          "title": "Which command to use",
+          "columns": [
+            "Command",
+            "Use it when"
+          ],
+          "rows": [
+            [
+              "`/user-flows:add-user-flow`",
+              "You want to add one specific flow, journey or scenario, such as a single flow the client asked for."
+            ],
+            [
+              "`/user-flows:update-user-flows`",
+              "You want many flows re-derived from the whole session's code changes."
+            ],
+            [
+              "`/user-flows:extract-user-flows`",
+              "You want the list regenerated or extracted from the codebase at large."
+            ]
+          ],
+          "highlight_column": 0
+        },
+        {
+          "type": "list",
+          "title": "Before you start",
+          "items": [
+            "Nothing beyond Claude Code is needed. The skill reads the code and writes `user-flows.md` at the project root.",
+            "The plugin has no environment variables and no plugin settings.",
+            "You do not need a `user-flows.md` yet. If there is none, one is created."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "It first checks whether the flow is already listed",
+      "short": "Duplicate check",
+      "blocks": [
+        {
+          "type": "flow",
+          "title": "What happens to your description",
+          "nodes": [
+            {
+              "id": "desc",
+              "label": "Your description"
+            },
+            {
+              "id": "same",
+              "label": "Stop: reports the matching flow"
+            },
+            {
+              "id": "code",
+              "label": "Look for it in the code"
+            },
+            {
+              "id": "none",
+              "label": "Stop: says the feature is missing"
+            },
+            {
+              "id": "add",
+              "label": "New flow added to user-flows.md"
+            }
+          ],
+          "edges": [
+            {
+              "from": "desc",
+              "to": "same",
+              "label": "already listed"
+            },
+            {
+              "from": "desc",
+              "to": "code",
+              "label": "not listed"
+            },
+            {
+              "from": "code",
+              "to": "none",
+              "label": "not in code"
+            },
+            {
+              "from": "code",
+              "to": "add",
+              "label": "found in code"
+            }
+          ],
+          "caption": "When a matching flow is found, user-flows.md is not changed."
+        },
+        {
+          "type": "before_after",
+          "before": {
+            "label": "Your words",
+            "text": "\"Allow buyers to back out of an order before it ships.\""
+          },
+          "after": {
+            "label": "Existing flow",
+            "text": "\"Let users cancel a pending order.\""
+          },
+          "caption": "These count as the same flow even with no words in common, so nothing is added."
+        },
+        {
+          "type": "text",
+          "text": "The check judges what the flow does, not how it is worded. Two flows with the same steps and the same outcome, differing only in data values, count as the same flow. This is the same rule `/user-flows:extract-user-flows` uses."
+        },
+        {
+          "type": "text",
+          "text": "When a match is found, it reports the existing flow's ID, its name and why it matches, and makes no changes to the file."
+        }
+      ]
+    },
+    {
+      "heading": "A new flow is grounded in your code, never invented",
+      "short": "Found in code",
+      "blocks": [
+        {
+          "type": "chain",
+          "nodes": [
+            {
+              "icon": "link",
+              "label": "Entry point",
+              "note": "Where the flow starts in the app."
+            },
+            {
+              "icon": "user",
+              "label": "Elements involved",
+              "arrow": "then",
+              "note": "The interactive elements the person uses."
+            },
+            {
+              "icon": "check",
+              "label": "What they do",
+              "arrow": "then",
+              "note": "What those elements actually do in the code.",
+              "outcome": true
+            }
+          ],
+          "title": "What Claude traces in the code"
+        },
+        {
+          "type": "text",
+          "text": "This makes the flow based on evidence, not on your description alone. If your description does not match anything in the code, Claude says so and stops, instead of writing a flow for a feature that does not exist."
+        }
+      ]
+    },
+    {
+      "heading": "The new flow gets the next ID and nothing else moves",
+      "short": "Adding the flow",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Same shape as others",
+              "state": "done",
+              "text": "Written in the exact format extraction uses (Actor, Precondition, Steps, Expected and Source), with the same rule against duplicates, so the file stays consistent."
+            },
+            {
+              "title": "Next free ID",
+              "state": "done",
+              "text": "It gets the next ID after the highest one in the whole file. An ID is never reused."
+            },
+            {
+              "title": "Under its area heading",
+              "state": "done",
+              "text": "Placed under the matching area heading. If the area is new, the heading is created."
+            },
+            {
+              "title": "Other flows untouched",
+              "state": "done",
+              "text": "Every other flow stays exactly as it was: no reformatting, reordering or rewording."
+            },
+            {
+              "title": "Header date updated",
+              "state": "done",
+              "text": "The `generated:` date in the header is updated. Granularity and area stay as they were, or as set at creation for a new file."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "If there is no user-flows.md yet, it starts one",
+      "short": "No file yet",
+      "blocks": [
+        {
+          "type": "before_after",
+          "before": {
+            "label": "No file",
+            "text": "The project has no `user-flows.md`."
+          },
+          "after": {
+            "label": "New file",
+            "text": "A `user-flows.md` with the standard header and no flows yet, then your one flow is added to it."
+          }
+        },
+        {
+          "type": "code",
+          "title": "Header of a newly created file",
+          "code": "granularity: medium | area: all | generated: <today>"
+        },
+        {
+          "type": "text",
+          "text": "It does not run a full extraction first. Only the one flow you described is added."
+        }
+      ]
+    },
+    {
+      "heading": "If you already have user-flow tests, a test is added too",
+      "short": "Tests",
+      "blocks": [
+        {
+          "type": "flow",
+          "nodes": [
+            {
+              "id": "written",
+              "label": "New flow written to the file"
+            },
+            {
+              "id": "sync",
+              "label": "test-user-flow runs and adds a test"
+            },
+            {
+              "id": "skip",
+              "label": "Skipped, with a pointer to test-user-flow"
+            }
+          ],
+          "edges": [
+            {
+              "from": "written",
+              "to": "sync",
+              "label": "tests exist"
+            },
+            {
+              "from": "written",
+              "to": "skip",
+              "label": "no tests yet"
+            }
+          ],
+          "caption": "Existing user-flow tests are found by looking for a folder with `# user-flow:` marker comments."
+        },
+        {
+          "type": "text",
+          "text": "When there are no user-flow tests yet, Claude mentions that `/user-flows:test-user-flow` can set them up."
+        }
+      ]
+    },
+    {
+      "heading": "The report tells you which of two things happened",
+      "short": "The report",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Already listed",
+              "state": "info",
+              "text": "The ID and name of the existing flow that blocked the add. No changes were made."
+            },
+            {
+              "title": "Flow added",
+              "state": "done",
+              "text": "The new flow's ID, name and area, plus the outcome of the test sync."
+            }
+          ],
+          "caption": "It does not paste the whole file back into the conversation."
+        }
+      ]
+    }
+  ],
+  "next_action": {
+    "text": "Run `/user-flows:add-user-flow` followed by a description of the flow you want added.",
+    "detail": "For example: `/user-flows:add-user-flow let users export their order history as CSV`."
+  },
+  "sources": [
+    {
+      "label": "user-flows plugin on GitHub",
+      "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/user-flows"
+    }
+  ]
+}

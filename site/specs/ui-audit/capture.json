@@ -1,0 +1,711 @@
+{
+  "title": "Audit UI Changes",
+  "page_type": "how-to",
+  "gist": {
+    "kind": "chain",
+    "nodes": [
+      {
+        "icon": "code",
+        "label": "Run /ui-audit:capture"
+      },
+      {
+        "icon": "search",
+        "label": "Capture before and after",
+        "arrow": "on each screen"
+      },
+      {
+        "icon": "flag",
+        "label": "Tag every changed screen",
+        "arrow": "diff and classify"
+      },
+      {
+        "icon": "link",
+        "label": "Audit page for PR",
+        "arrow": "publish",
+        "outcome": true
+      }
+    ]
+  },
+  "bottom_line": "Run one command on your branch to get a private page of before and after screenshots of every screen that really changed.",
+  "sections": [
+    {
+      "heading": "One command starts the audit, and flags skip its questions",
+      "short": "The command",
+      "blocks": [
+        {
+          "type": "code",
+          "code": "/ui-audit:capture [--platforms web,ios,android] [--baseline base+head|head-only|head+base-related] [--full] [--pr N] [--publish artifact|cloudflare] [--themes light|light+dark] [--unattended] [--model <name>]",
+          "caption": "Type this in Claude Code on the branch you want to audit. Every flag is optional."
+        },
+        {
+          "type": "table",
+          "title": "What each flag does",
+          "columns": [
+            "Flag",
+            "What it does"
+          ],
+          "rows": [
+            [
+              "`--platforms web,ios,android`",
+              "Which platforms to capture this run. Skips the platforms question."
+            ],
+            [
+              "`--baseline base+head|head-only|head+base-related`",
+              "How to compare the old and new version. Skips the baseline question."
+            ],
+            [
+              "`--full`",
+              "Audit every screen, not only what changed since the last audited commit."
+            ],
+            [
+              "`--pr N`",
+              "The PR number. Without it, the skill looks the PR up with `gh pr view`."
+            ],
+            [
+              "`--publish artifact|cloudflare`",
+              "Where to publish the audit page. Skips the publish question."
+            ],
+            [
+              "`--themes light|light+dark`",
+              "Which themes to capture when dark mode is enabled. Skips the themes question."
+            ],
+            [
+              "`--unattended`",
+              "Ask nothing. Use the passed flags, the config and the defaults."
+            ],
+            [
+              "`--model <name>`",
+              "The model for the helper subagents. The default is `haiku`."
+            ]
+          ]
+        },
+        {
+          "type": "text",
+          "title": "Why it exists",
+          "text": "Reviewers cannot see UI changes from a diff, and shared CSS or components change screens nobody meant to touch. This skill shows what the UI really looks like before and after the change."
+        },
+        {
+          "type": "text",
+          "title": "Other ways it starts",
+          "text": "The skill also starts when you ask for screenshots of UI changes, a visual audit, a visual regression check, a UI diff for a PR, before/after images, or to \"show reviewers what the UI looks like\". It also starts when templates, components, styles, screens or front-end code changed and reviewers need to see the result."
+        },
+        {
+          "type": "text",
+          "text": "`/plan-tools:finalize-pr` offers to run it when a PR touches UI files, then calls it with `--unattended`. That run asks nothing and uses the passed flags, the config and the defaults. It makes no dark-mode offer, and a failed base falls back to `head-only`."
+        },
+        {
+          "type": "text",
+          "text": "You can also use it to set up, refresh or inspect the `.ui-audit/` config and manifest in a repo. It works for web (Playwright, desktop and mobile emulation) and, for Capacitor/Expo apps, simulators and emulators."
+        }
+      ]
+    },
+    {
+      "heading": "Have the right tools ready before you run it",
+      "short": "Before you start",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "GitHub CLI",
+              "state": "info",
+              "text": "`gh` CLI, authenticated. It looks up the PR and writes the `ui-audit` commit status."
+            },
+            {
+              "title": "Python with two packages",
+              "state": "info",
+              "text": "Python 3 with `pip install pillow numpy`, for image diffing. If they are missing, the skill tells you to install them and stops."
+            },
+            {
+              "title": "Web: Playwright CLI",
+              "state": "info",
+              "text": "The Playwright CLI (`playwright-cli`, via the `playwright-cli` skill)."
+            },
+            {
+              "title": "To publish as artifact",
+              "state": "info",
+              "text": "The Claude Code `Artifact` tool. Artifacts are private: reviewers see the audit after you share it from claude.ai."
+            },
+            {
+              "title": "To publish to Cloudflare",
+              "state": "info",
+              "text": "Node (`npx`, already needed for the Playwright CLI) to run `npx wrangler@4 pages deploy`. Nothing to install."
+            },
+            {
+              "title": "Native apps (optional)",
+              "state": "warn",
+              "text": "Xcode with iOS simulators (`xcrun simctl`), or the Android SDK with an emulator and `adb`. Optionally `ffmpeg` to convert recordings. Untested on real apps."
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "title": "Environment variables",
+          "items": [
+            "None are needed to publish as a Claude artifact.",
+            "To publish to Cloudflare Pages, set `CLOUDFLARE_API_TOKEN` (scope Account > Cloudflare Pages > Edit).",
+            "Also set `CLOUDFLARE_ACCOUNT_ID` when the token reaches more than one account.",
+            "Or run `! npx wrangler login` once instead. The skill never logs in itself.",
+            "The plugin has no plugin settings. Per-repo choices live in `.ui-audit/config.json`."
+          ]
+        },
+        {
+          "type": "text",
+          "title": "A clean working tree",
+          "text": "Each run needs a clean working tree (it ignores `.ui-audit/`). If you have uncommitted changes, it offers to commit them and stops if you say no. An unpushed HEAD is fine."
+        }
+      ]
+    },
+    {
+      "heading": "The first run interviews you and sets up the repo",
+      "short": "First run",
+      "blocks": [
+        {
+          "type": "chain",
+          "title": "What happens on the first run",
+          "nodes": [
+            {
+              "icon": "question",
+              "label": "Answers a short interview"
+            },
+            {
+              "icon": "search",
+              "label": "Confirm the screen list",
+              "arrow": "then"
+            },
+            {
+              "icon": "file",
+              "label": "Config and manifest written",
+              "arrow": "then"
+            },
+            {
+              "icon": "repeat",
+              "label": "Every screen captured",
+              "arrow": "full sweep",
+              "outcome": true
+            }
+          ],
+          "caption": "The skill offers discovered defaults, so you mostly confirm."
+        },
+        {
+          "type": "list",
+          "title": "The interview questions, a few at a time",
+          "ordered": true,
+          "items": [
+            "Which platforms does this repo ship (web, Capacitor, Expo/React Native)? Which should be enabled for audits?",
+            "How do I start the app locally (command, port, working directory)? How do I know it is ready?",
+            "Does the app need login? Provide a test account or storage-state, or should I use an existing dev-login route?",
+            "Is there seed/fixture data so screens look the same on every run? If not, which regions are dynamic (clocks, avatars, random content) and should be masked?",
+            "Feature flags or env vars that need to be on for the screens to render?",
+            "Viewports: keep desktop 1440x900 and mobile 390x844 (touch, DPR 3), or different?",
+            "Default baseline mode (base+head recommended).",
+            "Publish target: Claude artifact (default) or Cloudflare Pages. Only if Cloudflare, the Pages project name (default `<repo-name>-ui-audit`).",
+            "Only if dark mode was detected: capture dark too? Confirm the detected `dark_mode` method."
+          ]
+        },
+        {
+          "type": "text",
+          "title": "The screen list",
+          "text": "Next it proposes a screen list (name, route, notable states such as empty, error, modal, open menu). You confirm, merge or drop entries. Admin and internal screens are skipped unless you want them."
+        },
+        {
+          "type": "text",
+          "text": "With `--unattended`, the interview and the screen-list confirmation are skipped and the defaults are used."
+        }
+      ]
+    },
+    {
+      "heading": "Every run follows the same six steps",
+      "short": "Each run",
+      "blocks": [
+        {
+          "type": "stepper",
+          "steps": [
+            {
+              "title": "Check the working tree is clean",
+              "text": "It ignores `.ui-audit/`. If files are listed, it offers to commit your changes, otherwise it stops."
+            },
+            {
+              "title": "Load the config",
+              "text": "It loads `.ui-audit/config.json`. On the first run it interviews you, discovers screens, and writes the config and manifest."
+            },
+            {
+              "title": "Find what changed",
+              "text": "`BASE` is the merge-base with the PR base branch, always the diff baseline. `LAST` is the last audited commit (a `ui-audit` commit status on the PR, else `last_audited_sha` in the manifest). `LAST` only picks which screens to re-capture."
+            },
+            {
+              "title": "Answer the per-run questions",
+              "text": "Which platforms (if several are enabled), which baseline mode and where to publish. `hosting.target` in the config is the default, and `--publish` skips that question."
+            },
+            {
+              "title": "Capture, compare and classify",
+              "text": "It picks screens from file hashes plus reasoning about ripples from shared files, captures base (git worktree) and head under identical conditions, diffs, classifies, and builds the audit page."
+            },
+            {
+              "title": "Publish and return the link",
+              "text": "It publishes the audit and returns the URL (and the password, if any), ready for the PR body."
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "title": "When a run stops early or widens",
+          "items": [
+            "The run stops if nothing changed since `LAST`.",
+            "If the base branch moved since the last audit, the run is a full sweep."
+          ]
+        },
+        {
+          "type": "list",
+          "title": "What it never does",
+          "items": [
+            "It never pushes, and commits only your uncommitted work in the first step when you say yes.",
+            "`.ui-audit/` changes are left in the working tree for you or finalize-pr to commit.",
+            "Images are never committed."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Pick a baseline mode: base+head is the only one that finds surprises",
+      "short": "Baseline mode",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "base+head (default)",
+              "state": "good",
+              "text": "Captures the old and new version of every affected screen, then shows only screens that really changed, side by side with a diff overlay.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "The only mode that can find unintended changes"
+                }
+              ]
+            },
+            {
+              "title": "head-only",
+              "state": "warn",
+              "text": "Captures only the new version. Use it for brand new UIs or when the base cannot run.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Fastest and cheapest"
+                },
+                {
+                  "sign": "-",
+                  "text": "No diff and no way to tell what changed"
+                },
+                {
+                  "sign": "-",
+                  "text": "Everything is tagged `needs_review`"
+                }
+              ]
+            },
+            {
+              "title": "head+base-related",
+              "state": "warn",
+              "text": "Captures the new version of all affected screens, but the old version only for screens whose own files changed.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Faster than the default on large apps"
+                },
+                {
+                  "sign": "-",
+                  "text": "Ripples on other screens have no before image, so are tagged `needs_review`"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "title": "The questions asked at the start of each run",
+          "items": [
+            "Platforms, only if more than one is enabled in config: which to capture this run (for example web, iOS simulator, Android emulator). Native captures are slower, so you pick.",
+            "Baseline mode, always (default `base+head`).",
+            "Viewports: confirm the configured ones (default desktop and mobile). Mobile is browser emulation on web.",
+            "Publish target, unless `--publish` is given or the run is unattended: `Claude artifact` or `Cloudflare Pages`, with the config's `hosting.target` (default `artifact`) preselected.",
+            "Themes, unless `--themes` is given, only if config has a `dark_mode` object (web only): `light+dark` (default) or `light` only. Dark doubles the captures, so `light` is offered for quick runs."
+          ]
+        },
+        {
+          "type": "text",
+          "text": "The remaining questions are asked together. A flag that answers a question skips it, and `--unattended` asks none of them."
+        }
+      ]
+    },
+    {
+      "heading": "Publish privately as a Claude artifact or on Cloudflare Pages",
+      "short": "Where to publish",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Claude artifact (default)",
+              "state": "good",
+              "text": "Private until you share it from claude.ai.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "No environment variables needed"
+                }
+              ]
+            },
+            {
+              "title": "Cloudflare Pages",
+              "state": "info",
+              "text": "Published at `https://pr-<n>.<project>.pages.dev`.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "On a private repo it sits behind a password"
+                },
+                {
+                  "sign": "-",
+                  "text": "A public repo gets no password"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "title": "The Cloudflare password",
+          "items": [
+            "The password is the first 12 characters of the audited commit sha.",
+            "It is kept in the `ui-audit` commit status and the PR body.",
+            "Anyone with the link and password sees the screenshots."
+          ]
+        },
+        {
+          "type": "list",
+          "title": "Switching targets and fallback",
+          "items": [
+            "Changing the target for a PR that already has an audit carries the earlier items over to the new target.",
+            "If the chosen target cannot publish, the skill offers the artifact instead or keeps a local `index.html` and a `report.md` for the PR comment.",
+            "Retention: none automatic. An artifact, Pages project or deployment is deleted only when you ask."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Dark mode is opt-in and catches colors that change in one theme",
+      "short": "Dark mode",
+      "blocks": [
+        {
+          "type": "flow",
+          "title": "How a dark-mode run checks a screen",
+          "nodes": [
+            {
+              "id": "both",
+              "label": "Capture light and dark"
+            },
+            {
+              "id": "same",
+              "label": "Both themes changed alike"
+            },
+            {
+              "id": "one",
+              "label": "Only one theme changed"
+            },
+            {
+              "id": "ok",
+              "label": "Classified as usual"
+            },
+            {
+              "id": "nr",
+              "label": "Flagged needs_review"
+            }
+          ],
+          "edges": [
+            {
+              "from": "both",
+              "to": "same",
+              "label": "compare"
+            },
+            {
+              "from": "both",
+              "to": "one",
+              "label": "compare"
+            },
+            {
+              "from": "same",
+              "to": "ok",
+              "label": "then"
+            },
+            {
+              "from": "one",
+              "to": "nr",
+              "label": "then"
+            }
+          ],
+          "caption": "A screen that changed in one theme but not the other may have a hardcoded color or a missing dark variant."
+        },
+        {
+          "type": "list",
+          "title": "How dark mode works",
+          "items": [
+            "Web apps with a dark theme (detected from `prefers-color-scheme`, `.dark`/`[data-theme]` selectors or Tailwind `darkMode`) can opt in via a `dark_mode` object in `.ui-audit/config.json`.",
+            "`false` means none or declined, and you are not asked again.",
+            "Each run then also captures every chosen state in dark (`<state>--dark`), diffs base vs head, and cross-checks light and dark.",
+            "Choose `light` only at the per-run question for quicker runs."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "You get tagged screens, a reviewable page and a PR-ready summary",
+      "short": "What you get",
+      "blocks": [
+        {
+          "type": "cards",
+          "title": "Each changed screen gets one tag and a one-line reason",
+          "cards": [
+            {
+              "title": "intentional",
+              "state": "good",
+              "text": "The screen was touched by the diff itself and the visual change is plausible."
+            },
+            {
+              "title": "unintended",
+              "state": "bad",
+              "text": "Reached only through shared files or ripple and nobody meant to change it, or the change contradicts the diff."
+            },
+            {
+              "title": "needs_review",
+              "state": "warn",
+              "text": "The skill cannot tell."
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "title": "The audit page",
+          "items": [
+            "Unintended items are listed first, with the diff overlay.",
+            "The page opens in the view set by `report.default_view` (`slider`, `side` or `diff`, default `slider`) and also has a view picker.",
+            "Each card shows its audit history.",
+            "A per-browser \"Mark reviewed\", which clears when the card changes in a later audit.",
+            "A per-browser \"Skip\" that collapses a card to its title row; it also clears when the card changes."
+          ]
+        },
+        {
+          "type": "list",
+          "title": "What the skill returns to you",
+          "items": [
+            "Config suggestions (merges, deleted-file removals).",
+            "The audit URL and the password, if any.",
+            "Counts of changed, unintended and needs-review screens.",
+            "The list of unintended items with reasons.",
+            "Which screens were reused, and which were skipped and why.",
+            "The `report.md` text as a ready PR comment, if hosting was unavailable."
+          ]
+        },
+        {
+          "type": "text",
+          "text": "It also records a `ui-audit` commit status on the PR head. This is fixed, because `finalize-pr` relies on it."
+        }
+      ]
+    },
+    {
+      "heading": "Example: a shared stylesheet change caught on another page",
+      "short": "Worked example",
+      "blocks": [
+        {
+          "type": "chain",
+          "title": "A PR changes a home button and style.css",
+          "nodes": [
+            {
+              "icon": "file",
+              "label": "style.css is shared",
+              "note": "Every page uses it."
+            },
+            {
+              "icon": "search",
+              "label": "Home, about, settings captured",
+              "arrow": "reasons about reach",
+              "note": "Base and head, at desktop and mobile."
+            },
+            {
+              "icon": "flag",
+              "label": "Two screens differ",
+              "arrow": "diff",
+              "note": "`home`: the new button, intentional. `about`: card padding changed, unintended."
+            },
+            {
+              "icon": "link",
+              "label": "About listed first",
+              "arrow": "build page",
+              "outcome": true,
+              "note": "With the diff overlay and a one-line reason."
+            }
+          ]
+        },
+        {
+          "type": "code",
+          "code": "/ui-audit:capture",
+          "caption": "The command used in this example, with no flags."
+        },
+        {
+          "type": "code",
+          "title": "What the PR body gets",
+          "code": "## UI audit\nLatest: https://claude.ai/artifact/<id>  (2 changed screens, 1 unintended)"
+        },
+        {
+          "type": "code",
+          "title": "Or, on Cloudflare Pages with a private repo",
+          "code": "## UI audit\nLatest: https://pr-12.my-repo-ui-audit.pages.dev  (2 changed screens, 1 unintended)\nPassword: `3f9c1a7be204` (username: anything)"
+        },
+        {
+          "type": "text",
+          "text": "A later commit that only touches `about.html` re-captures `about` alone."
+        }
+      ]
+    },
+    {
+      "heading": "Defaults you can change, and what lives in the repo",
+      "short": "Defaults",
+      "blocks": [
+        {
+          "type": "table",
+          "columns": [
+            "Default",
+            "Change it with"
+          ],
+          "rows": [
+            [
+              "Publish as a private Claude artifact",
+              "`--publish cloudflare`, or `hosting.target` in `.ui-audit/config.json`"
+            ],
+            [
+              "Compare base and head (`base+head`), showing only screens that really changed",
+              "`--baseline head-only` or `--baseline head+base-related`"
+            ],
+            [
+              "Capture desktop 1440x900 and mobile 390x844",
+              "viewports in `.ui-audit/config.json`"
+            ],
+            [
+              "Light theme only; dark is captured too once the repo opts in with a `dark_mode` object in `.ui-audit/config.json`",
+              "`--themes light` for a quick run"
+            ],
+            [
+              "Helper subagents run on the `haiku` model",
+              "`--model <name>`"
+            ],
+            [
+              "Audit only what changed since the last audited commit",
+              "`--full`"
+            ],
+            [
+              "Record a `ui-audit` commit status on the PR head",
+              "fixed; `finalize-pr` relies on it"
+            ]
+          ]
+        },
+        {
+          "type": "list",
+          "title": "Committed in your repo under .ui-audit/",
+          "items": [
+            "`config.json`: platforms, launch command and base URL, login and seed data, hosting target and Cloudflare Pages project name (`hosting`), viewports (default desktop 1440x900 and mobile 390x844 with touch, via browser emulation), screens and states, masked regions, diff thresholds, default baseline mode, native device settings.",
+            "Platform ids in `config.json`: `web`, `capacitor-ios`, `capacitor-android`, `expo-ios`, `expo-android`.",
+            "`manifest.json`: maintained by the skill. Only screens whose hash changed are re-captured on repeat runs."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "If something goes wrong, the skill says so and falls back",
+      "short": "Troubleshooting",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "No UI changes",
+              "state": "warn",
+              "text": "No UI changes in the diff and nothing shared changed.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Reports \"no UI changes since `LAST`\" and builds nothing"
+                }
+              ]
+            },
+            {
+              "title": "App fails on base",
+              "state": "warn",
+              "text": "The app fails to start on base, and the skill says so.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Falls back to `head-only` for that platform after asking you"
+                },
+                {
+                  "sign": "+",
+                  "text": "With `--unattended`, falls back without asking and notes it"
+                }
+              ]
+            },
+            {
+              "title": "A recipe step fails",
+              "state": "warn",
+              "text": "A recipe step no longer matches.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Refreshes it and mentions it in the report"
+                }
+              ]
+            },
+            {
+              "title": "Everything differs slightly",
+              "state": "warn",
+              "text": "Everything differs by a few pixels: likely font or animation instability.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Fix stability instead of reporting hundreds of changes"
+                },
+                {
+                  "sign": "+",
+                  "text": "Mask a screen in config if it cannot be made stable"
+                }
+              ]
+            },
+            {
+              "title": "Publishing fails",
+              "state": "warn",
+              "text": "The chosen target cannot publish.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Offers the artifact instead, or keeps local `index.html` and `report.md`"
+                }
+              ]
+            },
+            {
+              "title": "Native apps",
+              "state": "warn",
+              "text": "Native capture (Capacitor, Expo/React Native) follows the documented simulator and emulator commands but has not been tried on a real app yet."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "next_action": {
+    "text": "Commit your changes so the working tree is clean, then run `/ui-audit:capture` on your branch.",
+    "detail": "The first run interviews you, writes `.ui-audit/config.json` and captures every screen."
+  },
+  "sources": [
+    {
+      "label": "ui-audit on GitHub",
+      "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/ui-audit"
+    }
+  ]
+}

@@ -1,0 +1,308 @@
+{
+  "title": "Build a Split Plan",
+  "page_type": "how-to",
+  "gist": {
+    "kind": "chain",
+    "nodes": [
+      {
+        "icon": "code",
+        "label": "Run plan-split-implment"
+      },
+      {
+        "icon": "warning",
+        "label": "Blockers checked first",
+        "arrow": "reads every session"
+      },
+      {
+        "icon": "repeat",
+        "label": "One helper per session",
+        "arrow": "in order"
+      },
+      {
+        "icon": "check-circle",
+        "label": "Every session committed",
+        "arrow": "then archives plan",
+        "outcome": true
+      }
+    ]
+  },
+  "bottom_line": "Run /plan-tools:plan-split-implment in a repo with a split plan, and Claude builds each remaining session in turn, committing each one on a plan branch.",
+  "sections": [
+    {
+      "heading": "Start it in a repo that already has a split plan",
+      "short": "Start it",
+      "blocks": [
+        {
+          "type": "code",
+          "code": "/plan-tools:plan-split-implment [--branch <name>]",
+          "caption": "Without --branch, the work goes on a branch named plan/<feature-name>."
+        },
+        {
+          "type": "cards",
+          "title": "Before you start",
+          "cards": [
+            {
+              "title": "A split plan exists",
+              "state": "done",
+              "text": "`.planning/progress.md` and `.planning/sessions/`, as written by /plan-tools:split-plan. If they are missing, Claude checks the project root, then asks you."
+            },
+            {
+              "title": "Blockers only you can clear",
+              "state": "info",
+              "text": "Steps that need your own credentials, accounts or access. Claude lists them before it starts any session."
+            }
+          ]
+        },
+        {
+          "type": "glossary",
+          "terms": [
+            {
+              "term": "Session",
+              "definition": "One chunk of the plan, with its own file in `.planning/sessions/`. Only sessions not yet complete are run."
+            },
+            {
+              "term": "Subagent",
+              "definition": "A separate helper Claude starts for one job. Here, one subagent builds one session."
+            },
+            {
+              "term": "Branch",
+              "definition": "A separate line of work in git, so changes stay off the main code until they are merged."
+            },
+            {
+              "term": "Commit",
+              "definition": "A saved snapshot of the code changes, with a message."
+            }
+          ]
+        },
+        {
+          "type": "code",
+          "title": "Where it fits",
+          "code": "/plan-tools:split-plan\n/plan-tools:plan-split-implment --branch feature/meal-plans\n/plan-tools:finalize-pr\n/plan-tools:monitor-pr",
+          "caption": "The README's example for an existing repo with a plan."
+        }
+      ]
+    },
+    {
+      "heading": "Work goes on a plan branch, never straight onto main",
+      "short": "Branch",
+      "blocks": [
+        {
+          "type": "before_after",
+          "before": {
+            "label": "You are on main",
+            "text": "On `main` or `master`, Claude first creates an implementation branch, such as `plan/<feature-name>`, and works there."
+          },
+          "after": {
+            "label": "With --branch",
+            "text": "Claude uses the name you give instead of `plan/<feature-name>`."
+          }
+        },
+        {
+          "type": "text",
+          "text": "Every session ends with a commit, and those commits belong on a branch, not on main."
+        }
+      ]
+    },
+    {
+      "heading": "Claude lists anything that needs your own access, then waits",
+      "short": "Blockers",
+      "blocks": [
+        {
+          "type": "flow",
+          "title": "The blocker check",
+          "nodes": [
+            {
+              "id": "read",
+              "label": "Reads every remaining session file"
+            },
+            {
+              "id": "found",
+              "label": "Only a numbered checklist, one line each"
+            },
+            {
+              "id": "wait",
+              "label": "Waits for you"
+            },
+            {
+              "id": "recheck",
+              "label": "Re-checks anything ambiguous"
+            },
+            {
+              "id": "go",
+              "label": "Starts building"
+            }
+          ],
+          "edges": [
+            {
+              "from": "read",
+              "to": "found",
+              "label": "blockers found"
+            },
+            {
+              "from": "found",
+              "to": "wait",
+              "label": "then"
+            },
+            {
+              "from": "wait",
+              "to": "recheck",
+              "label": "you say done"
+            },
+            {
+              "from": "recheck",
+              "to": "go",
+              "label": "then"
+            },
+            {
+              "from": "read",
+              "to": "go",
+              "label": "none found"
+            }
+          ],
+          "caption": "With no blockers it says so in one line and starts without waiting for a go-ahead."
+        },
+        {
+          "type": "list",
+          "title": "Examples of blockers",
+          "items": [
+            "Signing up for or logging into a third-party service.",
+            "Creating an API key or OAuth app.",
+            "Granting a permission or dashboard access.",
+            "Buying a domain.",
+            "Any manual action in a UI."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Sessions run one at a time, each in its own helper",
+      "short": "The loop",
+      "blocks": [
+        {
+          "type": "stepper",
+          "title": "What each session helper does",
+          "steps": [
+            {
+              "title": "Reads the plan conventions",
+              "text": "It reads `.planning/CLAUDE.md`, then its own session file."
+            },
+            {
+              "title": "Does the session's tasks",
+              "text": "It carries out the tasks exactly as written."
+            },
+            {
+              "title": "Updates the project CLAUDE.md",
+              "text": "It records what changed this session in the project's root CLAUDE.md, creating the file if it does not exist yet."
+            },
+            {
+              "title": "Commits",
+              "text": "It commits the work, including the CLAUDE.md update."
+            },
+            {
+              "title": "Marks progress",
+              "text": "It marks its session complete in `.planning/progress.md` and the next one active."
+            },
+            {
+              "title": "Exits",
+              "text": "The next session starts only after this one finishes and `progress.md` confirms it."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "Sessions never run in parallel, because each depends on the one before. Each helper reads `.planning/CLAUDE.md` for the plan's conventions. Claude itself never writes code here; it only hands out sessions and watches them."
+        }
+      ]
+    },
+    {
+      "heading": "Questions come to you; a broken session stops the run",
+      "short": "If it stops",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "A helper has a question",
+              "state": "warn",
+              "text": "A session can hit a decision its plan does not answer.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Claude asks you in plain English and passes your answer back so the helper continues."
+                }
+              ]
+            },
+            {
+              "title": "A session breaks",
+              "state": "warn",
+              "text": "A session fails or ends in a broken state.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Claude stops and reports to you. It does not skip ahead to the next session."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "At the end, CLAUDE.md is tidied and the plan is archived",
+      "short": "Finish",
+      "blocks": [
+        {
+          "type": "stepper",
+          "steps": [
+            {
+              "title": "Improve CLAUDE.md",
+              "text": "Runs `/claude-md-management:claude-md-improver` on the root CLAUDE.md if the `claude-md-management` plugin is installed. Otherwise it skips this and says so."
+            },
+            {
+              "title": "Compress CLAUDE.md",
+              "text": "Runs `/caveman:caveman-compress claude.md` if the `caveman` plugin is installed. Otherwise it skips this and says so."
+            },
+            {
+              "title": "Commit",
+              "text": "Commits the tidied CLAUDE.md."
+            },
+            {
+              "title": "Sync user flows",
+              "text": "If `user-flows.md` exists at the project root, runs `/user-flows:update-user-flows` to match everything built, then commits. Skipped when the file does not exist."
+            },
+            {
+              "title": "Archive the plan",
+              "text": "Moves the plan's `.md` files and `sessions/` into a feature-named folder inside the plan location, so it is clean for the next plan. The move is not committed, because the plan location is almost always ignored by git."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "reference": [
+    {
+      "title": "Default branch name",
+      "items": [
+        "Plan work happens on a branch named `plan/<feature-name>`. This default is shared by `plan-split-implment` and `plan-implement-complete`, and you change it with `--branch <name>`."
+      ]
+    },
+    {
+      "title": "About the plan-tools plugin",
+      "items": [
+        "Plugin purpose: plan-driven workflow tools that bootstrap a new web or mobile app end to end, split implementation plans into context-sized resumable sessions, and drive them to PRs.",
+        "Installing plan-tools also installs the plugins it depends on: `ntfy`, `fastapi-template` and `htmx-vs-alpine`.",
+        "No environment variables are needed. The one setting, `designer_ui_review` (default `false`), is changed with `/plugin configure plan-tools@wovemind`. It runs the ui-change-guard designer review (/ui-change-guard:review-ui-change) before finalize-pr raises a PR."
+      ]
+    }
+  ],
+  "next_action": {
+    "text": "Run /plan-tools:plan-split-implment in the repo that holds your .planning folder.",
+    "detail": "Add --branch <name> if you want a branch name other than plan/<feature-name>."
+  },
+  "sources": [
+    {
+      "label": "plan-tools on GitHub",
+      "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/plan-tools"
+    }
+  ]
+}

@@ -1,0 +1,116 @@
+{
+  "title": "Session Overview Pane",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "code", "label": "Type /sessions"},
+    {"icon": "table", "label": "Pane lists every session", "arrow": "opens side pane"},
+    {"icon": "flag", "label": "See who needs you", "arrow": "refreshes every 3s", "outcome": true}
+  ]},
+  "bottom_line": "Type /sessions to open a side pane that lists every open Claude Code session on this machine, grouped by project, with its goal and state.",
+  "sections": [
+    {"heading": "Type /sessions, or add auto on or off", "short": "The command", "blocks": [
+      {"type": "code", "title": "What to type", "code": "/sessions\n/sessions auto on\n/sessions auto off", "caption": "The first line opens the pane now. The other two switch automatic opening on or off."},
+      {"type": "table", "title": "What each form does and what it replies", "columns": ["You type", "What happens", "Reply you see"], "rows": [
+        ["`/sessions`", "Opens the pane, titled Sessions, with the keyboard on it. It refreshes every 3 seconds while open.", "Sessions pane opened."],
+        ["`/sessions` when the pane cannot be placed", "The pane is open but not shown in place.", "Sessions pane open but not placed: followed by the reason"],
+        ["`/sessions auto on`", "Opens the pane, without taking the keyboard, on every new session, including after `/clear`. The choice is remembered.", "Sessions pane will open on every new session."],
+        ["`/sessions auto off`", "Stops the automatic opening. The choice is remembered.", "Sessions pane will no longer open automatically."]
+      ]},
+      {"type": "text", "text": "The pane shows every open Claude Code session on the machine in a side pane, grouped by project, with each session's goal and state."}
+    ]},
+    {"heading": "Check that your setup can run the pane", "short": "Before you start", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Claude Code that loads mods", "state": "done", "text": "The plugin registers a TypeScript module through `hooks/hooks.json`, not a skill, so your Claude Code version must load plugin mods."},
+        {"title": "tmux, if you want jumping", "state": "info", "text": "Optional. Clicking a session switches your tmux client to it. Outside tmux the list is read-only."},
+        {"title": "Session files under ~/.claude/", "state": "done", "text": "It works wherever Claude Code keeps its session files under `~/.claude/`."}
+      ]},
+      {"type": "list", "title": "Nothing to configure", "items": [
+        "No environment variables and no plugin settings.",
+        "It only reads `~/.claude/sessions/*.json` and `~/.claude/projects/<encoded-cwd>/<sessionId>.jsonl`."
+      ]}
+    ]},
+    {"heading": "The pane groups sessions by project and marks each state", "short": "Reading the pane", "blocks": [
+      {"type": "code", "title": "Example: three sessions in one project", "code": "1 need you   1 running   1 idle\n\nmy-app  ~/workspace\n  ◆ Fix login redirect\n    waiting: permission prompt\n  ● GDPR and PECR compliance audit\n    worktree wt-1\n  ○ Add pricing page\n\n1: bg  2: cli  3: sdk-cli (hidden)"},
+      {"type": "text", "text": "The top line counts sessions by state. Under it, each project heading shows the folder name in bold and its parent path dimmed. The last line of the example shows the type buttons, each with its number."},
+      {"type": "table", "title": "The four states", "columns": ["Mark", "State", "What it means", "Extra line under the title"], "rows": [
+        ["◆", "waiting", "The session waits for something, for example a permission prompt. These are the sessions that need you.", "waiting: followed by what it waits for, or waiting: your reply when nothing more specific is known"],
+        ["●", "running", "The session is running.", "none"],
+        ["○", "idle", "Finished, awaiting the next prompt.", "none"],
+        ["✕", "ended", "A leftover registry entry whose process is gone.", "a dim ended line"]
+      ]},
+      {"type": "list", "title": "How the list is arranged", "items": [
+        "The count line at the top shows how many sessions need you (waiting), and how many are running, idle and ended. A state with no sessions is left out.",
+        "Sessions are grouped by run directory. Home is shown as `~`.",
+        "Worktrees (`<repo>/.claude/worktrees/<name>`) appear under their repo, with a line saying worktree and the worktree name.",
+        "Within a project, starred sessions come first, then waiting, running, idle and ended.",
+        "Projects are ordered with the most recently updated project first.",
+        "A dim today after the title marks a session active today.",
+        "This session's title is bold and tagged (this one).",
+        "With nothing to show, the pane says No sessions open."
+      ]}
+    ]},
+    {"heading": "Each session's goal comes from the best title available", "short": "Session goal", "blocks": [
+      {"type": "chain", "title": "Where the goal text comes from, first match wins", "nodes": [
+        {"icon": "user", "label": "Your /rename title"},
+        {"icon": "lightbulb", "label": "The AI title", "arrow": "else"},
+        {"icon": "file", "label": "First prompt's first line", "arrow": "else"},
+        {"icon": "table", "label": "The registry name", "arrow": "else"}
+      ], "caption": "A title you set with /rename always wins. A session with no goal at all shows Untitled session."},
+      {"type": "text", "text": "To set your own title, type `/rename <title>`."}
+    ]},
+    {"heading": "Haiku names an untitled session from its first prompt", "short": "Automatic titles", "blocks": [
+      {"type": "chain", "title": "What is sent to a model", "nodes": [
+        {"icon": "user", "label": "First prompt, no title"},
+        {"icon": "cloud", "label": "Haiku model", "arrow": "first 4000 characters"},
+        {"icon": "check", "label": "3-to-6-word session title", "arrow": "reply", "outcome": true}
+      ], "caption": "On the first prompt of a session that has no title yet, up to the first 4000 characters go to Haiku."},
+      {"type": "list", "title": "Prompts it skips", "items": [
+        "Prompts that start with `/`.",
+        "Prompts that did not come from you.",
+        "Sessions that already have a title, for example one set with `/rename`."
+      ]}
+    ]},
+    {"heading": "Star, hide or jump to sessions from the pane", "short": "Using the pane", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Star a session", "state": "info", "text": "Click the ☆ before a title to star it (★). Starred sessions lead their project. Stars are saved across restarts and shown in every open session within a few seconds."},
+        {"title": "Hide a session type", "state": "info", "text": "One toggle button per session type (`cli`, `bg`, `sdk-cli`, and so on) hides or shows that type. A hidden type is marked (hidden).", "points": [{"sign": "+", "text": "The choice is remembered across restarts."}, {"sign": "+", "text": "It shows in every open session within a few seconds."}]},
+        {"title": "Jump to a tmux session", "state": "info", "text": "Click a session running in tmux to switch this tmux client to it (`tmux switch-client`). Sessions outside tmux, and ended ones, are not clickable."}
+      ]},
+      {"type": "list", "title": "Keyboard", "items": [
+        "The toggles have hotkeys `1` to `9`, in type order, shown on each button. At most 9 type buttons are shown.",
+        "The hotkeys work while the pane has the keyboard. `/sessions` opens it focused; otherwise click the pane or press ctrl+x tab.",
+        "Arrows scroll a tree taller than the pane.",
+        "Esc returns to the prompt."
+      ]},
+      {"type": "table", "title": "The hint at the bottom of the pane", "columns": ["When", "Hint text"], "rows": [
+        ["The pane has the keyboard", "Click ☆ to star a session, a title to jump to it (tmux only). \"today\" marks sessions active today. Number keys hide a type. Esc returns."],
+        ["The pane does not have the keyboard", "Press ctrl+x tab to use the number keys."]
+      ]}
+    ]},
+    {"heading": "Open the pane on every new session with auto on", "short": "Auto-open", "blocks": [
+      {"type": "before_after", "before": {"label": "Default", "text": "The pane opens only when you run `/sessions`."}, "after": {"label": "After /sessions auto on", "text": "The pane opens, unfocused, on every new session, including after `/clear`. It does not take the keyboard from the prompt. Run `/sessions auto off` to turn it off."}, "caption": "The choice is remembered. Automatic opening happens only for interactive sessions."}
+    ]},
+    {"heading": "Every default can be changed from inside Claude Code", "short": "Changing defaults", "blocks": [
+      {"type": "table", "title": "Opinionated defaults", "columns": ["Default", "Change it with"], "rows": [
+        ["The pane opens only when you run `/sessions`", "`/sessions auto on` opens it, unfocused, on every new session (including after `/clear`); `/sessions auto off` turns that off"],
+        ["Untitled sessions are named by Haiku from their first prompt", "`/rename <title>` sets your own title, which always wins"],
+        ["All session types are shown", "the per-type toggle buttons or the `1`-`9` hotkeys"]
+      ]}
+    ]},
+    {"heading": "If the pane does not behave as expected", "short": "Troubleshooting", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Open but not placed", "state": "warn", "text": "The reply says Sessions pane open but not placed, followed by the reason."},
+        {"title": "Couldn't switch to that pane", "state": "warn", "text": "A toast says Couldn't switch to that tmux pane when the tmux switch fails."},
+        {"title": "A title is not clickable", "state": "warn", "text": "Only sessions running in tmux can be clicked. Sessions outside tmux, and ended ones, are not clickable."},
+        {"title": "Number keys do nothing", "state": "warn", "text": "The hotkeys work while the pane has the keyboard.", "points": [{"sign": "+", "text": "Click the pane or press ctrl+x tab."}]}
+      ]}
+    ]}
+  ],
+  "next_action": {
+    "text": "Type `/sessions` in a Claude Code session to open the pane.",
+    "detail": "It opens with the keyboard on it and refreshes every 3 seconds. Press Esc to return to the prompt."
+  },
+  "sources": [
+    {"label": "session-overview plugin on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/session-overview"}
+  ]
+}

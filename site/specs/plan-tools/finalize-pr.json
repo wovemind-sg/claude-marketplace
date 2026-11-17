@@ -1,0 +1,173 @@
+{
+  "title": "Finalize a PR",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "question", "label": "Answer questions up front"},
+    {"icon": "search", "label": "Review, security, tests", "arrow": "runs unattended"},
+    {"icon": "flag", "label": "Leftovers fixed or filed", "arrow": "then"},
+    {"icon": "rocket", "label": "PR opened, report back", "arrow": "pushes", "outcome": true}
+  ]},
+  "bottom_line": "Answer its questions once at the start. Then, unattended, it reviews, security-checks and tests your branch, fixes or files leftovers, and opens the PR.",
+  "sections": [
+    {"heading": "Run it on the current branch, with optional context and flags", "short": "Run it", "blocks": [
+      {"type": "code", "code": "/plan-tools:finalize-pr [optional extra context for the review/PR, e.g. target branch] [--label <name>] [--model <name>]", "caption": "Every part is optional. It works on the current branch."},
+      {"type": "table", "title": "What you can pass", "columns": ["Part", "Default", "What it does"], "rows": [
+        ["Extra context", "Optional", "Passed to the code review and the PR, for example the target branch. A review level word (`low`, `medium`, `high`, `xhigh`, `max`) sets the review level. The word \"security\" forces the security review."],
+        ["`--label <name>`", "`ai`", "The label on any follow-up issues it opens."],
+        ["`--model <name>`", "`sonnet`", "The model every helper runs on."]
+      ]},
+      {"type": "chain", "title": "Where it fits in a typical plan workflow", "nodes": [
+        {"icon": "file", "label": "`split-plan`"},
+        {"icon": "code", "label": "`plan-split-implment`", "arrow": "then", "note": "for example with `--branch feature/meal-plans`"},
+        {"icon": "rocket", "label": "`finalize-pr`", "arrow": "then"},
+        {"icon": "repeat", "label": "`monitor-pr`", "arrow": "then"}
+      ]},
+      {"type": "code", "title": "The same workflow as commands", "code": "/plan-tools:split-plan\n/plan-tools:plan-split-implment --branch feature/meal-plans\n/plan-tools:finalize-pr\n/plan-tools:monitor-pr"}
+    ]},
+    {"heading": "It needs the GitHub CLI; the other tools are used when present", "short": "Before you start", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "git and GitHub CLI", "state": "done", "text": "Install `git` and `gh`, signed in with `gh auth login`, with push access to the repository. Every issue, PR and status command goes through `gh`."},
+        {"title": "`/code-review` skill", "state": "info", "text": "Built in. The review step runs only if it is installed; otherwise it is skipped and the report says so."},
+        {"title": "`/security-review` skill", "state": "info", "text": "Built in. The security step runs only if it is installed; otherwise it is skipped and the report says so."},
+        {"title": "`ui-audit` plugin (optional)", "state": "info", "text": "From this marketplace. Needed for the screenshot audit after the PR is raised."},
+        {"title": "`ui-change-guard` plugin (optional)", "state": "info", "text": "From this marketplace. Needed for the designer review, together with the `designer_ui_review` setting."}
+      ]},
+      {"type": "text", "text": "No environment variables are needed."}
+    ]},
+    {"heading": "Every question comes first, so the rest runs without stopping", "short": "Upfront questions", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Push and PR go-ahead", "state": "open", "text": "It shows the branch and base. \"No\" means every stage up to leftover work still runs, but commits stay local. The PR, UI audit and mark stages are skipped.", "points": [{"sign": "-", "text": "On \"No\", the report says the branch is ready but not pushed"}]},
+        {"title": "Run the UI audit?", "state": "open", "text": "Asked only if the `ui-audit` plugin is installed and the change touches UI files since the last audited commit. A yes runs `/ui-audit:capture --unattended` later."}
+      ], "caption": "One round of questions, plus a second only if you choose custom audit settings. Questions already answered by the caller, the arguments or the session are skipped."},
+      {"type": "text", "title": "The UI audit question", "text": "It asks: \"Run the UI audit after the PR is raised? It captures screenshots and publishes as a Claude artifact or to Cloudflare Pages.\" The options are `Yes, config defaults` (recommended), `Yes, choose settings` and `No`. If `.ui-audit/config.json` is missing, the option text says the first run builds the config from defaults and captures every screen."},
+      {"type": "text", "text": "**UI files** are templates, components, screens, stylesheets, design tokens, front-end JS/TS, and native UI (SwiftUI/UIKit, Compose, Flutter, React Native screens)."},
+      {"type": "table", "title": "Settings asked when you pick \"Yes, choose settings\"", "columns": ["Setting", "Choices", "Asked when"], "rows": [
+        ["Baseline mode", "`base+head`, `head-only`, `head+base-related`", "No condition"],
+        ["Publish target", "`artifact`, `cloudflare`", "No condition"],
+        ["Platforms", "The platforms enabled in the config", "More than one is enabled in the config"],
+        ["Themes", "`light`, `light+dark`", "The config has a `dark_mode` object"]
+      ]},
+      {"type": "text", "text": "When questions cannot be asked, because it runs unattended (for example inside `drain-issues`), it asks nothing, skips the UI audit, and takes push and PR permission from whatever called it."}
+    ]},
+    {"heading": "Then it works through eight stages on its own", "short": "What happens", "blocks": [
+      {"type": "stepper", "steps": [
+        {"title": "Code review with fixes", "text": "Runs `/code-review high --fix` on the branch, or the level your arguments name. It fixes what it can and notes what it left, with reasons such as out of scope, needs a design decision or low confidence."},
+        {"title": "Security review when relevant", "text": "Runs `/security-review` when the change touches security-relevant code. It fixes and commits every high-confidence finding. It runs after the code review so it sees the final code, and before the tests so its fixes get tested."},
+        {"title": "Test plan", "text": "Writes a concrete test plan for the changed behaviour, happy path and edge cases. It runs existing tests, adds missing ones, exercises the feature per project conventions (for example with the `run` skill for a UI or app change) and fixes what is broken."},
+        {"title": "User flows", "text": "If `user-flows.md` exists at the repository root, it runs `/user-flows:update-user-flows` to sync it and commits the result. Without the file, this stage is skipped."},
+        {"title": "Your repository's own steps", "text": "If `.claude/finalize-pr.md` exists and is not empty, it carries out every step in it, in order, and commits any fixes."},
+        {"title": "Leftover work", "text": "Small leftovers are fixed. Big ones become one GitHub issue each, through `/plan-tools:write-issue`."},
+        {"title": "Raise the PR", "text": "Checks everything is committed and pushed, then opens a PR with a title and body summarizing the change. Follow-up issues are listed under \"Follow-ups\", for example `Follow-up: #<number>`."},
+        {"title": "UI audit, mark, report", "text": "Runs the UI audit if you said yes, adds a `finalize-pr` commit status (\"finalize-pr ran\") to the head commit once the PR is raised, the test plan has fully run and no fixes remain, then reports back."}
+      ]},
+      {"type": "text", "text": "If the branch's commits close an issue (a `Closes #<number>` line from `/plan-tools:impl-issue`), that line is carried into the PR body so GitHub closes the issue on merge."},
+      {"type": "text", "text": "A finished PR gets a `finalize-pr` commit status, and a UI audit gets a `ui-audit` status. Both `finalize-pr` and `monitor-pr` use these statuses."},
+      {"type": "text", "text": "The full step order is: 0 last finalized commit, 0b upfront questions, 1 code review, 1b security review, 2 test plan, 3 user flows, 3b repo steps, 4 residual work, 5 PR, 6 UI audit, 7 mark, 8 report."}
+    ]},
+    {"heading": "The security review runs only for security-relevant changes", "short": "Security review", "blocks": [
+      {"type": "flow", "title": "Does the security review run?", "nodes": [
+        {"id": "diff", "label": "Your change"},
+        {"id": "docs", "label": "Docs, tests or styles only"},
+        {"id": "sec", "label": "Touches security-relevant code"},
+        {"id": "skip", "label": "Skipped with a one-line note"},
+        {"id": "run", "label": "`/security-review` runs"}
+      ], "edges": [
+        {"from": "diff", "to": "docs", "label": "only these"},
+        {"from": "diff", "to": "sec", "label": "any of the list"},
+        {"from": "docs", "to": "skip", "label": "then"},
+        {"from": "sec", "to": "run", "label": "then"}
+      ], "caption": "Putting the word \"security\" in the arguments forces it to run."},
+      {"type": "list", "title": "Changes that count as security-relevant", "items": [
+        "Auth, sessions or permissions.",
+        "Request input: forms, params, bodies, uploads.",
+        "DB queries.",
+        "Shell or subprocess calls.",
+        "File paths.",
+        "Outbound HTTP, webhooks or redirects.",
+        "Templates that render user data.",
+        "Crypto, tokens or secrets.",
+        "CORS, CSP or cookie config.",
+        "Dependency manifests."
+      ]},
+      {"type": "text", "text": "Findings it does not fix are reported with reasons, such as low confidence or needs a design decision, and become leftover work."}
+    ]},
+    {"heading": "Small leftovers get fixed now, big ones become issues", "short": "Leftover work", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Small to medium", "state": "good", "text": "A contained fix: a few files, no open design decision, roughly under half a day. Fixed one at a time, with tests run and a commit.", "points": [{"sign": "-", "text": "If a fix fails, the item is treated as big"}]},
+        {"title": "Big", "state": "open", "text": "Needs a design decision, spans several subsystems, or is substantial new work well beyond this PR. One GitHub issue per item, labeled `ai` or your `--label` name."}
+      ]},
+      {"type": "text", "text": "Leftover items are the findings not fixed and the test-plan gaps not addressed by the code review, the security review, the test plan and your repository's own steps. If there are none, this stage is skipped."}
+    ]},
+    {"heading": "Add your repository's own checks in `.claude/finalize-pr.md`", "short": "Your own steps", "blocks": [
+      {"type": "chain", "title": "Where your steps run", "nodes": [
+        {"icon": "check", "label": "Test plan"},
+        {"icon": "users", "label": "User flows synced", "arrow": "then"},
+        {"icon": "file", "label": "Your steps", "arrow": "then", "note": "Free-form markdown instructions, carried out in order"},
+        {"icon": "flag", "label": "Leftover work, then PR", "arrow": "then"}
+      ]},
+      {"type": "code", "title": "Example `.claude/finalize-pr.md`", "code": "1. Run `make lint` and fix what it reports.\n2. If `migrations/` changed, check the new migration has a downgrade."},
+      {"type": "list", "title": "Rules for your steps", "items": [
+        "The PR does not exist yet on a first run, so your steps must not depend on it.",
+        "Findings your steps could not fix become leftover work.",
+        "On a repeat run, each step is told the range of changes since the last finalize (`$BASE..HEAD`) and decides whether to look only at that or run in full."
+      ]},
+      {"type": "code", "title": "Create or edit the file interactively", "code": "/plan-tools:hook-finalize-pr [description]", "caption": "It inspects the repository, proposes steps and writes `.claude/finalize-pr.md`."}
+    ]},
+    {"heading": "Running it again only covers what changed since last time", "short": "Running it again", "blocks": [
+      {"type": "flow", "title": "What a run covers", "nodes": [
+        {"id": "start", "label": "You run it"},
+        {"id": "full", "label": "Full run"},
+        {"id": "inc", "label": "Only changes since that commit"},
+        {"id": "stop", "label": "Says so and stops"}
+      ], "edges": [
+        {"from": "start", "to": "full", "label": "no marked commit"},
+        {"from": "start", "to": "inc", "label": "older marked commit"},
+        {"from": "start", "to": "stop", "label": "nothing changed"}
+      ], "caption": "A marked commit is one an earlier run gave the `finalize-pr` status, on a branch that already has a PR. It uses the newest one."},
+      {"type": "list", "title": "On a repeat run", "items": [
+        "The code review, the security review and the test plan cover only the changes since the marked commit. The UI audit picks its own scope.",
+        "The PR already exists, so it pushes the new commits and updates the PR body, adding new follow-ups, instead of opening a new PR.",
+        "A marked commit dropped by a rebase or force-push is never used."
+      ]}
+    ]},
+    {"heading": "Two optional UI checks wrap around the PR", "short": "UI checks", "blocks": [
+      {"type": "table", "title": "The plugin's one setting", "columns": ["Setting", "Default", "What it does"], "rows": [
+        ["`designer_ui_review`", "`false`", "When `true` and the `ui-change-guard` plugin is installed, `finalize-pr` runs `/ui-change-guard:review-ui-change` before it raises the PR, and labels the PR `ui-risky` if the review still finds a problem."]
+      ]},
+      {"type": "code", "title": "Change the setting with", "code": "/plugin configure plan-tools@wovemind"},
+      {"type": "text", "text": "A default only takes effect after you open the settings dialog and save it once. Until then the setting counts as off. The designer review resolves what it flags first; the PR is labeled `ui-risky` only if the final verdict is still UNSAFE or NEEDS ENGINEER REVIEW."},
+      {"type": "before_after", "title": "The UI audit after the PR",
+        "before": {"label": "PR raised", "text": "The PR exists. It then runs `/ui-audit:capture --pr <number> --unattended` with the settings you chose."},
+        "after": {"label": "Audit added", "text": "It adds or replaces an \"UI audit\" section in the PR body: the latest audit link, a password line when there is one (private-repo Cloudflare audit), counts (changed, unintended, needs review) and a \"History\" list, one line per audited commit."}},
+      {"type": "list", "title": "When the audit is skipped", "items": [
+        "Your answer was `No`, or there is no answer: the plugin is missing, the run was unattended with no answer from the caller, or no UI files were found. It is skipped with a one-line note.",
+        "If no answer was ever collected and UI files appear only now, it skips and suggests `/ui-audit:capture` in the report.",
+        "If the audit could not publish, the PR section says so only when it produced a local `report.md`; otherwise the report mentions it."
+      ]}
+    ]},
+    {"heading": "You get one report covering every stage and the PR link", "short": "The result", "blocks": [
+      {"type": "stats", "items": [
+        {"value": "1 PR", "label": "opened or updated", "icon": "rocket", "note": "unless you answered No to push and PR"},
+        {"value": "1 report", "label": "covering every stage", "icon": "file", "note": "sent in one pass at the end"}
+      ]},
+      {"type": "list", "title": "The report lists", "items": [
+        "What `/code-review --fix` fixed, and what it left, with reasons.",
+        "The security review: what it fixed and deferred, or why it was skipped.",
+        "The test plan, what passed, what was fixed, and anything it found but did not fix, with the reason.",
+        "Whether user flows were synced.",
+        "What the repository steps in `.claude/finalize-pr.md` did, or that none exist.",
+        "Which leftover items were fixed, and which follow-up issues were opened, with URLs.",
+        "The UI audit URL, its password if any, and counts, or why it was skipped.",
+        "The PR URL, or that the branch is ready but not pushed (push and PR answer \"No\")."
+      ]},
+      {"type": "text", "text": "The `finalize-pr` commit status on the PR is fixed behaviour. A branch rule can require it before merging."}
+    ]}
+  ],
+  "next_action": {
+    "text": "On the branch you want to turn into a PR, run `/plan-tools:finalize-pr` and answer the questions it asks at the start.",
+    "detail": "After those answers it runs to the PR without stopping."
+  },
+  "sources": [
+    {"label": "plan-tools on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/plan-tools"}
+  ]
+}

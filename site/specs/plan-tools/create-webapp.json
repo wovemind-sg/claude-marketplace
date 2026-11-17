@@ -1,0 +1,591 @@
+{
+  "title": "Start a Web App",
+  "page_type": "how-to",
+  "gist": {
+    "kind": "chain",
+    "nodes": [
+      {
+        "icon": "lightbulb",
+        "label": "Describe your app"
+      },
+      {
+        "icon": "key",
+        "label": "Answer questions, give keys",
+        "arrow": "then"
+      },
+      {
+        "icon": "file",
+        "label": "Plan written and split",
+        "arrow": "blockers cleared"
+      },
+      {
+        "icon": "rocket",
+        "label": "Working, committed app",
+        "arrow": "helpers build it",
+        "outcome": true
+      }
+    ]
+  },
+  "bottom_line": "Run /plan-tools:create-webapp with a one-line idea, answer its questions up front, and Claude plans and builds a new FastAPI web app, committing as it goes.",
+  "sections": [
+    {
+      "heading": "Start in an empty folder with a one-line idea",
+      "short": "Start it",
+      "blocks": [
+        {
+          "type": "code",
+          "code": "/plan-tools:create-webapp [--host railway|generic] [--ai-model <openrouter model id>] [optional one-line app idea]",
+          "caption": "Defaults: host railway, AI model openai/gpt-4o-mini."
+        },
+        {
+          "type": "code",
+          "title": "Example",
+          "code": "/plan-tools:create-webapp a recipe box where friends share weekly meal plans",
+          "caption": "Starts a new web app, plans it, and implements it session by session."
+        },
+        {
+          "type": "table",
+          "title": "The two optional flags",
+          "columns": [
+            "Flag",
+            "Default",
+            "What it changes"
+          ],
+          "rows": [
+            [
+              "`--host railway|generic`",
+              "`railway`",
+              "With `generic`, every Railway setup and deploy step is skipped and you deploy to your own host. If you want mobile apps, Claude asks you for that host's public HTTPS address instead."
+            ],
+            [
+              "`--ai-model <openrouter model id>`",
+              "`openai/gpt-4o-mini`",
+              "The OpenRouter model the app uses for its AI features."
+            ]
+          ]
+        },
+        {
+          "type": "text",
+          "text": "Everything after the flags is your seed idea. Claude does not write app code itself. It gathers what its helpers need, removes everything that would stall them, then hands off planning and building."
+        },
+        {
+          "type": "list",
+          "title": "When to use it",
+          "items": [
+            "You want to start, bootstrap, kick off or build a new web app from scratch, planned and implemented end to end, not just scaffolded.",
+            "Even if you only say \"new app\", \"build me an app that…\" or \"start a project for…\"."
+          ]
+        },
+        {
+          "type": "glossary",
+          "terms": [
+            {
+              "term": "Stack slice",
+              "definition": "The parts of the standard template your app actually needs, such as a database or AI."
+            },
+            {
+              "term": ".env file",
+              "definition": "A private file of settings and secret keys the app reads. It is never committed to git."
+            },
+            {
+              "term": "Blocker",
+              "definition": "Something the unattended helpers cannot do themselves, such as an unreachable database or a missing key."
+            },
+            {
+              "term": "Session",
+              "definition": "One chunk of the plan, sized to fit one Claude Code conversation."
+            },
+            {
+              "term": "Subagent",
+              "definition": "A separate Claude helper started for one job, such as planning or building."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Check you have the tools and plugins it relies on",
+      "short": "Before you start",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "fastapi-template and htmx-vs-alpine",
+              "state": "done",
+              "text": "Required plugins from this marketplace. They install with plan-tools."
+            },
+            {
+              "title": "railway plugin (optional)",
+              "state": "info",
+              "text": "Its `use-railway` skill sets up the database and the deploy when the host is Railway. Without it, Claude skips that part and says so."
+            },
+            {
+              "title": "capacitor plugins (optional)",
+              "state": "info",
+              "text": "`capacitor-core` for building iOS/Android apps, and `capacitor-deployment` for store submission. Without them, Claude skips that part and says so."
+            },
+            {
+              "title": "An empty project folder",
+              "state": "done",
+              "text": "Claude confirms the current folder is the project root. If it is not empty, Claude stops and asks."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Claude asks everything up front, in as few rounds as it can",
+      "short": "Questions",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "What Claude asks",
+          "columns": [
+            "Question",
+            "Details"
+          ],
+          "rows": [
+            [
+              "App name",
+              "In kebab-case. Default: the current folder's name."
+            ],
+            [
+              "Features",
+              "What the app must do, as concrete behaviour (\"users log in with Google, create lists, share a list by link\"), not categories (\"auth\", \"CRUD\"). Claude asks about anything unclear now, because the planner cannot ask you."
+            ],
+            [
+              "Design reference (optional)",
+              "A link, a screenshot or image path, an app to imitate, or a few words (\"minimal, dark, dense tables\"). Without one, the planner picks a sensible default."
+            ],
+            [
+              "Mobile apps?",
+              "Should it also ship as iOS/Android apps? Yes or No, and which platforms."
+            ],
+            [
+              "Planning model",
+              "Default `sonnet`."
+            ],
+            [
+              "Implementing model",
+              "Default `sonnet`. Options: `sonnet`, `opus`, `haiku`, `fable`."
+            ]
+          ]
+        },
+        {
+          "type": "text",
+          "text": "Claude skips anything you already said."
+        }
+      ]
+    },
+    {
+      "heading": "Only the parts your features need are included",
+      "short": "Stack",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "The parts Claude can include",
+          "columns": [
+            "Part",
+            "Included when"
+          ],
+          "rows": [
+            [
+              "PostgreSQL + SQLModel + Alembic",
+              "Anything is saved (almost always yes)"
+            ],
+            [
+              "Redis (`fastapi-cache2`)",
+              "AI is included, or caching, rate limiting or background jobs are needed"
+            ],
+            [
+              "OpenRouter AI",
+              "Any feature generates, summarises, classifies or converses over text"
+            ],
+            [
+              "Google login",
+              "The features need accounts or per-user data"
+            ],
+            [
+              "Background jobs (`arq`)",
+              "Long-running or scheduled work; this implies Redis"
+            ]
+          ],
+          "caption": "Claude decides each part from your features and confirms the table with you in one message."
+        },
+        {
+          "type": "text",
+          "text": "Unused parts would add settings to fill in, services to run and dead code, so they are left out. Login state is kept in signed cookies."
+        },
+        {
+          "type": "cards",
+          "title": "Fixed choices",
+          "cards": [
+            {
+              "title": "Server-rendered pages",
+              "state": "info",
+              "text": "Jinja2 templates, HTMX for anything the server owns, Alpine.js for short-lived UI state. No single-page app and no JSON API for the browser."
+            },
+            {
+              "title": "Visible errors",
+              "state": "info",
+              "text": "Failed requests show visible feedback to the user across the whole app."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Say yes to mobile and iOS and Android apps are planned too",
+      "short": "Mobile",
+      "blocks": [
+        {
+          "type": "before_after",
+          "before": {
+            "label": "Mobile: No",
+            "text": "None of the mobile steps on this page apply."
+          },
+          "after": {
+            "label": "Mobile: Yes",
+            "text": "A Capacitor shell whose WebView loads the deployed server is planned and built alongside the web app, so the FastAPI app stays the single source of the UI."
+          }
+        },
+        {
+          "type": "list",
+          "title": "How the web app is made mobile-ready from session 1",
+          "items": [
+            "A mobile-first responsive layout with safe-area spacing.",
+            "Every text input at 16px or larger, so iOS does not zoom in.",
+            "Boosted navigation on every page, so there is no white blink on each click.",
+            "Google login through a native sign-in step inside the app.",
+            "Native features such as camera, share, push and haptics through Capacitor plugins, with handling for denied permissions."
+          ]
+        },
+        {
+          "type": "text",
+          "text": "The mobile apps are part of the plan, not a later step."
+        }
+      ]
+    },
+    {
+      "heading": "You give the keys once; Claude writes and protects .env",
+      "short": "Keys",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "The settings Claude collects",
+          "columns": [
+            "Variable",
+            "When",
+            "Where the value comes from"
+          ],
+          "rows": [
+            [
+              "`DEV_MODE`",
+              "always",
+              "set to `ON`"
+            ],
+            [
+              "`SESSION_SECRET`",
+              "always",
+              "generated; you are not asked"
+            ],
+            [
+              "`ENGINE_URL`",
+              "Postgres",
+              "you give it: `postgresql://user:pass@host:5432/db` (local or Railway)"
+            ],
+            [
+              "`REDIS_CONNECTION_STRING`",
+              "Redis",
+              "you give it: `redis://localhost:6379` or a hosted address"
+            ],
+            [
+              "`OPENROUTER_API_KEY`",
+              "AI",
+              "you give it"
+            ],
+            [
+              "`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`",
+              "Google login",
+              "you give them; they need an OAuth client in Google Cloud Console with `http://localhost:8000/auth/callback` as an authorised redirect URI"
+            ]
+          ],
+          "caption": "Only the variables for the parts you included. Claude asks for them all in one message, each with a note on where it comes from."
+        },
+        {
+          "type": "stepper",
+          "title": "What Claude does with them",
+          "steps": [
+            {
+              "title": "Starts git",
+              "text": "Runs `git init` if the folder is not already a repository."
+            },
+            {
+              "title": "Writes .env",
+              "text": "With your values. From here on it never repeats a secret value back in the conversation."
+            },
+            {
+              "title": "Hides .env from git",
+              "text": "Makes sure `.gitignore` lists `.env` (and `.prod.env`) and checks that `.env` is ignored. It is the one file that must never be committed."
+            },
+            {
+              "title": "Writes .env.example",
+              "text": "The same keys with placeholder values."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Every outside service is tested before any building starts",
+      "short": "Blockers",
+      "blocks": [
+        {
+          "type": "text",
+          "text": "The building helpers run unattended, so anything they cannot do themselves is done now."
+        },
+        {
+          "type": "cards",
+          "title": "What is checked",
+          "cards": [
+            {
+              "title": "Postgres reachable",
+              "state": "open",
+              "text": "If the database does not exist yet, Claude creates it or has you set it up (on Railway with `use-railway`, if installed)."
+            },
+            {
+              "title": "Redis reachable",
+              "state": "open"
+            },
+            {
+              "title": "OpenRouter key valid",
+              "state": "open"
+            },
+            {
+              "title": "Google OAuth client",
+              "state": "open",
+              "text": "Redirect URI registered. You confirm this; it cannot be tested."
+            },
+            {
+              "title": "Toolchain",
+              "state": "open",
+              "text": "`uv` works and Python 3.11 is available."
+            },
+            {
+              "title": "Design reference readable",
+              "state": "open",
+              "text": "The image path exists or the link opens."
+            },
+            {
+              "title": "Mobile toolchain",
+              "state": "open",
+              "text": "With mobile: Node and npm, Xcode and CocoaPods for iOS, Android Studio or the SDK for Android. Only your platforms."
+            },
+            {
+              "title": "Deploy target",
+              "state": "open",
+              "text": "With mobile: a public HTTPS address. A Railway project (with `use-railway`, if installed) or another host exists or can be created."
+            }
+          ],
+          "caption": "Each one is actually tested and reported as pass or fail in a short checklist."
+        },
+        {
+          "type": "text",
+          "text": "Claude also checks anything your features imply, such as third-party APIs, webhooks, domains or paid accounts. Without the `railway` plugin, the Railway parts are skipped and the report says so."
+        },
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "A check fails",
+              "state": "warn",
+              "text": "Failures come as a numbered list, one line each.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Fix them and tell Claude you are done. It tests again."
+                },
+                {
+                  "sign": "-",
+                  "text": "It will not move on while a dependency is known to be broken."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "A planner writes the plan and you approve it before splitting",
+      "short": "Plan",
+      "blocks": [
+        {
+          "type": "chain",
+          "nodes": [
+            {
+              "icon": "file",
+              "label": "Planner drafts plan",
+              "note": "follows plan-helper, on your planning model"
+            },
+            {
+              "icon": "question",
+              "label": "You answer its questions",
+              "arrow": "open decisions"
+            },
+            {
+              "icon": "check",
+              "label": "You approve summary",
+              "arrow": "one screen"
+            },
+            {
+              "icon": "table",
+              "label": "Plan split",
+              "arrow": "split-plan",
+              "outcome": true
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "title": "What the plan includes",
+          "items": [
+            "A design brief, from your design reference or a restrained default.",
+            "For each interactive element, whether HTMX or Alpine.js handles it. Client-side choices follow the `htmx-vs-alpine` skill.",
+            "With mobile, a deploy step to Railway before the Capacitor work."
+          ]
+        },
+        {
+          "type": "text",
+          "text": "The plan is saved to `.planning/SPEC.md`. Claude asks the planner's questions in plain English and passes your answers back until the plan is finished."
+        },
+        {
+          "type": "before_after",
+          "before": {
+            "label": "Split",
+            "text": "`.planning/progress.md`, `.planning/CLAUDE.md` and `.planning/sessions/session-NN.md` now exist."
+          },
+          "after": {
+            "label": "Not split",
+            "text": "The whole plan fits one session, and `.planning/SPEC.md` stays the single source."
+          },
+          "caption": "split-plan writes its files directly under `.planning/`."
+        }
+      ]
+    },
+    {
+      "heading": "Approve commits once, then helpers build the app",
+      "short": "Build",
+      "blocks": [
+        {
+          "type": "flow",
+          "title": "How the building runs",
+          "nodes": [
+            {
+              "id": "ask",
+              "label": "You approve commits once"
+            },
+            {
+              "id": "split",
+              "label": "plan-split-implment builds each session"
+            },
+            {
+              "id": "single",
+              "label": "One helper builds the plan"
+            },
+            {
+              "id": "report",
+              "label": "Report relayed to you"
+            }
+          ],
+          "edges": [
+            {
+              "from": "ask",
+              "to": "split",
+              "label": "plan was split"
+            },
+            {
+              "from": "ask",
+              "to": "single",
+              "label": "not split"
+            },
+            {
+              "from": "split",
+              "to": "report",
+              "label": "then"
+            },
+            {
+              "from": "single",
+              "to": "report",
+              "label": "then"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "The one question: do you approve committing after every session (or at the end, if not split) without further confirmation? Nothing starts until you answer."
+        },
+        {
+          "type": "list",
+          "title": "What each path does",
+          "items": [
+            "Split: a helper on your implementing model runs /plan-tools:plan-split-implment, with a commit per session already approved, and reports the final progress and any session that stopped.",
+            "Not split: one helper on your implementing model builds the plan, checks it (`make dev` boots, migrations apply, each feature works), writes the project CLAUDE.md, commits and reports what was built and anything left undone. If it ends with a question, Claude asks you and passes the answer back."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "You get the builder's report and any real next steps",
+      "short": "Result",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "The builder's report",
+              "state": "done",
+              "text": "Passed on to you as it is."
+            },
+            {
+              "title": "Unresolved blockers",
+              "state": "open",
+              "text": "Listed only if there are any."
+            },
+            {
+              "title": "Deferred items",
+              "state": "open",
+              "text": "Listed only if there are any."
+            },
+            {
+              "title": "Store submission",
+              "state": "open",
+              "text": "With mobile, submitting to the app stores is out of scope. Claude points to `capacitor-deployment:capacitor-app-store`, or says that plugin is not installed."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "reference": [
+    {
+      "title": "About the plan-tools plugin",
+      "items": [
+        "Plugin purpose: plan-driven workflow tools that bootstrap a new web or mobile app end to end, split implementation plans into context-sized resumable sessions, and drive them to PRs.",
+        "Installing plan-tools also installs the plugins it depends on: `ntfy`, `fastapi-template` and `htmx-vs-alpine`.",
+        "Default conventions: new web apps use FastAPI + Jinja2 + HTMX + Alpine.js, deployed to Railway, with OpenRouter `openai/gpt-4o-mini` (change with `--host generic` and `--ai-model <model id>`). Helpers run on `sonnet` unless you pick another model when asked.",
+        "No environment variables are needed for the plugin itself. The one setting, `designer_ui_review` (default `false`), is changed with `/plugin configure plan-tools@wovemind`. It runs the ui-change-guard designer review (/ui-change-guard:review-ui-change) before finalize-pr raises a PR."
+      ]
+    }
+  ],
+  "next_action": {
+    "text": "In an empty folder, run /plan-tools:create-webapp followed by a one-line description of your app.",
+    "detail": "Claude asks for your database address and API keys in one message, each with a note on where it comes from."
+  },
+  "sources": [
+    {
+      "label": "plan-tools on GitHub",
+      "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/plan-tools"
+    }
+  ]
+}

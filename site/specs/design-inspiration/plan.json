@@ -1,0 +1,108 @@
+{
+  "title": "Plan Your Redesign",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "link", "label": "Run with mockup link"},
+    {"icon": "question", "label": "Pick the model", "arrow": "reads your choices"},
+    {"icon": "user", "label": "Planner reads your code", "arrow": "then"},
+    {"icon": "file", "label": "Plan printed in chat", "arrow": "writes", "outcome": true}
+  ]},
+  "bottom_line": "Run `/design-inspiration:plan` on your mockup or rated shortlist to get an implementation plan in chat. Nothing is written or built.",
+  "sections": [
+    {"heading": "Run it on your mockup, or on your rated shortlist", "short": "Run it", "blocks": [
+      {"type": "code", "code": "/design-inspiration:plan [mockup or shortlist url] [--model <name>]", "caption": "The command. Both parts in brackets are optional."},
+      {"type": "flow", "title": "What the link you give decides", "nodes": [
+        {"id": "run", "label": "You run plan with a link"},
+        {"id": "mock", "label": "Plans to build the mockup"},
+        {"id": "short", "label": "Plans from your shortlist ratings"},
+        {"id": "stop", "label": "Stops and says why"}
+      ], "edges": [
+        {"from": "run", "to": "mock", "label": "mockup link"},
+        {"from": "run", "to": "short", "label": "shortlist link"},
+        {"from": "run", "to": "stop", "label": "any other page"}
+      ], "caption": "Give it the mockup if you made one. Any other page than a shortlist or mockup made by this plugin: it stops and says so."},
+      {"type": "code", "title": "Examples", "code": "/design-inspiration:plan https://claude.ai/code/artifact/<mockup id>\n/design-inspiration:plan https://claude.ai/code/artifact/<id>\n/design-inspiration:plan https://claude.ai/code/artifact/<id> --model sonnet\n/design-inspiration:plan"},
+      {"type": "table", "title": "Arguments", "columns": ["Argument", "Default", "Meaning"], "rows": [
+        ["artifact URL", "The newest \"<app> Design Mockup\" artifact for this repo, else the newest \"<app> Design Shortlist\" (asks when several match; stops with a pointer to `/design-inspiration:find` when none does)", "The mockup you accepted, or the shortlist you rated"],
+        ["`--model <name>`", "Asked, with Opus first", "Model of the planning subagent"]
+      ]},
+      {"type": "text", "title": "The model question", "text": "Unless you pass `--model`, it asks \"Which model should write the plan?\" The options are Opus (first, the default: planning a redesign takes judgment across many files) and Sonnet (cheaper and faster)."},
+      {"type": "text", "title": "When to use it", "text": "Use it when you have rated a shortlist or finished a mockup and want to apply it: \"plan the redesign\", \"use the designs I picked\", \"I rated the cards, go\", \"build the mockup\", or when you pass a shortlist or mockup Artifact link, even if you do not say \"plan\"."}
+    ]},
+    {"heading": "You need a rated shortlist or a mockup, and your repo", "short": "Before you start", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "A shortlist or mockup", "state": "done", "text": "A shortlist from `/design-inspiration:find` with at least one design rated Love, or a mockup from `/design-inspiration:mockup`."},
+        {"title": "Your app's repo", "state": "done", "text": "Run it from the root of the app's repo, because the planner reads that repo's UI code."},
+        {"title": "plan-tools", "state": "done", "text": "Installed automatically with the plugin. The plan follows `/plan-tools:plan-helper`."},
+        {"title": "claude.ai Artifact tool", "state": "done", "text": "To read the shortlist or mockup."}
+      ], "caption": "What the skill needs."}
+    ]},
+    {"heading": "From a shortlist, it plans from your Love cards", "short": "From a shortlist", "blocks": [
+      {"type": "stepper", "title": "What happens on a shortlist", "steps": [
+        {"title": "Reads the page", "text": "It reads the brief, every app-page section, and your ratings and notes from the page."},
+        {"title": "Checks for a Love card", "text": "If no design is rated Love, it stops and asks you to rate first. An app page with no Love card is left out of the plan, and the reply names it. A note that plainly ends mid-sentence is not guessed at: it asks you for the full note."},
+        {"title": "Fetches the screenshots", "text": "It fetches the screenshots of the Love cards and of the Maybe cards you wrote a note on."},
+        {"title": "A planner writes the plan", "text": "It spawns one planning subagent with the model you chose. The subagent studies the designs (palette, type, spacing, layout, components), reads your app's UI code, and writes one implementation plan for all the rated pages, following `/plan-tools:plan-helper`."}
+      ]},
+      {"type": "list", "title": "How the plan uses your ratings", "items": [
+        "Love cards lead; a Maybe card contributes only what its note asks for.",
+        "It names per change which design it comes from.",
+        "It recreates the style in your own code and never reuses the source's images, illustrations or logos."
+      ]}
+    ]},
+    {"heading": "From a mockup, it plans to build what the mockup shows", "short": "From a mockup", "blocks": [
+      {"type": "stepper", "title": "What happens on a mockup", "steps": [
+        {"title": "Checks for open comments", "text": "Running `plan` on a mockup means you accept it. If a comment thread on the mockup is still open, it stops, lists the open threads with their app page, and asks whether to revise the mockup first or plan anyway."},
+        {"title": "Reads each app page", "text": "It reads each app page's mockup, its mode (shallow, deep or full redesign) and its listed deliberate changes, and follows the mockup's link back to the shortlist for the brief and the credits of your Love designs. If the shortlist cannot be read, it goes on without it and says so."},
+        {"title": "A planner writes the plan", "text": "It spawns one planning subagent with the model you chose. The subagent treats the mockup as the target, reads your app's UI code, and plans to build each page in your own code."}
+      ]},
+      {"type": "cards", "title": "If comments are still open", "cards": [
+        {"title": "Revise the mockup first", "state": "info", "text": "The first option. It stops: run `/design-inspiration:mockup <mockup url>`, then run `/design-inspiration:plan` again."},
+        {"title": "Plan anyway", "state": "info", "text": "It plans the mockup as it stands. The open comments are not requirements and are named in the final reply."}
+      ]},
+      {"type": "list", "title": "How the planner builds from the mockup", "items": [
+        "It reuses your existing components and tokens where they give the same look.",
+        "It turns the mockup's width breakpoints into your app's media queries.",
+        "It wires in the real data in place of the mockup's made-up sample data.",
+        "It says plainly where the real result will differ from the mockup."
+      ]}
+    ]},
+    {"heading": "Design choices it cannot settle come back to you", "short": "Your questions", "blocks": [
+      {"type": "chain", "title": "How a design choice is handled", "nodes": [
+        {"icon": "question", "label": "Planner meets a choice"},
+        {"icon": "check", "label": "Dictated: goes in plan", "arrow": "notes, designs, code"},
+        {"icon": "user", "label": "Otherwise: you decide", "arrow": "else", "outcome": true}
+      ]},
+      {"type": "text", "text": "A choice goes into the plan only when your notes, brief or answers, the chosen designs, the mockup, or the repo's existing code dictate it. Every other choice is yours."},
+      {"type": "text", "text": "The planner collects those questions and you are asked them together, once, with 2 to 4 options each and a recommendation first."}
+    ]},
+    {"heading": "The plan appears in chat and nothing is built", "short": "The output", "blocks": [
+      {"type": "before_after",
+        "before": {"label": "You get", "text": "The plan, printed in chat. The reply also names any app page left out for having no Love card, and any open comment left out because you chose to plan anyway."},
+        "after": {"label": "Not done", "text": "Nothing is written to the repo, and nothing is implemented."}},
+      {"type": "text", "title": "To build it", "text": "Hand the plan to `/plan-tools:plan-implement-complete` or implement it yourself."},
+      {"type": "code", "code": "/plan-tools:plan-implement-complete"}
+    ]},
+    {"heading": "Most stops have a one-step fix", "short": "If it stops", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "No Love card", "state": "warn", "text": "If no design is rated Love, it stops.", "points": [
+          {"sign": "+", "text": "Rate at least one design Love on the shortlist, then run it again."}
+        ]},
+        {"title": "Open comments on the mockup", "state": "warn", "text": "It stops and lists the open threads.", "points": [
+          {"sign": "+", "text": "Choose \"Revise the mockup first\" or \"Plan anyway\"."}
+        ]},
+        {"title": "No shortlist or mockup found", "state": "warn", "text": "With no link and no matching artifact for this repo, it stops.", "points": [
+          {"sign": "+", "text": "Run `/design-inspiration:find` first."}
+        ]},
+        {"title": "A page that is neither", "state": "warn", "text": "It stops and says it needs a shortlist or a mockup made by this plugin."}
+      ]}
+    ]}
+  ],
+  "next_action": {
+    "text": "From your app's repo root, run `/design-inspiration:plan` with your mockup's link, or your rated shortlist's link if you made no mockup.",
+    "detail": "The shortlist needs at least one design rated Love."
+  },
+  "sources": [
+    {"label": "design-inspiration plugin on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/design-inspiration"}
+  ]
+}

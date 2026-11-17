@@ -1,0 +1,475 @@
+{
+  "title": "OpenFeature Reference",
+  "page_type": "how-to",
+  "gist": {
+    "kind": "chain",
+    "nodes": [
+      {
+        "icon": "flag",
+        "label": "Mention flags or OpenFeature"
+      },
+      {
+        "icon": "lightbulb",
+        "label": "Skill loads automatically",
+        "arrow": "triggers"
+      },
+      {
+        "icon": "user",
+        "label": "Ask for flag code",
+        "arrow": "then"
+      },
+      {
+        "icon": "check-circle",
+        "label": "Correct OpenFeature code",
+        "arrow": "without browsing",
+        "outcome": true
+      }
+    ]
+  },
+  "bottom_line": "When you add, debug or change feature flags through OpenFeature, in any language, Claude uses this reference to get the API right without browsing.",
+  "sections": [
+    {
+      "heading": "Type the command or just ask about feature flags",
+      "short": "Start it",
+      "blocks": [
+        {
+          "type": "code",
+          "code": "/openfeature:openfeature",
+          "caption": "The command takes no arguments. You can also skip it: the skill starts on its own."
+        },
+        {
+          "type": "flow",
+          "title": "Two ways the skill starts",
+          "nodes": [
+            {
+              "id": "cmd",
+              "label": "You type the command"
+            },
+            {
+              "id": "name",
+              "label": "You mention OpenFeature or its parts"
+            },
+            {
+              "id": "want",
+              "label": "You want feature flags in an app"
+            },
+            {
+              "id": "skill",
+              "label": "Claude uses the OpenFeature reference"
+            }
+          ],
+          "edges": [
+            {
+              "from": "cmd",
+              "to": "skill",
+              "label": "by hand"
+            },
+            {
+              "from": "name",
+              "to": "skill",
+              "label": "automatically"
+            },
+            {
+              "from": "want",
+              "to": "skill",
+              "label": "automatically"
+            }
+          ],
+          "caption": "Asking \"which feature flag library should I use\" is enough: OpenFeature is the standard answer."
+        },
+        {
+          "type": "glossary",
+          "terms": [
+            {
+              "term": "OpenFeature",
+              "definition": "The CNCF vendor-neutral feature-flag standard (https://openfeature.dev): a specification plus an SDK for each language."
+            },
+            {
+              "term": "Provider",
+              "definition": "The plug-in that connects the SDK to a flag backend such as flagd, GO Feature Flag, Flipt, Unleash, LaunchDarkly, ConfigCat, env vars or an in-memory map."
+            },
+            {
+              "term": "Default value",
+              "definition": "The value your code passes with every flag check. It comes back on any error, because evaluation never throws."
+            },
+            {
+              "term": "targetingKey",
+              "definition": "The optional part of the evaluation context saying who or what is being evaluated, such as a user id. Needed for deterministic percentage rollouts."
+            },
+            {
+              "term": "Evaluation context",
+              "definition": "What your code tells the provider about the request: an optional `targetingKey` plus flat attributes."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "OpenFeature is not a flag backend. You always pair the SDK with a provider."
+        },
+        {
+          "type": "list",
+          "title": "Claude uses it when you mention any of these",
+          "items": [
+            "OpenFeature, `openfeature-sdk`, `@openfeature/*`, `dev.openfeature`, the `OpenFeature` NuGet package, `go-sdk` or a *-sdk-contrib repo",
+            "an OpenFeature provider or hook",
+            "OFREP",
+            "`EvaluationContext` or `targetingKey`",
+            "`PROVIDER_READY`, `FLAG_NOT_FOUND` or `TYPE_MISMATCH`",
+            "the flagd, GO Feature Flag, Flipt, Unleash, LaunchDarkly, ConfigCat, DevCycle, Split or PostHog OpenFeature provider"
+          ]
+        },
+        {
+          "type": "list",
+          "title": "It also starts when you want to",
+          "items": [
+            "add feature flags, percentage rollouts, A/B tests, kill switches or vendor-agnostic flagging to an app in any language (especially Go, C#/.NET, Python)",
+            "swap or migrate flag vendors",
+            "write a custom provider or hook",
+            "unit-test flag-dependent code with an in-memory provider",
+            "ask \"which feature flag library should I use\""
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Deep detail for Go, .NET and Python, coverage for ten more",
+      "short": "What you get",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Specification digest",
+              "state": "info",
+              "text": "Evaluation API, providers and their lifecycle, evaluation context and merge order, hooks (stages, ordering, error semantics), events, tracking, `Reason` / `ErrorCode` tables, multi-provider strategies, OpenTelemetry conventions, requirement numbers."
+            },
+            {
+              "title": "Go, .NET / C#, Python",
+              "state": "good",
+              "text": "Deep-dive references: exact signatures, provider registration and readiness, all evaluation getters, context and transaction context, writing hooks and custom providers, in-memory providers for tests, verified gotchas."
+            },
+            {
+              "title": "Other SDKs",
+              "state": "info",
+              "text": "Java, Node/NestJS, web/React/Angular, Kotlin, Swift, PHP, Ruby, Rust, C++, Dart, with package names, versions and hello-flag snippets."
+            },
+            {
+              "title": "Ecosystem",
+              "state": "info",
+              "text": "Which provider exists for which vendor and language, hooks catalogue, the OFREP protocol (endpoints, payloads, errors), the `openfeature` CLI, the OpenFeature MCP server, the Kubernetes Operator."
+            },
+            {
+              "title": "Troubleshooting",
+              "state": "info",
+              "text": "A symptom → cause → fix table, and a curated map of online resources plus grep recipes for anything the skill does not cover."
+            }
+          ],
+          "caption": "The five areas the skill gives Claude, so it can add, debug and evolve OpenFeature-based feature flags without browsing."
+        },
+        {
+          "type": "list",
+          "title": "More detail in the deep-dive languages",
+          "items": [
+            "Contrib providers (flagd, OFREP, env-var, ...) with their options and env vars.",
+            "Framework recipes: net/http, ASP.NET Core with `OpenFeature.Hosting`, FastAPI/Flask/Django."
+          ]
+        },
+        {
+          "type": "list",
+          "title": "More detail in the ecosystem area",
+          "items": [
+            "Vendor migration patterns.",
+            "Community channels."
+          ]
+        },
+        {
+          "type": "text",
+          "title": "Where the flagd skill takes over",
+          "text": "The sibling `flagd` skill and plugin cover the flagd daemon itself (flag file format, JSON Logic targeting, deployment). Claude uses it when the question is about flagd configuration rather than the OpenFeature API."
+        }
+      ]
+    },
+    {
+      "heading": "Ask why every flag returns its default and get the cause",
+      "short": "Example",
+      "blocks": [
+        {
+          "type": "before_after",
+          "before": {
+            "label": "You ask",
+            "text": "\"My Python FastAPI app returns the default for every flag with reason ERROR. Why?\""
+          },
+          "after": {
+            "label": "Claude delivers",
+            "text": "The usual causes, checked in order with the troubleshooting table. For each: how to confirm it from the evaluation details and the code change that fixes it."
+          },
+          "caption": "The example from the plugin's README."
+        },
+        {
+          "type": "stepper",
+          "title": "The causes Claude checks, in order",
+          "steps": [
+            {
+              "title": "Provider not ready yet",
+              "text": "The provider was registered but not ready when the first evaluation ran. A fix is to register it with `api.set_provider_and_wait(...)` so it is ready before the app serves requests."
+            },
+            {
+              "title": "Flag key missing",
+              "text": "The flag key does not exist in the provider (`FLAG_NOT_FOUND`)."
+            },
+            {
+              "title": "Wrong type",
+              "text": "The variant type does not match the getter you called (`TYPE_MISMATCH`)."
+            },
+            {
+              "title": "No targetingKey",
+              "text": "A percentage rollout received no `targetingKey`."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "Claude confirms each cause from the evaluation details: `reason`, `error_code` and `error_message`."
+        },
+        {
+          "type": "list",
+          "title": "More things you can ask",
+          "items": [
+            "\"Add OpenFeature to this Go service with the flagd provider and gate `/checkout` on `new-checkout` for 10% of users\"",
+            "\"Wire OpenFeature into my ASP.NET Core app with DI, an OFREP provider and a logging hook, and unit-test the controller with the in-memory provider\"",
+            "\"My Python FastAPI app returns the default for every flag with reason ERROR — why?\"",
+            "\"Write an OpenFeature hook that adds the request's tenant id to the evaluation context and emits an OTel span attribute\"",
+            "\"How do I migrate from LaunchDarkly to flagd without touching call sites?\""
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Claude writes flag code that stays safe when the flag system fails",
+      "short": "Rules: writing",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Safe default values",
+              "state": "warn",
+              "text": "The default is the value that is correct when the flag system is down."
+            },
+            {
+              "title": "Evaluate per request",
+              "state": "warn",
+              "text": "Check flags where the decision is made, not at import or in a constructor."
+            },
+            {
+              "title": "Wait for readiness",
+              "state": "warn",
+              "text": "Once, at startup."
+            },
+            {
+              "title": "Pass a targetingKey",
+              "state": "warn",
+              "text": "For percentage rollouts and per-user targeting."
+            },
+            {
+              "title": "Match getter to type",
+              "state": "info",
+              "text": "Including int vs float."
+            },
+            {
+              "title": "Use transaction context",
+              "state": "info",
+              "text": "For request-scoped data."
+            },
+            {
+              "title": "Domains or multi-provider",
+              "state": "info",
+              "text": "When two backends coexist."
+            },
+            {
+              "title": "Provider by backend",
+              "state": "info",
+              "text": "App code stays on the OpenFeature API."
+            }
+          ],
+          "caption": "Eight of the fifteen rules the skill gives Claude. Each one in full is in the list below."
+        },
+        {
+          "type": "list",
+          "title": "The writing rules in full",
+          "items": [
+            "Default values are the safety net. Pick the default that is correct when the flag system is down (usually the old/off behaviour); never \"the value we want in prod\".",
+            "Evaluate flags where the decision is made, per request, not once at import/module load or in a constructor. An early evaluation races provider init (returns the default with `PROVIDER_NOT_READY`), never picks up later flag changes, and defeats per-user targeting. Cache only deliberately, and refresh on `PROVIDER_CONFIGURATION_CHANGED`.",
+            "Wait for readiness once, at startup. Otherwise early evaluations silently return defaults with `PROVIDER_NOT_READY`.",
+            "Always pass a `targetingKey` when the flag does percentage rollouts or per-user targeting; otherwise bucketing is undefined (`TARGETING_KEY_MISSING` on strict providers). Prefer a stable id (user id / session id / hostname), not an email.",
+            "Match the getter to the flag type, including int vs float.",
+            "Request-scoped data goes in transaction context, not in a new client per request.",
+            "Use domains (named clients + named providers) or the multi-provider when two backends coexist (e.g. migrating LaunchDarkly → flagd). Don't hand-roll fallbacks.",
+            "Vendor choice is orthogonal: pick the provider by backend and keep application code on the OpenFeature API. For a self-hosted open-source backend Claude recommends flagd (see the `flagd` skill) or GO Feature Flag; for \"just a REST API\", the generic OFREP provider."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Claude debugs, tests and hardens flag code the same careful way",
+      "short": "Rules: checking",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Debug with details",
+              "state": "info",
+              "text": "Read `reason` and `errorCode`, not just the value."
+            },
+            {
+              "title": "Test in memory",
+              "state": "info",
+              "text": "Use the in-memory provider."
+            },
+            {
+              "title": "Shut down on exit",
+              "state": "info",
+              "text": "So providers flush and close."
+            },
+            {
+              "title": "Keep PII out",
+              "state": "warn",
+              "text": "Unless the provider is trusted to hold it."
+            },
+            {
+              "title": "Cheap, safe hooks",
+              "state": "warn",
+              "text": "Hooks must not throw in `after`/`finally`."
+            },
+            {
+              "title": "Web and mobile differ",
+              "state": "info",
+              "text": "Context is set on the API."
+            },
+            {
+              "title": "Say which source",
+              "state": "info",
+              "text": "When the bundled docs are silent."
+            }
+          ],
+          "caption": "The other seven rules. Each one in full is in the list below."
+        },
+        {
+          "type": "list",
+          "title": "The checking rules in full",
+          "items": [
+            "Debug with details, not values. `reason` + `errorCode` tell you `FLAG_NOT_FOUND` vs `TYPE_MISMATCH` vs `DEFAULT` (rule matched nothing) vs `DISABLED`. Attach the SDK's `LoggingHook` at debug level when in doubt; the SDK itself is silent by design.",
+            "Test with the in-memory provider: no network, deterministic, supports variants + context evaluators. Reset the API between tests.",
+            "Shut down on exit so providers flush events/tracking and close streams.",
+            "Keep PII out of context unless the provider is trusted to hold it; a `before` hook can strip/anonymize attributes.",
+            "Hooks must be cheap and must not throw in `after`/`finally`; an error in `before` aborts the evaluation and returns the default (spec 4.5.x). Put telemetry in `after`/`finally`, context enrichment in `before`.",
+            "Client-side (web/mobile) is different: set context on the API (`OpenFeature.setContext`), evaluation getters are synchronous against a cached bulk evaluation, and the app reacts to `PROVIDER_CONFIGURATION_CHANGED`/`PROVIDER_CONTEXT_CHANGED` to re-render.",
+            "When the bundled docs are silent or ambiguous, Claude reads the live page on https://openfeature.dev/, the spec at https://openfeature.dev/specification/, or greps the SDK source. It says which source it used and notes the version it checked, because SDK APIs are still moving (Python is pre-1.0)."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "The skill needs nothing; running its output needs an SDK and provider",
+      "short": "Requirements",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "The skill itself",
+              "state": "done",
+              "text": "No requirements, no arguments and no environment variables."
+            },
+            {
+              "title": "Running what it writes",
+              "state": "open",
+              "text": "The OpenFeature SDK for your language and a provider for your flag backend, for example flagd (covered by the sibling `flagd` plugin), OFREP or a vendor provider."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "title": "Environment variables",
+          "text": "None are required by the skill. Providers read their own variables (for example `FLAGD_HOST`, `FLAGD_PORT`, `FLAGD_RESOLVER` for the flagd provider); these are documented in the skill's language reference files."
+        },
+        {
+          "type": "table",
+          "title": "How current the knowledge is",
+          "columns": [
+            "Source",
+            "Version"
+          ],
+          "rows": [
+            [
+              "`open-feature/spec`",
+              "24f98d7"
+            ],
+            [
+              "`open-feature/openfeature.dev` docs",
+              "9e19e66"
+            ],
+            [
+              "`go-sdk`",
+              "1.18.0"
+            ],
+            [
+              "`dotnet-sdk`",
+              "2.14.1"
+            ],
+            [
+              "`python-sdk`",
+              "0.10.0"
+            ],
+            [
+              "The three `*-sdk-contrib` repos and `open-feature/protocol`",
+              "Local clones taken 2026-09-21"
+            ]
+          ],
+          "caption": "All references were distilled from local clones taken 2026-09-21. The plan is to re-run this when an SDK ships a new minor version."
+        },
+        {
+          "type": "table",
+          "title": "Plugin details",
+          "columns": [
+            "Field",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Plugin version",
+              "1.0.2"
+            ],
+            [
+              "Licence",
+              "MIT"
+            ],
+            [
+              "Dependencies on other plugins",
+              "None"
+            ],
+            [
+              "Settings to fill in",
+              "None"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "next_action": {
+    "text": "Ask Claude: \"My Python FastAPI app returns the default for every flag with reason ERROR. Why?\"",
+    "detail": "Or swap in your own question about OpenFeature; the skill starts on its own."
+  },
+  "sources": [
+    {
+      "label": "openfeature plugin on GitHub",
+      "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/openfeature"
+    },
+    {
+      "label": "OpenFeature documentation",
+      "url": "https://openfeature.dev/"
+    }
+  ]
+}

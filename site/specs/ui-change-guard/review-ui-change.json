@@ -1,0 +1,173 @@
+{
+  "title": "Review a UI Change",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "code", "label": "Run review-ui-change"},
+    {"icon": "search", "label": "Branch compared with base", "arrow": "reads every change"},
+    {"icon": "link", "label": "Hidden consumers checked", "arrow": "traces each removal"},
+    {"icon": "flag", "label": "SAFE or UNSAFE verdict", "arrow": "reports", "outcome": true}
+  ]},
+  "bottom_line": "Run /ui-change-guard:review-ui-change before you push a UI change. It answers \"is this safe to push?\" with a verdict and a list of concrete issues.",
+  "sections": [
+    {"heading": "Type one command and get a safety verdict", "short": "Run it", "blocks": [
+      {"type": "code", "code": "/ui-change-guard:review-ui-change [base-ref | files]", "caption": "Both arguments are optional. Leave them out to review against main or master."},
+      {"type": "chain", "title": "What happens after you run it", "nodes": [
+        {"icon": "code", "label": "You run the command"},
+        {"icon": "file", "label": "Every change is read", "arrow": "then", "note": "Committed, uncommitted and untracked files, from the base to your working tree."},
+        {"icon": "search", "label": "Each risk is checked", "arrow": "then"},
+        {"icon": "flag", "label": "Report with a verdict", "arrow": "then", "outcome": true, "note": "SAFE, UNSAFE or NEEDS ENGINEER REVIEW."}
+      ]},
+      {"type": "text", "text": "The plugin is built for a team where a designer makes front-end changes with Claude Code and the engineer cannot review every diff. The skill reviews the working tree against the base branch and answers **is this safe to push?** If it is not safe, the report says exactly what is wrong and where."},
+      {"type": "text", "text": "It works on web apps (HTML/Jinja/htmx/Alpine, React/Vue/Svelte) and native apps (React Native/Expo, SwiftUI/UIKit, Jetpack Compose, Flutter, Capacitor/Ionic hybrids)."},
+      {"type": "list", "title": "When to run it", "items": [
+        "Whenever a UI or UX change is about to be pushed, committed or handed to the engineer.",
+        "When you ask things like \"is this safe to push\", \"check my changes\", \"review before I push\", \"did I break anything\" or \"sanity check the redesign\". Claude can start it even if you do not say \"review\".",
+        "Claude also runs it on its own at the end of any session where templates, components, screens, CSS, or front-end JS/Swift/Kotlin/Dart UI code were edited."
+      ]}
+    ]},
+    {"heading": "You need Python, git and, for PRs, a signed-in GitHub CLI", "short": "Before you start", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Python 3", "state": "done", "text": "Runs the bundled inventory-diff script."},
+        {"title": "git", "state": "done", "text": "The review compares your branch with its base."},
+        {"title": "GitHub CLI signed in", "state": "done", "text": "Needed when the branch has a PR, because the review writes its engineer handoff into the PR body."},
+        {"title": "Playwright or a simulator", "state": "info", "text": "Optional. Playwright (web) or a simulator/emulator with Maestro (native) lets it measure performance. Without them it checks performance from the code only."}
+      ]},
+      {"type": "text", "text": "There is nothing to configure. The plugin has no environment variables and no plugin settings."}
+    ]},
+    {"heading": "Pick what to compare against, or which files to focus on", "short": "Arguments", "blocks": [
+      {"type": "flow", "title": "Which base the review uses", "nodes": [
+        {"id": "arg", "label": "Did you name a ref?"},
+        {"id": "ref", "label": "Use that ref"},
+        {"id": "mb", "label": "Merge-base with origin/main, main or master"},
+        {"id": "head", "label": "Otherwise HEAD"}
+      ], "edges": [
+        {"from": "arg", "to": "ref", "label": "yes"},
+        {"from": "arg", "to": "mb", "label": "no"},
+        {"from": "mb", "to": "head", "label": "none found"}
+      ]},
+      {"type": "table", "title": "Ways to run it", "columns": ["You type", "What it reviews"], "rows": [
+        ["`/ui-change-guard:review-ui-change`", "Everything since the merge-base with `main` or `master`"],
+        ["`/ui-change-guard:review-ui-change main`", "Everything since the given base branch or ref"],
+        ["`/ui-change-guard:review-ui-change templates/profile.html templates/partials/nav.html`", "Focuses on the files or pages you list"]
+      ]},
+      {"type": "text", "text": "The review covers everything from the base to your working tree, uncommitted and untracked files included, because the designer may not have committed yet."},
+      {"type": "text", "text": "A change to a shared partial, layout, component or global stylesheet is a change to every page that uses it, so those pages are reviewed too. The review also decides whether the UI is web, native or hybrid (Capacitor/Ionic, where both sets of rules apply). A monorepo can be both, and each part is reviewed by its own rules."}
+    ]},
+    {"heading": "It looks for the breaks that test suites tend to miss", "short": "What it catches", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Removed form fields", "state": "warn", "text": "A field deleted or renamed in a template while the backend handler still reads it."},
+        {"title": "Lost buttons and states", "state": "warn", "text": "A redesigned page that quietly lost buttons, actions, states, role-specific controls or confirmations."},
+        {"title": "Slow UI", "state": "warn", "text": "Polling, unbounded lists, N+1 from templates, heavy assets, expensive CSS or motion."},
+        {"title": "Security leaks", "state": "warn", "text": "Permission conditionals removed from templates, unsafe HTML injection."},
+        {"title": "Weakened tests", "state": "warn", "text": "Tests edited to pass instead of the UI fixed."},
+        {"title": "Changes outside design", "state": "warn", "text": "Edits that crossed into routes, models, migrations or dependencies."}
+      ]},
+      {"type": "text", "text": "A UI change is safe when it changes only what the designer meant to change, and nothing that hidden consumers depend on. The designer owns look, layout, copy and interaction design. What they usually cannot see is everything else that hangs off a template."},
+      {"type": "list", "title": "What hangs off a template", "items": [
+        "The backend handler that reads a form field by name.",
+        "The JavaScript that finds an element by id.",
+        "The test that clicks a button by its label.",
+        "The permission check that was an `{% if %}` around a block.",
+        "The query cost of rendering a list.",
+        "The user who navigates by keyboard."
+      ]},
+      {"type": "list", "title": "The full list of failure modes it targets", "items": [
+        "A form field deleted or renamed in a template while the backend handler still reads it.",
+        "A redesigned page that quietly lost buttons, actions, states, role-specific controls, or confirmations the old page had.",
+        "UI that became unusably slow (polling, unbounded lists, N+1 from templates, heavy assets, expensive CSS/motion).",
+        "Broken htmx/Alpine wiring (targets that no longer exist, Alpine roots inside swap targets); on native, broken navigation/state/lifecycle wiring (renamed routes still deep-linked, screens removed from the navigator, lost cleanup).",
+        "Native-only breaks: permission requests without usage strings, denied-permission paths that look like a cancel, store-compliance regressions (account deletion, restore purchases, privacy manifest), safe-area/keyboard-avoidance/Dynamic Type regressions, assets missing densities or font registration.",
+        "Permission conditionals removed from templates (security leak), unsafe HTML injection.",
+        "Accessibility and responsive regressions.",
+        "Tests edited to pass instead of the UI fixed.",
+        "Changes that crossed out of the design domain into routes, models, migrations, or dependencies."
+      ]},
+      {"type": "list", "title": "How it checks the main ones", "items": [
+        "Removed or renamed items: it traces each one to whatever uses it (form to handler on web; binding to view-model to DTO to API on native).",
+        "Lost functionality: for each changed page it lists what the old page could do (buttons, links, forms and fields, loading, empty and error states, role-specific controls, confirmations on destructive actions) and checks each one survives.",
+        "It does not accept \"the designer must have meant to remove it\". Only an explicit statement in the conversation, such as \"we're dropping the export button\", turns a lost capability into a Note recording the deliberate removal.",
+        "Tests: it does not run the test suite, because CI runs it on every push. It reads the diff of test files. Deleted assertions, loosened selectors, skipped tests or changed expected values are a Blocker, reported as \"tests weakened\" with the removed assertion quoted.",
+        "Changes outside the UI domain: any touched route, model, schema, migration, service, API client, config, dependency manifest or native project file is a Needs-engineer finding, listed file by file, however small."
+      ]}
+    ]},
+    {"heading": "Performance is measured when the app can run", "short": "Performance", "blocks": [
+      {"type": "stats", "items": [
+        {"value": "1,500", "label": "DOM nodes on a list page", "icon": "table", "note": "more than this is a Warning"},
+        {"value": "3 s", "label": "To networkidle, locally", "icon": "clock", "note": "more than this is a Warning"},
+        {"value": "5 s", "label": "Repeating request interval", "icon": "repeat", "note": "any request repeating faster is a Warning"},
+        {"value": "2 MB", "label": "Transferred", "icon": "cloud", "note": "more than this is a Warning"}
+      ]},
+      {"type": "text", "text": "Performance is always checked from the code. When the dev server can be started, each changed page is also loaded with Playwright and measured against the thresholds above. A clear order-of-magnitude slowdown compared with the base is a Blocker. On native apps, a simulator, emulator or device and the platform profiler are used when available."},
+      {"type": "text", "text": "The report says which pages were measured and which could not be."}
+    ]},
+    {"heading": "Each finding gets a severity, and the severities set the verdict", "short": "The verdict", "blocks": [
+      {"type": "flow", "title": "How the verdict is chosen", "nodes": [
+        {"id": "b", "label": "Any Blocker?"},
+        {"id": "unsafe", "label": "UNSAFE"},
+        {"id": "n", "label": "Needs-engineer item or open Warning?"},
+        {"id": "ner", "label": "NEEDS ENGINEER REVIEW"},
+        {"id": "safe", "label": "SAFE"}
+      ], "edges": [
+        {"from": "b", "to": "unsafe", "label": "yes"},
+        {"from": "b", "to": "n", "label": "no"},
+        {"from": "n", "to": "ner", "label": "yes"},
+        {"from": "n", "to": "safe", "label": "no"}
+      ], "caption": "An open Warning is one the review could not rule out. A SAFE report may still list Warnings and Notes."},
+      {"type": "table", "title": "The four severities", "columns": ["Severity", "What it means"], "rows": [
+        ["Blocker", "Will break something or lose functionality: broken backend contract, lost capability, weakened tests, security leak, order-of-magnitude slowdown."],
+        ["Warning", "Likely degrades the experience or will bite soon: perf smell without measurement, accessibility regression, test-only selector removed, responsive risk."],
+        ["Needs engineer", "Not wrong as such, but outside the designer's domain or unverifiable from the code alone."],
+        ["Note", "Deliberate removals confirmed in conversation, and things checked and found fine that the engineer would otherwise ask about."]
+      ]}
+    ]},
+    {"heading": "The report names each problem the way a user would see it", "short": "The report", "blocks": [
+      {"type": "stepper", "title": "Reading one Blocker", "steps": [
+        {"title": "Where it is", "text": "The page or screen and the element, named the way a user would (\"the Save button on the profile screen\"), then the file and line."},
+        {"title": "The evidence", "text": "A grep hit, a test output line or a measurement. Every Blocker has evidence, never a hunch."},
+        {"title": "The smallest fix", "text": "The smallest action that makes it safe."}
+      ]},
+      {"type": "code", "title": "The shape of the report", "code": "# UI change review — SAFE | UNSAFE | NEEDS ENGINEER REVIEW\nBase · files · pages reviewed · tests · perf measured\n## Blockers      — will break something / lost functionality / weakened tests / security\n## Warnings      — likely degradation (perf smell, a11y, responsive, test-only selectors)\n## Needs engineer — outside the designer's domain or unverifiable from code\n## Notes\n## Checked and fine"},
+      {"type": "list", "title": "Good to know about the report", "items": [
+        "\"Checked and fine\" is short but always present, so the engineer can trust that a SAFE verdict was earned.",
+        "If the diff is empty or touches no UI files, the report says so in one line and stops.",
+        "The review is a reviewer, not a fixer. It never edits source, tests or styles while reviewing, and never \"fixes\" a finding by changing a test to match the new UI. You decide what to do with the findings; it may offer to fix after the report."
+      ]}
+    ]},
+    {"heading": "On a pull request, the findings are written into the PR body", "short": "PR handoff", "blocks": [
+      {"type": "flow", "title": "What happens to the PR body", "nodes": [
+        {"id": "pr", "label": "Does the branch have a PR?"},
+        {"id": "print", "label": "Section printed in the reply"},
+        {"id": "v", "label": "Verdict"},
+        {"id": "write", "label": "Handoff section written"},
+        {"id": "remove", "label": "Earlier section removed"}
+      ], "edges": [
+        {"from": "pr", "to": "print", "label": "no"},
+        {"from": "pr", "to": "v", "label": "yes"},
+        {"from": "v", "to": "write", "label": "UNSAFE or NEEDS ENGINEER"},
+        {"from": "v", "to": "remove", "label": "SAFE"}
+      ]},
+      {"type": "text", "text": "The engineer who picks up a risky PR was not in your session, so the review puts its findings in the PR body. The section lists one decision item per Blocker, Warning and Needs-engineer finding, and says what the designer was going for, taken from the conversation and commit messages, or \"Not stated\"."},
+      {"type": "list", "title": "The details", "items": [
+        "UNSAFE or NEEDS ENGINEER REVIEW: it writes the section, replacing the one from an earlier run if there is one.",
+        "SAFE: it removes a section left by an earlier run. If there is none, it does nothing.",
+        "No PR yet: it skips the write and prints the section in the reply so you can paste it later. Re-run `/ui-change-guard:review-ui-change` after opening the PR, because the push guard records each commit as reviewed and will not re-run the review (or write the handoff) for the same commit.",
+        "It never touches the PR title, comments or anything outside the section. If the PR edit fails, it reports the error and prints the section instead.",
+        "The engineer can then go through the section with `/ui-change-guard:engineer-review-ui-change`."
+      ]}
+    ]},
+    {"heading": "It works together with push guard, user flows and finalize-pr", "short": "Works with", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "user-flows plugin", "state": "info", "text": "If `user-flows.md` exists, flows touching changed files are walked against the new markup, and lost steps are reported by flow ID."},
+        {"title": "Push guard", "state": "info", "text": "A commit that passed review is recorded in `.git/ui-change-guard/` and not reviewed again. This is not configurable."},
+        {"title": "plan-tools finalize-pr", "state": "info", "text": "`finalize-pr` labels a PR `ui-risky` when this review still fails. The plan-tools `designer_ui_review` setting turns the review on."}
+      ]}
+    ]}
+  ],
+  "next_action": {
+    "text": "Before your next push, run `/ui-change-guard:review-ui-change` in the repo and read the verdict at the top of the report.",
+    "detail": "With no argument it reviews everything since the merge-base with main or master."
+  },
+  "sources": [
+    {"label": "ui-change-guard on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/ui-change-guard"}
+  ]
+}

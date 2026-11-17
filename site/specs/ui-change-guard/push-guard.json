@@ -1,0 +1,117 @@
+{
+  "title": "Push Guard",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "code", "label": "Run push-guard install"},
+    {"icon": "rocket", "label": "Someone pushes", "arrow": "later"},
+    {"icon": "search", "label": "UI review runs first", "arrow": "unreviewed commit"},
+    {"icon": "shield", "label": "UNSAFE pushes blocked", "arrow": "verdict", "outcome": true}
+  ]},
+  "bottom_line": "Run /ui-change-guard:push-guard install once per clone. From then on, every push from Claude or your terminal waits for the UI review to pass.",
+  "sections": [
+    {"heading": "One command turns the guard on, off, or reports its state", "short": "Run it", "blocks": [
+      {"type": "code", "code": "/ui-change-guard:push-guard install | uninstall | status", "caption": "Pick one of the three words. With no word, or any other word, the skill asks which one you mean."},
+      {"type": "table", "columns": ["You type", "What happens"], "rows": [
+        ["`/ui-change-guard:push-guard install`", "Turns the review into a pre-push gate for the current repo: pushes Claude makes and pushes from your terminal."],
+        ["`/ui-change-guard:push-guard uninstall`", "Turns the gate off and removes the guard's git `pre-push` hook."],
+        ["`/ui-change-guard:push-guard status`", "Says whether the gate is on, whether the git hook is installed, and how many reviewed commits are recorded."]
+      ]},
+      {"type": "list", "title": "When to use it", "items": [
+        "When you want to \"review before every push\", \"add a pre-push hook\" or \"run the UI review automatically on push\".",
+        "When you want to \"turn off\" or \"remove the push check\".",
+        "When you ask whether the guard is on."
+      ]},
+      {"type": "text", "text": "It works on the git repository in the current directory and shows you what the guard printed."}
+    ]},
+    {"heading": "You need Python 3, git and the claude command", "short": "Before you start", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Python 3", "state": "done", "text": "Runs the push-guard hook."},
+        {"title": "git", "state": "done", "text": "The guard lives in the repo's `.git/` folder."},
+        {"title": "claude on your PATH", "state": "done", "text": "Needed for the terminal push guard, because the git hook runs the review through `claude -p`."}
+      ]},
+      {"type": "text", "text": "The guard is per clone. It lives in `.git/`, nothing is committed, and teammates install it themselves. The plugin has no environment variables and no plugin settings."}
+    ]},
+    {"heading": "After install, both kinds of push wait for the review", "short": "What changes", "blocks": [
+      {"type": "flow", "title": "What happens to a push after install", "nodes": [
+        {"id": "push", "label": "A git push starts"},
+        {"id": "claude", "label": "Claude's push is blocked"},
+        {"id": "review", "label": "Claude runs the review"},
+        {"id": "term", "label": "Git runs review via claude -p"},
+        {"id": "go", "label": "Push goes ahead"},
+        {"id": "stop", "label": "Push blocked"}
+      ], "edges": [
+        {"from": "push", "to": "claude", "label": "Claude pushes"},
+        {"from": "claude", "to": "review", "label": "then"},
+        {"from": "push", "to": "term", "label": "you push"},
+        {"from": "review", "to": "go", "label": "SAFE or NEEDS ENGINEER"},
+        {"from": "review", "to": "stop", "label": "UNSAFE"},
+        {"from": "term", "to": "go", "label": "not UNSAFE"},
+        {"from": "term", "to": "stop", "label": "UNSAFE"}
+      ], "caption": "A commit that has already passed review goes straight through on either path."},
+      {"type": "text", "text": "Right after install, the skill tells you these two things in two lines."},
+      {"type": "list", "items": [
+        "When Claude runs `git push`, the push is blocked until `/ui-change-guard:review-ui-change` passes for that commit (SAFE or NEEDS ENGINEER REVIEW).",
+        "When you push from a terminal, git runs the review through `claude -p` (takes a few minutes and uses tokens) and blocks on UNSAFE. `git push --no-verify` skips it once."
+      ]}
+    ]},
+    {"heading": "Claude's pushes are checked by a hook on every command it runs", "short": "Claude's pushes", "blocks": [
+      {"type": "stepper", "title": "When Claude tries to push an unreviewed commit", "steps": [
+        {"title": "The push is blocked", "text": "The hook stops `git push` and tells Claude the review has to pass for this commit first."},
+        {"title": "Claude runs the review", "text": "Claude runs `/ui-change-guard:review-ui-change` and shows you the report."},
+        {"title": "SAFE or NEEDS ENGINEER REVIEW", "text": "Claude records the commit as reviewed and pushes again."},
+        {"title": "UNSAFE", "text": "Claude does not push. The blockers must be fixed first."}
+      ]},
+      {"type": "text", "text": "The plugin registers a `PreToolUse` hook, a small Python check that runs before each Bash command Claude runs, in every repo. It does nothing until you run `/ui-change-guard:push-guard install` in a repo. After that, it blocks `git push` there until the review passes for HEAD. In repos without the guard it stays inactive."}
+    ]},
+    {"heading": "Terminal pushes run the full review, which takes minutes and tokens", "short": "Terminal pushes", "blocks": [
+      {"type": "chain", "title": "A push from your terminal", "nodes": [
+        {"icon": "code", "label": "You run git push"},
+        {"icon": "search", "label": "Review runs via claude", "arrow": "pre-push hook", "note": "A few minutes and some tokens per push."},
+        {"icon": "file", "label": "Report printed", "arrow": "then"},
+        {"icon": "shield", "label": "UNSAFE blocks the push", "arrow": "verdict", "outcome": true}
+      ]},
+      {"type": "text", "text": "`install` also writes a git `pre-push` hook that runs the full review through `claude -p` on every push from your terminal. Because that run has Bash, the review's handoff step also updates the PR body on each guarded push."},
+      {"type": "code", "title": "Skip the review for one push", "code": "git push --no-verify"},
+      {"type": "table", "title": "Messages you may see in the terminal", "columns": ["Message", "What it means"], "rows": [
+        ["`ui-change-guard: reviewing UI changes before push (skip with: git push --no-verify)...`", "The review has started. Its report follows."],
+        ["`ui-change-guard: verdict UNSAFE, push blocked. Fix the blockers above, or skip with: git push --no-verify`", "The review found Blockers. The push did not happen."],
+        ["`ui-change-guard: claude CLI not found, push blocked. Skip with: git push --no-verify`", "The `claude` command is not on your PATH."],
+        ["`ui-change-guard: review did not run (exit <status>), push blocked. Skip with: git push --no-verify`", "The review failed to run, so the push was blocked."]
+      ]},
+      {"type": "text", "text": "With any other verdict, the push goes ahead and the commit is recorded as reviewed."}
+    ]},
+    {"heading": "Each commit is reviewed only once", "short": "Reviewed once", "blocks": [
+      {"type": "before_after", "before": {"label": "First push", "text": "The commit has no record, so the review runs. If it passes, the commit is recorded in `.git/ui-change-guard/reviewed-<sha>`."}, "after": {"label": "Next push", "text": "The record is there, so the push goes straight through without another review."}},
+      {"type": "text", "text": "This is not configurable. It also means that if you open a PR after the commit passed, the review will not run again for that commit on its own. Re-run `/ui-change-guard:review-ui-change` by hand to write the engineer handoff into the new PR."}
+    ]},
+    {"heading": "The guard prints a short status after each command", "short": "What you see", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "install", "state": "good", "text": "The git hook is written and the Claude Code push gate is on."},
+        {"title": "uninstall", "state": "info", "text": "The git hook is removed if it was the guard's, and the push gate is off."},
+        {"title": "status", "state": "info", "text": "Gate on or off, hook installed or not, and the count of reviewed commits."}
+      ]},
+      {"type": "code", "title": "After install", "code": "Installed.\n  git pre-push hook: <path of the pre-push hook>\n  Claude Code push gate: on (state in <state folder>)"},
+      {"type": "code", "title": "After uninstall", "code": "Uninstalled.\n  git pre-push hook: removed | none of ours found\n  Claude Code push gate: off"},
+      {"type": "code", "title": "After status", "code": "Claude Code push gate: on | off\ngit pre-push hook: installed | not installed (<hook path>)\nreviewed commits recorded: <n>"}
+    ]},
+    {"heading": "Install will not overwrite a pre-push hook you already have", "short": "If it fails", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Existing pre-push hook", "state": "warn", "text": "Install refuses to overwrite a `pre-push` hook that is not the guard's, such as one from husky.", "points": [{"sign": "+", "text": "Add a call to `claude -p /ui-change-guard:review-ui-change` to your hook by hand."}, {"sign": "+", "text": "Or remove your hook and run install again."}]},
+        {"title": "Not in a git repository", "state": "warn", "text": "The guard prints `Not inside a git repository.`", "points": [{"sign": "+", "text": "Run it from inside the repository."}]}
+      ]},
+      {"type": "code", "title": "The message when a hook already exists", "code": "Not installed: <hook> already exists and is not ours. Add a call to `claude -p /ui-change-guard:review-ui-change` to it by hand, or remove it and re-run."},
+      {"type": "list", "title": "Good to know", "items": [
+        "When the guard reports an error, the skill shows it and stops. It never deletes or overwrites a `pre-push` hook the guard refused to touch, and leaves the decision to you.",
+        "Install respects `core.hooksPath`.",
+        "`/ui-change-guard:push-guard uninstall` removes the guard's git hook and turns the gate off."
+      ]}
+    ]}
+  ],
+  "next_action": {
+    "text": "In the repository you want guarded, run `/ui-change-guard:push-guard install`.",
+    "detail": "Then run `/ui-change-guard:push-guard status` any time to check the gate is on."
+  },
+  "sources": [
+    {"label": "ui-change-guard on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/ui-change-guard"}
+  ]
+}

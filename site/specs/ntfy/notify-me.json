@@ -1,0 +1,75 @@
+{
+  "title": "Notify Me When Done",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "code", "label": "Type the command"},
+    {"icon": "repeat", "label": "Claude keeps working", "arrow": "with a condition"},
+    {"icon": "check", "label": "Condition really met", "arrow": "then"},
+    {"icon": "bolt", "label": "Push on your phone", "arrow": "priority 4", "outcome": true}
+  ]},
+  "bottom_line": "Type /ntfy:notify-me with a condition. Claude carries on with the work and sends a push notification once that condition has genuinely been met.",
+  "sections": [
+    {"heading": "Type the command with the moment you want a push", "short": "The command", "blocks": [
+      {"type": "code", "code": "/ntfy:notify-me <condition, e.g. \"when you finish the implementation\">", "caption": "The command and its argument. The condition is the moment you want to hear about."},
+      {"type": "chain", "title": "What happens after you press Enter", "nodes": [
+        {"icon": "user", "label": "You name a condition", "note": "For example \"when you finish the implementation\" or \"if the tests fail\"."},
+        {"icon": "repeat", "label": "Work continues", "arrow": "then", "note": "Claude continues with the work already in progress or requested in this conversation."},
+        {"icon": "bolt", "label": "Push sent", "arrow": "condition met", "outcome": true, "note": "Sent at priority 4 (high) unless you named another priority."}
+      ]},
+      {"type": "code", "title": "Example", "code": "/ntfy:notify-me when you finish the implementation"},
+      {"type": "text", "text": "Claude does not fake completion. It sends the notification only once the condition has genuinely been met."}
+    ]},
+    {"heading": "Have a subscribed app and your settings ready", "short": "Before you start", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "curl and bash", "state": "done", "text": "The plugin's `ntfy-send` script uses both."},
+        {"title": "An ntfy app", "state": "done", "text": "An ntfy app or web client subscribed to your topic, to receive the notifications."},
+        {"title": "Saved plugin settings", "state": "done", "text": "Your `server` and `topic`, saved once with `/plugin configure ntfy@wovemind` (or the dialog shown when the plugin is enabled)."}
+      ], "caption": "Run /ntfy:configure, or ask \"set up ntfy on my phone\", for a step-by-step walkthrough of all three."},
+      {"type": "table", "title": "The two plugin settings", "columns": ["Setting", "Default", "What it does"], "rows": [
+        ["`server`", "`https://ntfy.sh`", "The ntfy server every notification is published to. Point it at your own instance if you self-host."],
+        ["`topic`", "`claude`", "The topic notifications go to unless you name another one in a request."]
+      ]},
+      {"type": "text", "text": "The defaults only take effect after you save the dialog once. Until then the command (and the ntfy skill) falls back to `https://ntfy.sh` and `claude` itself, except when the token file `~/.ntfy` exists (see stop 4)."},
+      {"type": "text", "text": "On public ntfy.sh anyone who knows the topic name receives its messages, so pick a long random topic name there."}
+    ]},
+    {"heading": "You can also set the priority and topic in that line", "short": "Optional extras", "blocks": [
+      {"type": "table", "title": "What Claude reads from what you type", "columns": ["Part", "Required?", "What it means", "If you leave it out"], "rows": [
+        ["Condition", "Yes", "When to send the notification, for example \"when you finish the implementation\" or \"if the tests fail\".", "Nothing to wait for."],
+        ["Priority", "No", "min, low, default, high or urgent, or 1 to 5.", "Priority 4 (high)."],
+        ["Topic", "No", "A topic you name here wins over the `topic` setting.", "The `topic` setting, or `claude` if it was never saved."]
+      ]},
+      {"type": "before_after", "before": {"label": "Default", "text": "/ntfy:notify-me when you finish the implementation sends at priority 4 (high)."}, "after": {"label": "Your choice", "text": "Name a priority in the command, for example `urgent`, and that priority is used instead."}}
+    ]},
+    {"heading": "The push goes to your saved server, with one safety stop", "short": "Where it goes", "blocks": [
+      {"type": "flow", "title": "How the server is chosen", "nodes": [
+        {"id": "s", "label": "server setting saved?"},
+        {"id": "use", "label": "Use the saved server"},
+        {"id": "tok", "label": "Does ~/.ntfy exist?"},
+        {"id": "stop", "label": "Send nothing, ask you"},
+        {"id": "pub", "label": "Use https://ntfy.sh"}
+      ], "edges": [
+        {"from": "s", "to": "use", "label": "yes"},
+        {"from": "s", "to": "tok", "label": "never saved"},
+        {"from": "tok", "to": "stop", "label": "yes"},
+        {"from": "tok", "to": "pub", "label": "no"}
+      ], "caption": "The token in ~/.ntfy may belong to another server, so Claude stops instead of sending."},
+      {"type": "text", "text": "When it stops, Claude tells you to run `/plugin configure ntfy@wovemind` and set `server`: to your own server, or to `https://ntfy.sh` if that is where your token belongs."},
+      {"type": "text", "text": "When the command runs unattended, called from another skill such as plan-tools `drain-issues` or compliance-audit `apply`, it skips the notification and says so in the report instead of stopping that skill."}
+    ]},
+    {"heading": "A good push says what happened in one line", "short": "What arrives", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Title", "state": "info", "text": "A short context label, for example the task or repo name."},
+        {"title": "Message", "state": "info", "text": "One line that states what happened, for example \"Implementation finished — all tests passing\"."},
+        {"title": "Priority", "state": "info", "text": "4 unless your condition or arguments say otherwise."}
+      ], "caption": "What the notification on your phone contains."},
+      {"type": "text", "text": "Claude sends it with the plugin's `ntfy-send` script, or with the ntfy skill's curl pattern if the script is not available."}
+    ]}
+  ],
+  "next_action": {
+    "text": "Type /ntfy:notify-me followed by the moment you want to hear about, such as \"when you finish the implementation\".",
+    "detail": "For a step-by-step setup of the app and the plugin settings, run /ntfy:configure or ask \"set up ntfy on my phone\"."
+  },
+  "sources": [
+    {"label": "ntfy plugin on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/ntfy"}
+  ]
+}

@@ -1,0 +1,133 @@
+{
+  "title": "Push Notifications With ntfy",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "user", "label": "Ask to be notified"},
+    {"icon": "server", "label": "Claude posts to topic", "arrow": "your server"},
+    {"icon": "bolt", "label": "Push on your devices", "arrow": "subscribers get it", "outcome": true}
+  ]},
+  "bottom_line": "Ask Claude to notify you, or run /ntfy:ntfy. It sends a push to your ntfy topic, reaching every phone, desktop or browser subscribed.",
+  "sections": [
+    {"heading": "Ask in plain words, or call the skill by name", "short": "How to ask", "blocks": [
+      {"type": "code", "code": "/ntfy:ntfy", "caption": "The skill takes no argument. You can also just ask, as below."},
+      {"type": "chain", "title": "From a sentence to a push", "nodes": [
+        {"icon": "user", "label": "You ask in chat", "note": "\"Ping me on ntfy when this build finishes\""},
+        {"icon": "gear", "label": "Skill is used", "arrow": "Claude recognises it", "note": "Even if you don't say \"ntfy\"."},
+        {"icon": "bolt", "label": "Notification sent", "arrow": "then", "outcome": true, "note": "To your server and topic, with title, priority and tags as needed."}
+      ]},
+      {"type": "list", "title": "Phrases that trigger it", "items": [
+        "\"Ping me on ntfy when this build finishes\"",
+        "\"Send me a push notification if the tests fail, topic `ci-alerts`\"",
+        "\"let me know when this finishes\"",
+        "\"ping me if it fails\"",
+        "\"notify me\"",
+        "\"send me a push notification\"",
+        "\"text me when done\""
+      ]},
+      {"type": "text", "text": "It lets Claude ping you when a long-running task finishes, a build fails, or anything else worth interrupting you for. Other plugins in this marketplace use it too: `plan-tools` (`drain-issues`) and `compliance-audit` (`apply`) send their \"finished\" and \"stuck\" alerts through it."},
+      {"type": "glossary", "terms": [
+        {"term": "ntfy", "definition": "An HTTP pub-sub notification service. A message posted to <server>/<topic> reaches every subscriber to that topic. No accounts, no SDKs, plain HTTP."},
+        {"term": "Topic", "definition": "The channel name notifications go to. Anyone subscribed to that topic on this server gets the message."},
+        {"term": "Server", "definition": "Where notifications are published: the public ntfy.sh or your own self-hosted ntfy server."}
+      ]}
+    ]},
+    {"heading": "Have an app subscribed and your settings saved", "short": "Before you start", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "curl and bash", "state": "done", "text": "The `ntfy-send` script uses both."},
+        {"title": "A subscribed ntfy app", "state": "done", "text": "An ntfy app or web client subscribed to your topic, to receive the notifications."},
+        {"title": "Saved plugin settings", "state": "done", "text": "Set `server` and `topic` with `/plugin configure ntfy@wovemind`, or the dialog shown when the plugin is enabled."}
+      ], "caption": "Run /ntfy:configure, or ask \"set up ntfy on my phone\", for a step-by-step walkthrough."},
+      {"type": "table", "title": "The two plugin settings", "columns": ["Setting", "Default", "What it does"], "rows": [
+        ["`server`", "`https://ntfy.sh`", "The ntfy server every notification is published to. Point it at your own instance if you self-host."],
+        ["`topic`", "`claude`", "The topic notifications go to unless you name another one in a request."]
+      ]},
+      {"type": "text", "text": "The defaults only take effect after you save the dialog once. Until then the skill (and the notify-me command) falls back to `https://ntfy.sh` and `claude` itself, except when `~/.ntfy` exists (see stop 6)."},
+      {"type": "table", "title": "Opinionated defaults", "columns": ["Default", "Change it with"], "rows": [
+        ["Server `https://ntfy.sh`", "the `server` setting"],
+        ["Topic `claude`", "the `topic` setting; for one message, name another topic in your request (for example `ci-alerts`), or `-o <topic>` with `ntfy-send`"]
+      ]},
+      {"type": "text", "title": "No environment variables, one optional file", "text": "**Auth token** (optional): if `~/.ntfy` exists, its one line, a `tk_...` access token made with `ntfy token add` on the server, is sent as a Bearer token to whatever `server` is configured, including the public ntfy.sh. Public ntfy.sh needs no token."}
+    ]},
+    {"heading": "Treat the topic name like a password", "short": "Topic safety", "blocks": [
+      {"type": "before_after", "before": {"label": "Easy to guess", "text": "On the public ntfy.sh, anyone who subscribes to a topic name receives its messages, and `claude` is an easy name to guess."}, "after": {"label": "Safer", "text": "If you use ntfy.sh, set the `topic` setting to a long random name, or run your own server with access control."}, "caption": "The plan-tools and compliance-audit alerts use the same topic setting too."}
+    ]},
+    {"heading": "A notification can carry far more than a line of text", "short": "What it sends", "blocks": [
+      {"type": "table", "title": "Common fields", "columns": ["Field", "Values"], "rows": [
+        ["Title", "any string"],
+        ["Priority", "`1`/`min`, `2`/`low`, `3`/`default`, `4`/`high`, `5`/`urgent`"],
+        ["Tags (emoji or labels)", "comma-separated, for example `warning,skull`"],
+        ["Markdown", "turns on bold, italic, links and code in the message"],
+        ["Click action", "a URL opened when the notification is tapped"]
+      ]},
+      {"type": "cards", "title": "Pick the priority by how much it should interrupt", "cards": [
+        {"title": "High or urgent plus tag", "state": "warn", "text": "When the message is actionable or time-sensitive: failures, approvals needed."},
+        {"title": "Default", "state": "info", "text": "For routine \"job finished\" pings."}
+      ], "caption": "It is the difference between a notification that interrupts and one that just logs."},
+      {"type": "list", "title": "Also possible", "items": [
+        "An icon.",
+        "Attachments: a link to an external file, or a local file uploaded.",
+        "Scheduled or delayed delivery.",
+        "Forwarding to an email address.",
+        "Action buttons: open a URL, fire an HTTP request (such as an approve or rollback button), or copy text to the clipboard.",
+        "Updating or deleting a message already published."
+      ]}
+    ]},
+    {"heading": "Know the size, delay and naming limits before you send", "short": "Limits", "blocks": [
+      {"type": "stats", "items": [
+        {"value": "4,096 bytes", "label": "Largest message body", "icon": "file", "note": "non-UTF-8 content is treated as an attachment instead"},
+        {"value": "15 MB", "label": "Largest attachment", "icon": "file", "note": "per file, ntfy.sh default; self-hosted may differ"},
+        {"value": "3", "label": "Action buttons at most", "icon": "plus", "note": "per notification"}
+      ]},
+      {"type": "list", "title": "All limits", "items": [
+        "Message body: 4,096 bytes at most. Non-UTF-8 content is treated as an attachment instead of failing outright.",
+        "Attachments: 15 MB per file (the ntfy.sh default; a self-hosted server may be set differently). Uploaded files expire after 3 hours on ntfy.sh.",
+        "Delayed delivery: from 10 seconds to 3 days ahead.",
+        "Action buttons: 3 per notification at most.",
+        "Topic names: letters, numbers, underscores and dashes, 64 characters at most."
+      ]}
+    ]},
+    {"heading": "With a token file, nothing is sent until the server is saved", "short": "Token safety", "blocks": [
+      {"type": "flow", "title": "How the server is chosen", "nodes": [
+        {"id": "s", "label": "server setting saved?"},
+        {"id": "use", "label": "Use the saved server"},
+        {"id": "tok", "label": "Does ~/.ntfy exist?"},
+        {"id": "stop", "label": "Send nothing, ask you"},
+        {"id": "pub", "label": "Use https://ntfy.sh"}
+      ], "edges": [
+        {"from": "s", "to": "use", "label": "yes"},
+        {"from": "s", "to": "tok", "label": "never saved"},
+        {"from": "tok", "to": "stop", "label": "yes"},
+        {"from": "tok", "to": "pub", "label": "no"}
+      ], "caption": "The token is sent to whatever server is set, so nothing goes out until you choose one."},
+      {"type": "text", "text": "When it stops, Claude asks you to run `/plugin configure ntfy@wovemind` and save `server`: to your own server, or to `https://ntfy.sh` if that is where the token belongs."},
+      {"type": "text", "text": "When the skill runs unattended, called from another skill such as plan-tools `drain-issues` or compliance-audit `apply`, it skips the notification and says so in the report instead of stopping that skill."},
+      {"type": "text", "text": "Do not point `server` at a server you do not trust with the token, or move the file away first."}
+    ]},
+    {"heading": "You can also send a push yourself from the terminal", "short": "ntfy-send", "blocks": [
+      {"type": "code", "title": "The ntfy-send command the plugin puts on your PATH", "code": "ntfy-send -s https://ntfy.sh \"Build finished\" -t \"my-repo\" -p 4 -o my-topic\nntfy-send --help   # self-check: prints usage and exits 0"},
+      {"type": "table", "title": "What the flags in that example mean", "columns": ["Flag", "Meaning"], "rows": [
+        ["`-s`", "the server"],
+        ["`-t`", "the title"],
+        ["`-p`", "the priority"],
+        ["`-o`", "the topic"],
+        ["`-T`", "tags"]
+      ]},
+      {"type": "code", "title": "The same kind of push with plain curl", "code": "curl -H \"Title: Build failed\" \\\n     -H \"Priority: high\" \\\n     -H \"Tags: warning,rotating_light\" \\\n     -d \"CI pipeline failed on main branch\" \\\n     https://ntfy.sh/ci-alerts"},
+      {"type": "chain", "title": "What that curl example does", "nodes": [
+        {"icon": "warning", "label": "Build failed alert", "note": "Title \"Build failed\", priority high, tags warning and rotating_light."},
+        {"icon": "server", "label": "ntfy.sh topic ci-alerts", "arrow": "posted to"},
+        {"icon": "bolt", "label": "Subscribers notified", "arrow": "then", "outcome": true}
+      ]}
+    ]},
+    {"heading": "A printed id means the server accepted it", "short": "Check it worked", "blocks": [
+      {"type": "before_after", "before": {"label": "Accepted", "text": "A successful send prints a JSON line containing an \"id\" field. Claude checks for it rather than assuming the notification landed."}, "after": {"label": "Refused", "text": "`ntfy-send` exits with an error on an HTTP error, such as a bad or expired token or a topic you are not allowed to use."}}
+    ]}
+  ],
+  "next_action": {
+    "text": "Ask Claude \"Ping me on ntfy when this build finishes\" while a build runs.",
+    "detail": "If ntfy is not set up yet, run /ntfy:configure or ask \"set up ntfy on my phone\" for a step-by-step walkthrough."
+  },
+  "sources": [
+    {"label": "ntfy plugin on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/ntfy"}
+  ]
+}

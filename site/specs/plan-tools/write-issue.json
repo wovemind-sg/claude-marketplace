@@ -1,0 +1,53 @@
+{
+  "title": "Write an Issue",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "file", "label": "Describe the later work"},
+    {"icon": "flag", "label": "Label is ready", "arrow": "checks label"},
+    {"icon": "check-circle", "label": "Issue link returned", "arrow": "opens issue", "outcome": true}
+  ]},
+  "bottom_line": "Type the command with a description of work you want done later. It opens a GitHub issue labeled `ai` and gives you its link.",
+  "sections": [
+    {"heading": "Run it with a description of the work for later", "short": "Run it", "blocks": [
+      {"type": "code", "code": "/plan-tools:write-issue <description of the work to do later> [--label <name>]", "caption": "The description is required. The label is optional."},
+      {"type": "table", "title": "What you can pass", "columns": ["Part", "Required?", "What it does"], "rows": [
+        ["Description of the work to do later", "Yes", "The command derives the issue's short title from it and writes the body from it and the conversation."],
+        ["`--label <name>`", "No", "Uses `<name>` instead of `ai` as the label on the issue. Without it, the label is `ai`."]
+      ]},
+      {"type": "before_after", "before": {"label": "You type", "text": "fix null check in auth middleware"}, "after": {"label": "Issue title", "text": "Fix null check in auth middleware"}, "caption": "The command derives a short title from what you typed."},
+      {"type": "text", "text": "A typical case is a bug found during review that is out of scope for the current PR. You record it now and pick it up later."}
+    ]},
+    {"heading": "You need the GitHub CLI signed in with push access", "short": "Before you start", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "git installed", "state": "done", "text": "The plugin needs `git` alongside the GitHub CLI."},
+        {"title": "GitHub CLI signed in", "state": "done", "text": "Install `gh` and sign in with `gh auth login`, with push access to the repository. Every issue, PR and status command goes through `gh`."}
+      ]}
+    ]},
+    {"heading": "Five steps take your sentence to a finished issue", "short": "What happens", "blocks": [
+      {"type": "stepper", "steps": [
+        {"title": "Makes sure the label exists", "text": "If the `ai` label (or your `--label` name) is not in the repository yet, it creates it, with the description \"Queued for autonomous implementation\"."},
+        {"title": "Writes a short title", "text": "It turns your description into a short title, for example `Fix null check in auth middleware`."},
+        {"title": "Writes a self-contained body", "text": "The body says what is wrong or needed, where (file and line if known), and any context from the current conversation that a future session would need to act on it without working it out again."},
+        {"title": "Creates the issue", "text": "It opens the issue on GitHub with that title, body and label."},
+        {"title": "Gives you the link", "text": "You should see the new issue's URL in the reply."}
+      ]}
+    ]},
+    {"heading": "It only records the work and never starts it", "short": "What it skips", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Records the work", "state": "good", "text": "One labeled GitHub issue, ready to be picked up and done later."},
+        {"title": "Does not implement it", "state": "bad", "text": "The command makes no code changes. It only records the work for later."}
+      ]},
+      {"type": "table", "title": "The same `ai` label is shared across the plugin", "columns": ["Default", "Used by", "Change it with"], "rows": [
+        ["Deferred work goes into GitHub issues labeled `ai`", "`write-issue`, `impl-issue`, `impl-issue-lite`, `drain-issues`, `finalize-pr`, `convert-residual`", "`--label <name>`"]
+      ]},
+      {"type": "text", "text": "Later, `/plan-tools:impl-issue` picks up `ai`-labeled issues. `/plan-tools:finalize-pr` also calls this command once for each big leftover item."}
+    ]}
+  ],
+  "next_action": {
+    "text": "Type `/plan-tools:write-issue` followed by one sentence describing the work you want done later.",
+    "detail": "Add `--label <name>` if you want a label other than `ai`."
+  },
+  "sources": [
+    {"label": "plan-tools on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/plan-tools"}
+  ]
+}

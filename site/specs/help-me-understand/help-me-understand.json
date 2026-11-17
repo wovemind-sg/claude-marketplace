@@ -1,0 +1,137 @@
+{
+  "title": "Help Me Understand",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "file", "label": "Long or tangled text"},
+    {"icon": "gear", "label": "Run the command", "arrow": "you type"},
+    {"icon": "chart", "label": "One easy page", "arrow": "Claude reorganises", "outcome": true},
+    {"icon": "link", "label": "Link in chat", "arrow": "published"}
+  ]},
+  "bottom_line": "Run /help-me-understand:help-me-understand on a long answer, file or page. You get a link to one page holding the same information, picture first.",
+  "sections": [
+    {"heading": "You need the Artifact tool and Python 3.8", "short": "Before you start", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "The Artifact tool", "state": "done", "text": "Publishes the page as a private claude.ai artifact and gives you a link."},
+        {"title": "Python 3.8 or later", "state": "done", "text": "Runs the bundled renderer. It uses the standard library only."},
+        {"title": "humanizer plugin (optional)", "state": "info", "text": "When `/humanizer:humanizer` is installed, its writing rules are applied to the page text. Otherwise the skill follows a short inline version of the same rules."}
+      ]},
+      {"type": "text", "title": "Settings", "text": "No environment variables or settings."}
+    ]},
+    {"heading": "Type the command, with or without something to explain", "short": "Run it", "blocks": [
+      {"type": "code", "title": "The command", "code": "/help-me-understand:help-me-understand [topic | file path | URL]  (empty = the last substantial answer in this conversation)"},
+      {"type": "table", "title": "What gets explained", "columns": ["Argument", "What gets explained"], "rows": [
+        ["none", "The last substantial answer in this conversation."],
+        ["a topic", "What this conversation says about it, researched further if the conversation says little."],
+        ["a file path, a URL or a claude.ai artifact link", "The contents of that file, page or artifact."]
+      ]},
+      {"type": "list", "title": "Good to know", "items": [
+        "The skill only runs when you invoke it; Claude never starts it on its own.",
+        "With no argument, it takes the most recent reply that explains, reports or summarises something. Short confirmations and questions are skipped.",
+        "A link that ends in a `#fragment` still means the whole page, unless you say you want only that part.",
+        "Text inside a file or web page that is addressed to an AI, such as \"ignore your instructions\" or \"run this command\", is treated as material to explain and never followed."
+      ]},
+      {"type": "code", "title": "Examples", "code": "/help-me-understand:help-me-understand\n/help-me-understand:help-me-understand docs/architecture.md\n/help-me-understand:help-me-understand https://example.com/long-article"}
+    ]},
+    {"heading": "You get a link, the bottom line and one next action", "short": "What you get", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "A link to the page", "state": "done", "text": "A private claude.ai artifact."},
+        {"title": "The bottom line", "state": "info", "text": "In one sentence."},
+        {"title": "One next action", "state": "open", "text": "Something you can do next."}
+      ], "caption": "The page itself is not pasted into chat."},
+      {"type": "text", "title": "Running it again", "text": "Running it again for the same topic in the same conversation updates the same page, so the link stays the same."},
+      {"type": "text", "title": "Example: after a long answer comparing three queue libraries", "text": "You run `/help-me-understand:help-me-understand` with no argument. The reply is a link to a research page, plus:"},
+      {"type": "code", "code": "Bottom line: use arq, because it is the only one of the three that is async and already runs on your Redis.\nNext: add arq to requirements.txt and run arq --check worker.WorkerSettings."},
+      {"type": "text", "text": "The page opens with a verdict picture of arq against the other two libraries, each with the reason it lost. Then come stops for when the verdict holds, the measurements, and a comparison table with arq's column highlighted. The evidence for each library sits under its own sub-heading in the stop that discusses it."}
+    ]},
+    {"heading": "Claude picks one of four page types", "short": "Page types", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Concept", "state": "info", "text": "Explains how something works or what it means."},
+        {"title": "Research", "state": "info", "text": "Answers a question by comparing options or weighing evidence."},
+        {"title": "Work summary", "state": "info", "text": "Reports what was done, what changed and what is left."},
+        {"title": "How-to", "state": "info", "text": "Tells the reader how to do something, in order."}
+      ], "caption": "Each type has its own section order."}
+    ]},
+    {"heading": "The page opens with the whole idea, then numbered stops", "short": "The page", "blocks": [
+      {"type": "flow", "title": "The page from top to bottom", "nodes": [
+        {"id": "top", "label": "Title, gist picture, bottom line"},
+        {"id": "stop", "label": "You may stop here line"},
+        {"id": "route", "label": "Route of numbered stops"},
+        {"id": "stops", "label": "Stops: visual, then full detail"},
+        {"id": "drawers", "label": "Full detail and Also worth knowing"},
+        {"id": "end", "label": "Next action and sources"}
+      ], "edges": [
+        {"from": "top", "to": "stop", "label": "then"},
+        {"from": "stop", "to": "route", "label": "then"},
+        {"from": "route", "to": "stops", "label": "then"},
+        {"from": "stops", "to": "drawers", "label": "then"},
+        {"from": "drawers", "to": "end", "label": "then"}
+      ]},
+      {"type": "list", "title": "What each part holds", "items": [
+        "The title, then one panel with the gist picture and the bottom line (25 words at most). The gist is a chain from cause to outcome, a verdict of the winner against the alternatives, or a status of tallies with state icons.",
+        "One quiet line saying the reader may stop there, with the number of stops and the reading time (about 200 words per minute, counting only what shows without opening a collapsed block).",
+        "A route of up to twelve numbered stops that marks the stop in view, and a scroll progress bar.",
+        "Stops, each drawn as its own sheet, that lead with a visual and then give the stop's full detail under sub-headings, including tables of any length and verbatim code listings.",
+        "Collapsed notes inside a stop for bulky verbatim material such as a long listing, each labelled with what it holds.",
+        "A collapsed \"Full detail\" drawer only for material that belongs to no single stop, then \"Also worth knowing\", a collapsed block for asides.",
+        "One \"Next action\" card and the sources."
+      ]},
+      {"type": "list", "title": "The visuals a stop can lead with", "items": [
+        "Big figures.",
+        "Icon arrays for proportions.",
+        "Chains.",
+        "Cards with pros and cons or states.",
+        "Numbered stepper (Back, Next, Start over).",
+        "Comparison table.",
+        "Bar chart.",
+        "Dot chart.",
+        "Flow diagram.",
+        "Timeline.",
+        "Before and after pair.",
+        "\"Check yourself\" click-to-reveal prompts (concept pages only).",
+        "Glossary strip.",
+        "A slot for a bespoke SVG diagram."
+      ]},
+      {"type": "text", "text": "Icons come from a closed built-in set and always sit next to a text label."},
+      {"type": "list", "title": "Reading comfort", "items": [
+        "Light and dark themes.",
+        "Running text held to about 65 characters per line, while tables, cards, chains and charts use the full page width.",
+        "Keyboard access with visible focus.",
+        "No autoplaying motion.",
+        "No external scripts, fonts or images.",
+        "With JavaScript off, every stepper step is visible and the route is a plain list of links.",
+        "When printed, every step and every collapsed block is shown."
+      ]}
+    ]},
+    {"heading": "The page keeps every detail of the original", "short": "Nothing dropped", "blocks": [
+      {"type": "before_after", "before": {"label": "The original", "text": "A research finding, answer or work summary that is too long or too tangled to follow."}, "after": {"label": "The page", "text": "The same information, including every table row, list item and code listing, with each detail in the stop it belongs to. It does not summarise."}},
+      {"type": "table", "title": "Defaults and why", "columns": ["Default", "Why"], "rows": [
+        ["A picture of the whole idea first, and a visual in every stop", "A plain first screen makes readers more willing to start, and pictures of structure, quantity and sequence help comprehension."],
+        ["Same information as the source, checked by a coverage pass", "A page that says less than its source sends the reader back to the original."],
+        ["Length limits on labels and headings only, enforced by the renderer", "Short labels keep the layout readable. Limits on how much a page may hold forced detail off the page, so those are set high."],
+        ["Detail visible by default, under sub-headings in its stop", "A reader looking for a detail finds it where the idea is explained; only bulky listings are collapsed, with a label saying what is inside."],
+        ["Bars and dots only, labelled directly, bar axes from zero", "Position and length are read most accurately, and labels on the mark avoid a legend."],
+        ["Animation only as a reader-controlled stepper", "Motion that plays on its own runs past a reader who is still thinking."],
+        ["No decoration, fun facts or story hooks", "Off-topic material lowers what readers remember."],
+        ["Full plain English, even when a terse or caveman mode is active", "The reader asked for this because the original was hard to follow."]
+      ]},
+      {"type": "list", "title": "Limits worth knowing", "items": [
+        "Effects of design principles are smaller on self-paced pages like these than in lab settings.",
+        "No controlled study tests headings, chunking, progress bars or time estimates in adults with ADHD. The ADHD-specific choices (reading time, progress bar, collapsed tangents, one next action) are reasonable extrapolations from working-memory research, not tested findings."
+      ]}
+    ]},
+    {"heading": "If something is missing, Claude tells you", "short": "If stuck", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "No Artifact tool", "state": "warn", "text": "You get no link. The HTML file stays on disk instead.", "points": [{"sign": "+", "text": "You get the file's full path; it opens in any browser."}]},
+        {"title": "Nothing to explain", "state": "warn", "text": "You gave no argument and there is no substantial answer yet.", "points": [{"sign": "+", "text": "Claude asks you what to explain and stops."}]},
+        {"title": "The URL will not load", "state": "warn", "text": "The page could not be fetched.", "points": [{"sign": "+", "text": "Claude tells you and stops."}]}
+      ]}
+    ]}
+  ],
+  "next_action": {
+    "text": "After a long answer you found hard to follow, type `/help-me-understand:help-me-understand` with no argument.",
+    "detail": "It reorganises the last substantial answer in the conversation into a page and replies with its link."
+  },
+  "sources": [
+    {"label": "help-me-understand plugin on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/help-me-understand"}
+  ]
+}

@@ -1,0 +1,392 @@
+{
+  "title": "Launch Video Setup",
+  "page_type": "how-to",
+  "gist": {
+    "kind": "chain",
+    "nodes": [
+      {
+        "icon": "rocket",
+        "label": "Run the setup command"
+      },
+      {
+        "icon": "search",
+        "label": "Checker lists what's missing",
+        "arrow": "checks your computer"
+      },
+      {
+        "icon": "gear",
+        "label": "Fix one item each",
+        "arrow": "one by one"
+      },
+      {
+        "icon": "check-circle",
+        "label": "Everything is set up",
+        "arrow": "checker confirms",
+        "outcome": true
+      }
+    ]
+  },
+  "bottom_line": "Run the setup command once inside your app's repo. Claude checks the tools the launch videos need and installs what is missing, step by step.",
+  "sections": [
+    {
+      "heading": "Run it once, inside your app's repo",
+      "short": "Start",
+      "blocks": [
+        {
+          "type": "text",
+          "text": "In Claude Code, open your app's repo and type the command below. You only need it the first time. It takes no arguments."
+        },
+        {
+          "type": "code",
+          "code": "/launch-video:launch-video-setup",
+          "caption": "First time only: checks and installs tools."
+        },
+        {
+          "type": "cards",
+          "title": "What it does for you and what it asks of you",
+          "cards": [
+            {
+              "title": "Claude does",
+              "state": "done",
+              "text": "Everything a command can do: installing packages, editing PATH, creating the emulator, writing the key file."
+            },
+            {
+              "title": "You do",
+              "state": "open",
+              "text": "Only what needs a human: creating an account, clicking through an installer, approving a password prompt."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "The setup skill prepares your computer so the other launch-video skills can run, and it is written for people who may be non-technical. It finds what is missing and fixes it."
+        },
+        {
+          "type": "text",
+          "title": "When to use it",
+          "text": "Use it when you are setting up, installing or preparing for the launch video, when one of the launch-video skills reports something MISSING, when you ask \"what do I need\" for the video, or when a launch-video script fails because a tool is not found."
+        },
+        {
+          "type": "list",
+          "title": "What it can check and install",
+          "items": [
+            "ffmpeg, the program that stitches video clips together, built with libass for captions",
+            "Python 3.9+ and the pillow package",
+            "An ElevenLabs key for the voice-over (a free ElevenLabs account)",
+            "For Android apps: Java, the Android command-line tools and emulator (or a real phone), and Maestro",
+            "For web apps: Playwright and Chromium, or in the skill's own words the /playwright-cli skill"
+          ]
+        },
+        {
+          "type": "text",
+          "text": "The README also lists a free HeyGen or Synthesia account for the presenter clips. That part is manual and guided."
+        }
+      ]
+    },
+    {
+      "heading": "You are only ever asked to do one thing at a time",
+      "short": "One step rule",
+      "blocks": [
+        {
+          "type": "chain",
+          "title": "One message, one action",
+          "nodes": [
+            {
+              "icon": "user",
+              "label": "Claude gives one action"
+            },
+            {
+              "icon": "check",
+              "label": "You say it's done",
+              "arrow": "\"Tell me when\""
+            },
+            {
+              "icon": "search",
+              "label": "Claude checks it worked",
+              "arrow": "runs a command",
+              "outcome": true
+            }
+          ],
+          "caption": "Claude never takes \"done\" on faith. If the step did not work, it says what it saw in one sentence and gives the next single thing to try."
+        },
+        {
+          "type": "list",
+          "title": "What that means in practice",
+          "items": [
+            "Each message ends with exactly one action for you, in plain language, followed by \"Tell me when that's done\".",
+            "Even if three things are missing, they are handled one at a time.",
+            "Jargon comes with a one-phrase explanation, for example \"ffmpeg (the program that stitches video clips together)\"."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "The setup runs in four steps",
+      "short": "The steps",
+      "blocks": [
+        {
+          "type": "stepper",
+          "steps": [
+            {
+              "title": "Find out what you are making",
+              "text": "If the conversation or the repo does not make it clear, Claude asks one question: \"Is your launch video for a phone app (Android) or for a web app?\" An `AndroidManifest.xml` or `build.gradle` means Android app; a FastAPI, Django or Next.js project means web app."
+            },
+            {
+              "title": "Run the checker",
+              "text": "The checker prints an OK/MISSING table for app, webapp or both. Claude tells you briefly what is already fine and how many things are missing, for example \"Three things need installing; let's go one at a time.\", then goes straight to the first missing item."
+            },
+            {
+              "title": "Fix missing items one at a time",
+              "text": "If a command can install it, Claude runs it and tells you in one sentence, such as \"Installing ffmpeg now, this takes a minute.\" An admin password prompt is then your one action. Sign-ups, installers or plugging in a phone get a single next action. Claude re-runs the checker before moving on."
+            },
+            {
+              "title": "Confirm and hand over",
+              "text": "When the checker prints \"everything is set up\", Claude tells you that you are ready and that the next thing to do is run `/launch-video:launch-video-app` or `/launch-video:launch-video-webapp`."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "title": "Order for Android",
+          "text": "For an Android app the order matters: Java, then the Android tools, then Maestro. The virtual device is created after the emulator exists."
+        }
+      ]
+    },
+    {
+      "heading": "The checker looks for these items",
+      "short": "What it checks",
+      "blocks": [
+        {
+          "type": "stats",
+          "items": [
+            {
+              "value": "5",
+              "label": "Always needed",
+              "icon": "check",
+              "note": "checked every time"
+            },
+            {
+              "value": "5",
+              "label": "Android app recording",
+              "icon": "server",
+              "note": "for phone apps"
+            },
+            {
+              "value": "2",
+              "label": "Web app recording",
+              "icon": "cloud",
+              "note": "for web apps"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "columns": [
+            "Group",
+            "Item",
+            "What it is for"
+          ],
+          "rows": [
+            [
+              "Always needed",
+              "ffmpeg",
+              "Video assembly tool"
+            ],
+            [
+              "Always needed",
+              "ffmpeg captions (libass)",
+              "Burns in captions"
+            ],
+            [
+              "Always needed",
+              "python3",
+              "3.9 or newer, for the helper scripts"
+            ],
+            [
+              "Always needed",
+              "python: pillow",
+              "Image library"
+            ],
+            [
+              "Always needed",
+              "ElevenLabs key",
+              "Voice-over; free account at elevenlabs.io"
+            ],
+            [
+              "Android app recording",
+              "java",
+              "Needed by Android tools and Maestro"
+            ],
+            [
+              "Android app recording",
+              "adb",
+              "Android platform-tools"
+            ],
+            [
+              "Android app recording",
+              "emulator",
+              "Android emulator (or connect a real phone with USB debugging)"
+            ],
+            [
+              "Android app recording",
+              "virtual device",
+              "An Android virtual device (AVD)"
+            ],
+            [
+              "Android app recording",
+              "maestro",
+              "Drives the app during recording"
+            ],
+            [
+              "Web app recording",
+              "node",
+              "Needed to run the /playwright-cli skill"
+            ],
+            [
+              "Web app recording",
+              "playwright-cli",
+              "Installed with `npm install -g @playwright/cli@latest`"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Your ElevenLabs key is stored in your home folder",
+      "short": "Your key",
+      "blocks": [
+        {
+          "type": "stepper",
+          "steps": [
+            {
+              "title": "Create a free account",
+              "text": "Claude walks you through creating a free account at elevenlabs.io."
+            },
+            {
+              "title": "Create a key",
+              "text": "Go to Profile → API Keys → Create."
+            },
+            {
+              "title": "Paste it into the chat",
+              "text": "Claude writes it to `~/.launch-video/env` as `ELEVENLABS_API_KEY=<key>`, creates the folder, runs `chmod 600` on the file, and confirms with the checker. It never echoes the key back in full afterwards."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "The key is read from the `ELEVENLABS_API_KEY` environment variable, or from the file `~/.launch-video/env`."
+        },
+        {
+          "type": "text",
+          "text": "All configuration lives in `~/.launch-video/`, never inside the plugin's own folder. A plugin update replaces that folder, and your home folder is the only place that survives an update. The plugin turns an app repo into a launch/promo video: AI presenter intro/outro, real screen recordings, voice-over, and captions. It has no plugin settings, no dependencies and no userConfig."
+        }
+      ]
+    },
+    {
+      "heading": "Common snags have a known fix",
+      "short": "Snags",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Emulator install is painful",
+              "state": "warn",
+              "text": "A real Android phone works instead and skips the emulator and virtual device steps. If you have one handy and the emulator install is painful, Claude offers it.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Claude offers one action: enable USB debugging and plug it in."
+                }
+              ]
+            },
+            {
+              "title": "You are on Windows",
+              "state": "warn",
+              "text": "The scripts are bash and run on macOS and Linux. Git Bash is not enough for the Android emulator.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Use WSL (Ubuntu) and run everything inside it."
+                }
+              ]
+            },
+            {
+              "title": "Installed but not on PATH",
+              "state": "warn",
+              "text": "The checker says so, and Claude adds a line to your shell profile.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Open a new terminal window and run the setup command again."
+                }
+              ]
+            },
+            {
+              "title": "Captions (libass) missing",
+              "state": "warn",
+              "text": "On macOS, Homebrew's plain `ffmpeg` is built without libass, so captions cannot work.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Claude reinstalls a libass-enabled ffmpeg itself, with no admin password."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "title": "Windows details",
+          "text": "If the checker reports \"Windows (Git Bash)\", the first single action is installing WSL."
+        },
+        {
+          "type": "text",
+          "title": "PATH details",
+          "text": "The shell profile is `~/.zshrc` on macOS and `~/.bashrc` on Linux or WSL."
+        },
+        {
+          "type": "text",
+          "title": "The captions fix",
+          "text": "This is a same-for-same reinstall, not data loss. Claude runs this command:"
+        },
+        {
+          "type": "code",
+          "code": "brew uninstall ffmpeg && brew tap homebrew-ffmpeg/ffmpeg && brew install homebrew-ffmpeg/ffmpeg/ffmpeg"
+        }
+      ]
+    },
+    {
+      "heading": "Done means the checker says everything is set up",
+      "short": "Done",
+      "blocks": [
+        {
+          "type": "before_after",
+          "before": {
+            "label": "Before",
+            "text": "The checker shows one or more MISSING lines, and the launch-video skills report something MISSING."
+          },
+          "after": {
+            "label": "After",
+            "text": "The checker prints \"everything is set up\", and Claude points you to `/launch-video:launch-video-app` or `/launch-video:launch-video-webapp`."
+          }
+        },
+        {
+          "type": "text",
+          "title": "Coming back later",
+          "text": "If you come back later, Claude just runs the checker again, because it is the source of truth. It does not ask what you did last time."
+        }
+      ]
+    }
+  ],
+  "next_action": {
+    "text": "Open your app's repo in Claude Code and run `/launch-video:launch-video-setup`.",
+    "detail": "It is only needed the first time, and Claude asks you for one thing at a time."
+  },
+  "sources": [
+    {
+      "label": "launch-video plugin on GitHub",
+      "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/launch-video"
+    }
+  ]
+}

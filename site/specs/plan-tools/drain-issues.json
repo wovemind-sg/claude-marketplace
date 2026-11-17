@@ -1,0 +1,86 @@
+{
+  "title": "Drain the Issue Queue",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "flag", "label": "Open `ai` issues"},
+    {"icon": "code", "label": "Build, review, test", "arrow": "one per cycle"},
+    {"icon": "check-circle", "label": "PR merged", "arrow": "checks pass"},
+    {"icon": "mail", "label": "None left, notification sent", "arrow": "repeat until empty", "outcome": true}
+  ]},
+  "bottom_line": "It works through every open GitHub issue labeled `ai` one by one, merging a PR for each, until none remain, then sends a push notification.",
+  "sections": [
+    {"heading": "It commits, pushes and merges on its own, so agree first", "short": "Read this first", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Fully automatic by design", "state": "warn", "text": "It auto-commits, auto-pushes and auto-merges without asking at each step. That is its entire purpose."},
+        {"title": "Confirm before the first run", "state": "info", "text": "Claude confirms with you before the first run that this is what you want for this repository and branch."}
+      ]}
+    ]},
+    {"heading": "Set up the GitHub CLI and ntfy before you start", "short": "Before you start", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "git and GitHub CLI", "state": "done", "text": "Install `git` and `gh`, signed in with `gh auth login`, with push access to the repository. Every issue, PR and status command goes through `gh`."},
+        {"title": "ntfy server set", "state": "done", "text": "The `ntfy` plugin installs with plan-tools; its `ntfy:ntfy` skill sends the push notifications. Set its `server` setting first; see the ntfy README."},
+        {"title": "Issues to work on", "state": "done", "text": "Open GitHub issues labeled `ai` (or your `--label` name). `/plan-tools:write-issue` creates these."}
+      ]},
+      {"type": "text", "text": "Installing plan-tools installs `ntfy` together with its other dependencies, `fastapi-template` and `htmx-vs-alpine`."}
+    ]},
+    {"heading": "Run it bare, or pick a model and a label", "short": "Run it", "blocks": [
+      {"type": "code", "code": "/plan-tools:drain-issues [optional model override, e.g. \"opus\" — defaults to sonnet] [--label <name>]", "caption": "Both parts are optional."},
+      {"type": "table", "title": "What you can pass", "columns": ["Part", "Example", "Default", "What it does"], "rows": [
+        ["Model override", "`opus`", "`sonnet`", "The model each cycle's helper runs on. One of `sonnet`, `opus`, `haiku`, `fable`."],
+        ["`--label <name>`", "`--label backlog`", "`ai`", "Works through issues with `<name>` instead of `ai`, uses it in the notifications, and passes it on to `impl-issue`, `finalize-pr` and `write-issue` in every cycle."]
+      ]},
+      {"type": "code", "title": "Example: issues labeled backlog, on opus", "code": "/plan-tools:drain-issues opus --label backlog"},
+      {"type": "table", "title": "Defaults shared across the plugin", "columns": ["Default", "Used by", "Change it with"], "rows": [["Deferred work goes into GitHub issues labeled `ai`", "`write-issue`, `impl-issue`, `impl-issue-lite`, `drain-issues`, `finalize-pr`, `convert-residual`", "`--label <name>`"], ["Helpers run on the `sonnet` model", "`impl-issue`, `impl-issue-lite`, `drain-issues`", "A model word in the arguments, for example `opus`"]]},
+      {"type": "text", "text": "Before the loop starts, it works out the repository's main branch once. If that is unclear, it asks you."}
+    ]},
+    {"heading": "Each issue goes through one full cycle, then the loop repeats", "short": "One cycle", "blocks": [
+      {"type": "stepper", "steps": [
+        {"title": "Checks for work", "text": "It looks for an open issue with the label. If there is none, it sends \"No issues left — no open ai-labeled issues\" with title \"drain-issues\" and priority 4, and stops."},
+        {"title": "Implements the oldest issue", "text": "A fresh helper, on the chosen model and with a clean context, runs in the background. It follows `impl-issue`: a branch off the main branch, the fix, and a commit with a `Closes #<number>` line."},
+        {"title": "Reviews and tests", "text": "It follows `finalize-pr` on the change: code review with fixes (`code-review --fix`), a test plan written and run, and leftover items recorded as new issues with `write-issue`."},
+        {"title": "Opens the PR", "text": "It pushes the branch and opens a PR with the `Closes #<number>` line, so the issue closes on merge. New follow-up issues are listed under a \"Follow-ups\" section."},
+        {"title": "Waits for checks, then merges", "text": "It checks the PR's checks every 5 minutes. When all pass, it merges. When any fail, it fixes the break, commits, pushes and keeps waiting."},
+        {"title": "Resets and goes again", "text": "After a merge, it checks out the main branch, fetches, and resets it hard to `origin/<main branch>`. Then it goes back to the first step."}
+      ]},
+      {"type": "list", "title": "Each cycle reports back", "items": [
+        "The branch name.",
+        "The PR URL.",
+        "The issue number it closed.",
+        "The final status: merged, stopped for a decision, or stuck.",
+        "Any follow-up issues it opened."
+      ]}
+    ]},
+    {"heading": "You get a push notification whenever the loop stops", "short": "When it stops", "blocks": [
+      {"type": "text", "text": "What happens next depends on the final report of each cycle's helper."},
+      {"type": "flow", "title": "How a cycle can end", "nodes": [
+        {"id": "cycle", "label": "One cycle finishes"},
+        {"id": "merged", "label": "PR merged"},
+        {"id": "next", "label": "Reset, next issue"},
+        {"id": "decision", "label": "Needs your decision"},
+        {"id": "stuck", "label": "Stuck or unresolved failure"},
+        {"id": "stop", "label": "Loop stops, notification sent"}
+      ], "edges": [
+        {"from": "cycle", "to": "merged", "label": "success"},
+        {"from": "merged", "to": "next", "label": "then"},
+        {"from": "cycle", "to": "decision", "label": "blocker"},
+        {"from": "cycle", "to": "stuck", "label": "failure"},
+        {"from": "decision", "to": "stop", "label": "waits for you"},
+        {"from": "stuck", "to": "stop", "label": "then"}
+      ]},
+      {"type": "cards", "cards": [
+        {"title": "Needs your decision", "state": "warn", "text": "On something hard, significant, or a decision only you can make, the helper sends a notification describing the blocker and stops rather than guessing. The loop waits for you."},
+        {"title": "Stuck", "state": "blocked", "text": "On an unresolved failure, it sends a notification describing what is stuck and stops the loop."},
+        {"title": "Helper died mid-run", "state": "blocked", "text": "Every 20 minutes it checks the helper is alive. If it is gone without a completion report, it sends a notification that the cycle died mid-run and stops the loop."},
+        {"title": "Queue empty", "state": "done", "text": "When no open labeled issues remain, it sends \"No issues left\" and stops."}
+      ]},
+      {"type": "text", "text": "The 20-minute check is only a safety net for a helper that died silently. It does not replace the normal completion report."}
+    ]}
+  ],
+  "next_action": {
+    "text": "Set the ntfy plugin's `server` setting, then run `/plan-tools:drain-issues` and confirm when asked.",
+    "detail": "The plugin README says to set the ntfy `server` setting first; see the ntfy README."
+  },
+  "sources": [
+    {"label": "plan-tools on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/plan-tools"}
+  ]
+}

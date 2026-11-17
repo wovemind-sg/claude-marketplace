@@ -1,0 +1,78 @@
+{
+  "title": "Implement a Small Issue",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "flag", "label": "Pick a small issue"},
+    {"icon": "search", "label": "Confirm it is trivial", "arrow": "reads it"},
+    {"icon": "code", "label": "Build and test", "arrow": "new branch"},
+    {"icon": "rocket", "label": "PR that closes it", "arrow": "opens PR", "outcome": true}
+  ]},
+  "bottom_line": "For a small, obvious GitHub issue labeled `ai`: it implements the fix and opens a PR, skipping the full review and test-plan cycle.",
+  "sections": [
+    {"heading": "Use the lite path only for small, obvious fixes", "short": "When to use", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Use impl-issue-lite", "state": "good", "text": "A few-line fix, a single well-scoped change, no design decision to make. A separate review pass and formal test plan would be overkill."},
+        {"title": "Use impl-issue instead", "state": "bad", "text": "The issue spans several files or components, involves a design or ordering decision, or the approach is not obvious."}
+      ], "caption": "If the issue turns out not to be small once read in full, the command stops and tells you to use `/plan-tools:impl-issue`."},
+      {"type": "text", "text": "It is the same as `/plan-tools:impl-issue` for one small, mechanically obvious residual work item (an `ai` issue), except that it skips the full `finalize-pr` cycle: its code review, its formal test plan and its recording of leftover work as new issues."}
+    ]},
+    {"heading": "Run it bare for your oldest issue, or name one", "short": "Run it", "blocks": [
+      {"type": "code", "code": "/plan-tools:impl-issue-lite [issue number] [model override, e.g. \"opus\"] [--label <name>]", "caption": "Every part is optional. The issue number and the model can come in either order."},
+      {"type": "table", "title": "What you can pass", "columns": ["Part", "Example", "Default", "What it does"], "rows": [
+        ["Issue number", "`123` or `#123`", "Your oldest open issue with the label", "Works on that issue directly."],
+        ["Model override", "`opus`", "`sonnet`", "The model the helper runs on. One of `sonnet`, `opus`, `haiku`, `fable`."],
+        ["`--label <name>`", "`--label backlog`", "`ai`", "Looks for issues with `<name>` instead of `ai`."]
+      ]},
+      {"type": "flow", "title": "Which issue it works on", "nodes": [
+        {"id": "start", "label": "You run the command"},
+        {"id": "given", "label": "Uses that issue"},
+        {"id": "oldest", "label": "Oldest open labeled issue you opened"},
+        {"id": "none", "label": "Stops and tells you"}
+      ], "edges": [
+        {"from": "start", "to": "given", "label": "number given"},
+        {"from": "start", "to": "oldest", "label": "no number"},
+        {"from": "oldest", "to": "none", "label": "none found"}
+      ], "caption": "Without a number, it only looks at open issues with the label that you opened. If there are none, it never picks a different issue."},
+      {"type": "table", "title": "Defaults shared across the plugin", "columns": ["Default", "Used by", "Change it with"], "rows": [["Deferred work goes into GitHub issues labeled `ai`", "`write-issue`, `impl-issue`, `impl-issue-lite`, `drain-issues`, `finalize-pr`, `convert-residual`", "`--label <name>`"], ["Helpers run on the `sonnet` model", "`impl-issue`, `impl-issue-lite`, `drain-issues`", "A model word in the arguments, for example `opus`"]]},
+      {"type": "cards", "title": "Before you start", "cards": [
+        {"title": "git and GitHub CLI", "state": "done", "text": "Install `git` and `gh`, signed in with `gh auth login`, with push access to the repository. Every issue, PR and status command goes through `gh`."},
+        {"title": "A small issue", "state": "done", "text": "An open GitHub issue labeled `ai` (or your `--label` name) that is small and mechanically obvious."}
+      ]}
+    ]},
+    {"heading": "A helper checks the size, builds the fix and opens the PR", "short": "What happens", "blocks": [
+      {"type": "stepper", "steps": [
+        {"title": "Reads the whole issue", "text": "One helper, on the chosen model, fetches the issue and reads it in full before writing any code."},
+        {"title": "Confirms it is trivial", "text": "If the change is not small and mechanically obvious, it stops and reports that the issue needs `/plan-tools:impl-issue` instead."},
+        {"title": "Starts a fresh branch", "text": "It branches from the latest version of the repository's default branch. It detects that branch's name and never assumes `main`."},
+        {"title": "Builds exactly what the issue asks", "text": "No extra features, refactors or files beyond what the issue describes."},
+        {"title": "Checks the work, then commits", "text": "Existing tests and build must pass, as applicable to the repository. It commits only complete work, never partial work, with a `Closes #<number>` line in the commit message."},
+        {"title": "Pushes and opens the PR", "text": "The PR has a title and body summarizing the change and carries the `Closes #<number>` line. If you have not already said yes to pushing in this session, it confirms the branch and base and asks first."}
+      ]}
+    ]},
+    {"heading": "It stops without pushing if the issue is big or checks fail", "short": "If it stops", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "No issue found", "state": "warn", "text": "It stops and tells you. It does not fall back to a different issue."},
+        {"title": "Issue is not trivial", "state": "warn", "text": "It stops without pushing or opening a PR.", "points": [{"sign": "+", "text": "Run `/plan-tools:impl-issue` for that issue instead"}]},
+        {"title": "A check fails", "state": "warn", "text": "If any verification step fails, such as tests or build, it stops and reports back without pushing or opening a PR."}
+      ]}
+    ]},
+    {"heading": "You get a summary, the closed issue number and the PR link", "short": "The result", "blocks": [
+      {"type": "before_after",
+        "before": {"label": "Before", "text": "An open, small GitHub issue labeled `ai`."},
+        "after": {"label": "After", "text": "A PR for that issue, carrying `Closes #<number>`, so merging it closes the issue."}},
+      {"type": "list", "title": "The reply contains", "items": [
+        "A summary of what changed.",
+        "The issue number it closes.",
+        "The PR link."
+      ]},
+      {"type": "text", "text": "The helper's summary is passed to you as it is, with no extra commentary or next steps it did not report."}
+    ]}
+  ],
+  "next_action": {
+    "text": "Run `/plan-tools:impl-issue-lite` followed by the number of a small `ai` issue.",
+    "detail": "Leave the number out to take your oldest open `ai` issue."
+  },
+  "sources": [
+    {"label": "plan-tools on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/plan-tools"}
+  ]
+}

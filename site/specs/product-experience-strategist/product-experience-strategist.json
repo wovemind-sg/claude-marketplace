@@ -1,0 +1,622 @@
+{
+  "title": "Product Experience Strategist",
+  "page_type": "how-to",
+  "gist": {
+    "kind": "chain",
+    "nodes": [
+      {
+        "icon": "user",
+        "label": "Ask about your product"
+      },
+      {
+        "icon": "search",
+        "label": "Checks the whole flow",
+        "arrow": "skill activates"
+      },
+      {
+        "icon": "lightbulb",
+        "label": "One strong recommendation",
+        "arrow": "then",
+        "outcome": true
+      }
+    ]
+  },
+  "bottom_line": "Ask Claude a product, UX or design question and it answers as a product strategist, designer and business lead in one, recommending the strongest solution.",
+  "sections": [
+    {
+      "heading": "It starts on its own for product work, or by command",
+      "short": "Start it",
+      "blocks": [
+        {
+          "type": "code",
+          "code": "/product-experience-strategist:product-experience-strategist",
+          "caption": "Type this in Claude Code to call the skill directly. It takes no arguments."
+        },
+        {
+          "type": "flow",
+          "title": "Two ways the skill starts",
+          "nodes": [
+            {
+              "id": "ask",
+              "label": "You ask about product work"
+            },
+            {
+              "id": "cmd",
+              "label": "You type the command"
+            },
+            {
+              "id": "skill",
+              "label": "Strategist skill runs"
+            }
+          ],
+          "edges": [
+            {
+              "from": "ask",
+              "to": "skill",
+              "label": "activates automatically"
+            },
+            {
+              "from": "cmd",
+              "to": "skill",
+              "label": "invoke directly"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "title": "What it is for",
+          "text": "Designing, reviewing and improving digital products and end-to-end user flows. It balances user needs, business goals, business model, compliance, platform requirements and technical feasibility."
+        },
+        {
+          "type": "list",
+          "title": "What makes it activate automatically",
+          "items": [
+            "Product decisions",
+            "UX/UI design or review",
+            "Onboarding and flow design",
+            "Growth and monetization work",
+            "Subscription design",
+            "AI feature design",
+            "Family/children product experiences",
+            "Consent and privacy flows",
+            "Accessibility",
+            "Implementation reviews"
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "There is nothing to install or configure first",
+      "short": "Before you start",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Requirements",
+              "state": "done",
+              "text": "None. The skill is prompt-only and needs no other tools or plugins."
+            },
+            {
+              "title": "Environment variables",
+              "state": "done",
+              "text": "None."
+            },
+            {
+              "title": "Arguments",
+              "state": "done",
+              "text": "None. The command takes no arguments."
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "title": "What does not ship with it",
+          "items": [
+            "No agents, scripts, or config ship with this skill; it is prompt-only.",
+            "No taste-profile data, project memory, decision logs, or run state ship either. Those are generated per user and per project the first time the skill is used on real work."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Example: it moves the account step after the value",
+      "short": "Example",
+      "blocks": [
+        {
+          "type": "text",
+          "text": "Ask Claude: \"Review our signup flow. Users have to create an account before they can see any of the app.\""
+        },
+        {
+          "type": "before_after",
+          "before": {
+            "label": "Your flow",
+            "text": "People must create an account before they see any value. This is where they are likely to drop off."
+          },
+          "after": {
+            "label": "Proposed flow",
+            "text": "People try the core feature first, and are asked for an account when they want to save their work."
+          },
+          "caption": "The revised flow is the kind of change the skill proposes for this request."
+        },
+        {
+          "type": "list",
+          "title": "What Claude does with this request",
+          "items": [
+            "Reviews the flow as a product strategist and designer would.",
+            "Weighs what the user gets against what the business needs at each step.",
+            "Points out where people are likely to drop off (here, asking for an account before showing any value).",
+            "Proposes a revised flow.",
+            "Checks the parts that are easy to miss, such as consent wording, privacy, accessibility, and whether the change is feasible to build."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "It weighs six things, not only how the screen looks",
+      "short": "Six things",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "User value",
+              "state": "info"
+            },
+            {
+              "title": "Business value",
+              "state": "info"
+            },
+            {
+              "title": "Correct flow",
+              "state": "info"
+            },
+            {
+              "title": "Compliance",
+              "state": "info"
+            },
+            {
+              "title": "Feasibility",
+              "state": "info"
+            },
+            {
+              "title": "Design quality",
+              "state": "info"
+            }
+          ],
+          "caption": "The skill balances: User value × Business value × Correct flow × Compliance × Feasibility × Design quality."
+        },
+        {
+          "type": "text",
+          "text": "It operates as a product strategist, principal UX/UI designer and business development lead in one. It balances user value, business value, correct flow, compliance and technical feasibility instead of optimizing for visual polish alone."
+        },
+        {
+          "type": "text",
+          "text": "A polished interface built on incorrect product logic is a failed design."
+        }
+      ]
+    },
+    {
+      "heading": "It asks you only what it cannot work out itself",
+      "short": "What it asks",
+      "blocks": [
+        {
+          "type": "flow",
+          "title": "Before it designs",
+          "nodes": [
+            {
+              "id": "need",
+              "label": "A fact it needs"
+            },
+            {
+              "id": "infer",
+              "label": "Inferred from context"
+            },
+            {
+              "id": "ask",
+              "label": "Asks you"
+            }
+          ],
+          "edges": [
+            {
+              "from": "need",
+              "to": "infer",
+              "label": "reliably inferable"
+            },
+            {
+              "from": "need",
+              "to": "ask",
+              "label": "not inferable"
+            }
+          ],
+          "caption": "Context means available product context, code, screenshots or documentation."
+        },
+        {
+          "type": "list",
+          "title": "What it determines, only as far as necessary",
+          "items": [
+            "Who is the user?",
+            "What are they trying to accomplish?",
+            "What is the product/business trying to accomplish?",
+            "What is the business model?",
+            "Where does this sit in the existing journey?",
+            "What constraints materially affect the solution?",
+            "What would success look like?"
+          ]
+        },
+        {
+          "type": "text",
+          "text": "It does no unnecessary discovery for simple tasks."
+        }
+      ]
+    },
+    {
+      "heading": "It treats your request as input and may recommend something stronger",
+      "short": "Challenges you",
+      "blocks": [
+        {
+          "type": "chain",
+          "nodes": [
+            {
+              "icon": "question",
+              "label": "Problem"
+            },
+            {
+              "icon": "user",
+              "label": "Requested solution",
+              "arrow": "then"
+            },
+            {
+              "icon": "check-circle",
+              "label": "Best solution",
+              "arrow": "then",
+              "outcome": true
+            }
+          ],
+          "caption": "Your request is an input, not automatically the correct solution."
+        },
+        {
+          "type": "list",
+          "items": [
+            "It keeps your intent while challenging weak implementation choices.",
+            "When one solution is clearly stronger, it recommends it rather than producing unnecessary alternatives.",
+            "It does not automatically agree with you. If the proposed solution is weak, it explains why and recommends the stronger one."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "It checks the whole journey, the business and the risks",
+      "short": "What it checks",
+      "blocks": [
+        {
+          "type": "flow",
+          "title": "The journey it checks, end to end",
+          "nodes": [
+            {
+              "id": "e",
+              "label": "Entry"
+            },
+            {
+              "id": "p",
+              "label": "Prerequisites"
+            },
+            {
+              "id": "a",
+              "label": "Action"
+            },
+            {
+              "id": "v",
+              "label": "Validation"
+            },
+            {
+              "id": "r",
+              "label": "Result"
+            },
+            {
+              "id": "n",
+              "label": "Next step"
+            },
+            {
+              "id": "rc",
+              "label": "Recovery"
+            }
+          ],
+          "edges": [
+            {
+              "from": "e",
+              "to": "p",
+              "label": "then"
+            },
+            {
+              "from": "p",
+              "to": "a",
+              "label": "then"
+            },
+            {
+              "from": "a",
+              "to": "v",
+              "label": "then"
+            },
+            {
+              "from": "v",
+              "to": "r",
+              "label": "then"
+            },
+            {
+              "from": "r",
+              "to": "n",
+              "label": "then"
+            },
+            {
+              "from": "n",
+              "to": "rc",
+              "label": "then"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "title": "Each area and what it looks at",
+          "columns": [
+            "Area",
+            "What it looks at"
+          ],
+          "rows": [
+            [
+              "States",
+              "The applicable ones: first-time, returning, empty, loading, disabled, success, error, cancellation, permission denied, expired, interrupted, destructive action, recovery. For new requirements: what happens to existing users?"
+            ],
+            [
+              "Actors and permissions",
+              "In multi-user products: account owner, current user, profile, administrator, parent/guardian, child, recipient, payer. Account ≠ person ≠ profile. Authentication (who is this?) versus authorization (are they allowed?)."
+            ],
+            [
+              "Business model",
+              "Acquisition, activation, engagement, retention, conversion, monetization, referral, trust, operational cost, plus AI/API cost, platform fees, support burden, refunds, fraud, manual operations, partner dependency. No dark patterns for short-term conversion."
+            ],
+            [
+              "Business development",
+              "When partners, platforms, APIs, suppliers or marketplaces are involved. Not forced into trivial UI tasks."
+            ],
+            [
+              "Compliance with minimum friction",
+              "No unnecessary consent screens, checkboxes, warnings, modals, repeated verification or confirmations. Permissions and consent are asked close to the relevant action."
+            ],
+            [
+              "AI features",
+              "Why AI improves the product, what data is sent, third parties, sensitivity, what happens to the data, user expectations, failure cases, cost per use, fit with the business model."
+            ],
+            [
+              "Design",
+              "UX, UX writing, UI quality (only after product logic and flow are sound) and accessibility (a baseline, not optional polish)."
+            ],
+            [
+              "Platform rules",
+              "Apple HIG, App Store rules, Android/Material guidance, Google Play policies, browser conventions, payment-provider rules, third-party SDK requirements."
+            ],
+            [
+              "Evidence",
+              "For an existing product, in order: running product behavior, current code/backend behavior, current specification, current design, historical documentation, assumption. If sources conflict, it surfaces the contradiction."
+            ],
+            [
+              "Metrics",
+              "For meaningful changes: primary outcome, leading indicator, guardrail."
+            ]
+          ]
+        },
+        {
+          "type": "list",
+          "title": "Compliance: when it looks deeper",
+          "items": [
+            "When the feature involves areas such as children/minors, parental consent, personal or sensitive data, photos, AI processing, third-party data sharing, identity/authentication, location, payments/subscriptions, health/financial information, marketing consent, tracking, account deletion, data retention, user-generated content.",
+            "It separates legal/policy requirement, product requirement, UX requirement, technical/security requirement and good practice.",
+            "It never presents uncertain legal interpretation as fact, and never claims a product is legally compliant solely because the UX appears appropriate.",
+            "It flags qualified legal review where genuinely necessary.",
+            "It researches current law and platform rules only when the issue materially affects the flow and could depend on jurisdiction, provider or time, preferring regulators, legislation and official platform documentation."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "It works in one of three modes, depending on what exists",
+      "short": "Three modes",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Review Mode",
+              "state": "info",
+              "text": "For an existing design: Understand → Diagnose → Prioritize → Correct → Polish."
+            },
+            {
+              "title": "Design Mode",
+              "state": "info",
+              "text": "For substantial new features. It does not jump directly to visual design."
+            },
+            {
+              "title": "Implementation Review Mode",
+              "state": "info",
+              "text": "When implementation exists: compares the actual implementation with what was intended."
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "title": "Review Mode",
+          "items": [
+            "It first identifies whether the issue is Product, Flow, UX, UI, Copy, Accessibility, Technical, Compliance, Growth or Monetization.",
+            "It prioritizes by severity × frequency × business impact × confidence, and fixes the highest-value problem first."
+          ]
+        },
+        {
+          "type": "list",
+          "title": "Design Mode steps",
+          "ordered": true,
+          "items": [
+            "Establish user + job",
+            "Establish business objective/model",
+            "Understand existing journey",
+            "Map actors and rules",
+            "Design flow",
+            "Resolve material compliance issues",
+            "Design interaction/states",
+            "Design UI",
+            "Verify",
+            "Refine only if materially necessary"
+          ]
+        },
+        {
+          "type": "list",
+          "title": "Implementation Review Mode",
+          "items": [
+            "It compares the actual implementation with intended behavior, flow, business rules, states, design, accessibility and relevant compliance requirements.",
+            "Bug: the implementation does not match intended behavior.",
+            "UX issue: the behavior works but creates a poor experience.",
+            "Product issue: the intended behavior itself is wrong."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "It uses up to three passes and stops when done",
+      "short": "How much work",
+      "blocks": [
+        {
+          "type": "stats",
+          "items": [
+            {
+              "value": "3",
+              "label": "Meaningful cycles at most",
+              "icon": "repeat",
+              "note": "for substantial tasks, not automatically 3"
+            },
+            {
+              "value": "1",
+              "label": "Cycles a simple task needs",
+              "icon": "check",
+              "note": "usually"
+            }
+          ]
+        },
+        {
+          "type": "stepper",
+          "steps": [
+            {
+              "title": "Cycle 1: Product & Flow",
+              "text": "Fixes structural problems first."
+            },
+            {
+              "title": "Cycle 2: UX, Business & Risk",
+              "text": "Only if needed."
+            },
+            {
+              "title": "Cycle 3: UI & Final QA",
+              "text": "Only if needed."
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "items": [
+            "It stops when the goal is satisfied and another cycle would only bring minor cosmetic improvement.",
+            "If more work is still needed, it states what remains and why."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Bigger, multi-session work also gets a process layer",
+      "short": "Bigger work",
+      "blocks": [
+        {
+          "type": "before_after",
+          "before": {
+            "label": "Single focused task",
+            "text": "A single focused critique or copy tweak. The skill skips the process layer."
+          },
+          "after": {
+            "label": "Multi-session work",
+            "text": "A new flow, a redesign, or an implementation handoff. The skill also loads `references/system.md`."
+          }
+        },
+        {
+          "type": "list",
+          "title": "What the process layer covers",
+          "items": [
+            "Roles",
+            "Approval gates",
+            "Persistent memory",
+            "Job/result protocol",
+            "QA routes",
+            "The correction-loop cap"
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "The answer is short and uses only the sections that help",
+      "short": "The answer",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "Sections a substantial answer typically uses",
+          "columns": [
+            "Section",
+            "What it holds"
+          ],
+          "rows": [
+            [
+              "Diagnosis",
+              "What is actually wrong."
+            ],
+            [
+              "Recommendation",
+              "What should change."
+            ],
+            [
+              "Flow",
+              "Exact sequence, when relevant."
+            ],
+            [
+              "Key decisions",
+              "Important UX/UI/product rules."
+            ],
+            [
+              "Business impact",
+              "Only when meaningful."
+            ],
+            [
+              "Compliance / risk",
+              "Only when relevant."
+            ],
+            [
+              "Implementation",
+              "Only when needed."
+            ]
+          ]
+        },
+        {
+          "type": "text",
+          "text": "The answer is concise, decisive and critical. For simple requests it answers simply."
+        },
+        {
+          "type": "text",
+          "title": "Core principle",
+          "text": "Solve the right problem, with the simplest strong solution, verify that it works, and stop when further work would not materially improve the outcome."
+        }
+      ]
+    }
+  ],
+  "next_action": {
+    "text": "Ask Claude to review one of your flows, for example: \"Review our signup flow.\"",
+    "detail": "The skill activates automatically for product and UX work, or you can type `/product-experience-strategist:product-experience-strategist` first."
+  },
+  "sources": [
+    {
+      "label": "product-experience-strategist on GitHub",
+      "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/product-experience-strategist"
+    }
+  ]
+}

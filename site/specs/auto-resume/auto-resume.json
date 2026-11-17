@@ -1,0 +1,86 @@
+{
+  "title": "Auto-Resume After Limits",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "code", "label": "Type /auto-resume on"},
+    {"icon": "pause", "label": "Usage limit stops session", "arrow": "later"},
+    {"icon": "clock", "label": "The limit resets", "arrow": "wait"},
+    {"icon": "repeat", "label": "continue typed for you", "arrow": "3 minutes later", "outcome": true}
+  ]},
+  "bottom_line": "Turn on /auto-resume and a session stopped by the usage limit gets continue typed into it once the limit resets, so long runs continue.",
+  "sections": [
+    {"heading": "Type /auto-resume on, off, alone, or inside a prompt", "short": "The command", "blocks": [
+      {"type": "code", "title": "What to type", "code": "/auto-resume [on|off]\n/plan-tools:plan-implement-complete plan.md /auto-resume", "caption": "The first line switches it for every session, or shows its state when typed alone. The second adds it to one prompt only."},
+      {"type": "table", "title": "The four ways to use it", "columns": ["Command", "What it does", "Reply you see"], "rows": [
+        ["`/auto-resume on`", "Resume every session automatically. Kept across restarts.", "Auto-resume is on for every session."],
+        ["`/auto-resume off`", "Turn it off for every session and cancel the pending `continue` in the session where you type it.", "Auto-resume is off for every session."],
+        ["`... /auto-resume` inside a prompt", "Resume only the task that prompt starts, for example `/plan-tools:plan-implement-complete plan.md /auto-resume`. The word is removed before the prompt or command runs. The task ends at the next prompt you type without it.", "The prompt or command runs without the word."],
+        ["`/auto-resume` alone", "Show whether it is on and when the next `continue` is due.", "Auto-resume is on for every session, on for the current task, or off, then Next \"continue\" at a time when one is pending."]
+      ]},
+      {"type": "text", "text": "The mod types `continue` into a session that stopped on the usage limit (the 5-hour session limit or the weekly limit), once that limit resets. Long unattended runs, such as `/plan-tools:plan-implement-complete`, pick up where they stopped."},
+      {"type": "text", "text": "In Claude Code's command list, `/auto-resume` is described as: Send \"continue\" when a usage limit resets: on, off, or add /auto-resume to a prompt for that task only."}
+    ]},
+    {"heading": "You need a mod-loading Claude Code and a claude.ai subscription", "short": "Before you start", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Claude Code that loads mods", "state": "done", "text": "The plugin registers a TypeScript module through `hooks/hooks.json`, not a skill, so your Claude Code version must load plugin mods."},
+        {"title": "A claude.ai subscription", "state": "done", "text": "With it, Claude Code reports the rate-limit windows and their reset times, which the mod needs."}
+      ]},
+      {"type": "list", "title": "Nothing to configure", "items": [
+        "No environment variables or settings.",
+        "State is kept in the plugin's own store."
+      ]}
+    ]},
+    {"heading": "Choose every session or just one task", "short": "All or one", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Every session", "state": "info", "text": "Type `/auto-resume on`. Every session is resumed automatically, and the setting is kept across restarts. Type `/auto-resume off` to stop."},
+        {"title": "One task only", "state": "info", "text": "Add `/auto-resume` to the prompt that starts the task. The word is removed before the prompt or command runs."}
+      ]},
+      {"type": "list", "title": "How the one-task form behaves", "items": [
+        "Only the task that prompt starts is resumed.",
+        "The task ends at the next prompt you type without `/auto-resume`.",
+        "The word only counts as a separate word, with a space or the edge of the line on each side.",
+        "It works with a slash command too, for example `/plan-tools:plan-implement-complete plan.md /auto-resume`."
+      ]}
+    ]},
+    {"heading": "Continue is sent three minutes after the limit resets", "short": "When it fires", "blocks": [
+      {"type": "stepper", "steps": [
+        {"title": "The main conversation hits the limit", "text": "The main conversation stops with a `rate_limit` error. Limits hit by subagents are ignored; only the main conversation's stop counts."},
+        {"title": "It finds the reset time", "text": "It reads the windows Claude Code reports and takes the latest reset time among the exhausted ones. The status line shows `auto-resume at <time>`."},
+        {"title": "It waits three minutes past the reset", "text": "The wait lets Claude Code's built-in auto-continue go first. If anything starts a turn before then (the built-in auto-continue or you), the pending `continue` is dropped."},
+        {"title": "It types continue", "text": "It submits `continue` as a normal prompt, and the session picks up where it stopped. A `continue` that hits the limit again schedules the next one."}
+      ]},
+      {"type": "stats", "items": [
+        {"value": "3 min", "label": "Wait after the reset", "icon": "clock", "note": "lets the built-in auto-continue go first"},
+        {"value": "30 min", "label": "Retry when no reset time", "icon": "repeat", "note": "used when Claude Code reports no reset time"},
+        {"value": "1 min", "label": "Clock check interval", "icon": "calendar", "note": "a laptop that slept through the reset catches up when it wakes"}
+      ]}
+    ]},
+    {"heading": "Check the status line or type /auto-resume alone", "short": "Checking it", "blocks": [
+      {"type": "table", "title": "Two places to look", "columns": ["Where", "What you see"], "rows": [
+        ["The status line, while a `continue` is pending", "`auto-resume at <time>`"],
+        ["The reply to `/auto-resume` alone", "Whether it is on, and when the next `continue` is due"]
+      ]},
+      {"type": "list", "title": "Replies to /auto-resume alone", "items": [
+        "Auto-resume is on for every session.",
+        "Auto-resume is on for the current task.",
+        "Auto-resume is off.",
+        "When a `continue` is pending, the reply adds Next \"continue\" at followed by the time, shown as a short weekday with hour and minute."
+      ]}
+    ]},
+    {"heading": "Keep the session open, or reopen it with claude --resume", "short": "Limits", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "The terminal was closed", "state": "warn", "text": "It can only type into a session that is open. If you close the terminal, the pending `continue` is saved.", "points": [{"sign": "+", "text": "It fires when you reopen that session with `claude --resume`."}]},
+        {"title": "A subagent hit the limit", "state": "warn", "text": "Limits hit by subagents are ignored. Only the main conversation's stop counts."},
+        {"title": "The usage message appeared", "state": "warn", "text": "Any argument other than on or off replies Usage: /auto-resume on | off, or add /auto-resume to a prompt."},
+        {"title": "You typed before it fired", "state": "warn", "text": "If anything starts a turn before the `continue` is due, including you or the built-in auto-continue, the pending `continue` is dropped."}
+      ]}
+    ]}
+  ],
+  "next_action": {
+    "text": "Type `/auto-resume on` to resume every session automatically.",
+    "detail": "Or add `/auto-resume` to one prompt to cover only the task it starts."
+  },
+  "sources": [
+    {"label": "auto-resume plugin on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/auto-resume"}
+  ]
+}

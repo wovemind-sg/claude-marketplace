@@ -1,0 +1,86 @@
+{
+  "title": "Python arq Reference",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "code", "label": "Work on arq code"},
+    {"icon": "lightbulb", "label": "Skill loads automatically", "arrow": "triggers"},
+    {"icon": "user", "label": "Ask for queue code", "arrow": "then"},
+    {"icon": "check-circle", "label": "Correct arq code", "arrow": "no API guessing", "outcome": true}
+  ]},
+  "bottom_line": "When you write, review or debug Python job-queue code with arq, Claude uses this reference to get the arq API right instead of guessing.",
+  "sections": [
+    {"heading": "Type the command or just start working with arq", "short": "Start it", "blocks": [
+      {"type": "code", "code": "/python-arq:python-arq", "caption": "The command takes no arguments. You can also skip it: the skill starts on its own."},
+      {"type": "flow", "title": "Two ways the skill starts", "nodes": [
+        {"id": "cmd", "label": "You type the command"},
+        {"id": "auto", "label": "You work with arq code"},
+        {"id": "ask", "label": "You ask for a task queue"},
+        {"id": "skill", "label": "Claude uses the arq reference"}
+      ], "edges": [
+        {"from": "cmd", "to": "skill", "label": "by hand"},
+        {"from": "auto", "to": "skill", "label": "automatically"},
+        {"from": "ask", "to": "skill", "label": "automatically"}
+      ], "caption": "You do not need to name arq. Asking for background jobs in an async Python app backed by Redis is enough."},
+      {"type": "text", "text": "The skill is a complete reference for **arq** (version 0.28), the Python asyncio and Redis job queue library by the pydantic author."},
+      {"type": "list", "title": "Claude uses it when you write, review or debug Python code that", "items": [
+        "imports arq",
+        "enqueues background jobs with `enqueue_job`",
+        "defines a `WorkerSettings` class",
+        "runs the `arq` CLI worker",
+        "schedules cron jobs",
+        "handles job results, retries or aborts"
+      ]},
+      {"type": "list", "title": "It also starts when you ask for any of these", "items": [
+        "\"background tasks\"",
+        "\"task queue\"",
+        "\"job queue\"",
+        "\"deferred/scheduled jobs\" in an async Python (FastAPI, aiohttp, etc.) app backed by Redis, even if you don't name arq"
+      ]}
+    ]},
+    {"heading": "Claude writes, reviews and debugs arq code with the full API", "short": "What you get", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Enqueueing jobs", "state": "info", "text": "`create_pool`, `ArqRedis.enqueue_job`, deferral, and uniqueness via `_job_id`."},
+        {"title": "Job handles", "state": "info", "text": "`Job.result/status/info/result_info/abort` and the exact error flows."},
+        {"title": "Workers", "state": "info", "text": "`WorkerSettings`, the `arq` CLI, and all `Worker` params with their defaults."},
+        {"title": "Retry semantics", "state": "info", "text": "`Retry`, `max_tries`, at-least-once execution and idempotency."},
+        {"title": "Everything else", "state": "info", "text": "Cron jobs, custom serialization, health checks, testing patterns and the Redis key layout."}
+      ], "caption": "The five areas the skill covers. It gives Claude accurate, source-verified knowledge of the full arq public API."},
+      {"type": "text", "title": "Two things Claude keeps in mind", "text": "Jobs run at least once, not exactly once, so Claude makes them idempotent."},
+      {"type": "text", "text": "In a FastAPI or aiohttp app, Claude calls `create_pool()` once at app startup, keeps it on the app state and calls `enqueue_job` from the handlers. The worker is a separate process (`arq tasks.WorkerSettings`) and is never started inside the web app."}
+    ]},
+    {"heading": "One request, from your words to working retry code", "short": "Example", "blocks": [
+      {"type": "before_after",
+        "before": {"label": "You ask", "text": "\"Add background job to my FastAPI app, retries failed webhook deliveries w/ backoff\""},
+        "after": {"label": "Claude delivers", "text": "A correct `WorkerSettings`, an `enqueue_job` call with the function name as a string, and `Retry(defer=ctx['job_try'] * 5)` backoff. No API guessing."},
+        "caption": "The example from the plugin's README."},
+      {"type": "chain", "title": "The shape of what Claude builds", "nodes": [
+        {"icon": "server", "label": "Client enqueues a job", "note": "Your app puts the job into Redis."},
+        {"icon": "database", "label": "Redis holds the queue", "arrow": "into Redis"},
+        {"icon": "gear", "label": "Worker runs it", "arrow": "worker picks up", "note": "A separate process started with the `arq` CLI runs the registered coroutines."}
+      ], "caption": "arq has two halves: a client that enqueues jobs and a worker process that runs them."}
+    ]},
+    {"heading": "The skill needs nothing; the code it writes needs Redis", "short": "Requirements", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "The skill itself", "state": "done", "text": "No requirements, no arguments and no environment variables."},
+        {"title": "The code it writes", "state": "open", "text": "Python with `asyncio`, the `arq` package (version 0.28) and a Redis server for the queue."}
+      ]},
+      {"type": "code", "code": "pip install arq", "caption": "Installs arq. The current version is 0.28.0."},
+      {"type": "text", "title": "Where the code connects", "text": "The code connects to Redis on `localhost:6379` unless you pass your own settings, for example `RedisSettings.from_dsn(...)` with a URL from your own configuration."},
+      {"type": "table", "title": "Plugin details", "columns": ["Field", "Value"], "rows": [
+        ["Plugin version", "1.0.2"],
+        ["Licence", "MIT"],
+        ["arq version covered", "v0.28"],
+        ["Dependencies on other plugins", "None"],
+        ["Settings to fill in", "None"]
+      ]}
+    ]}
+  ],
+  "next_action": {
+    "text": "Ask Claude: \"Add background job to my FastAPI app, retries failed webhook deliveries w/ backoff\".",
+    "detail": "This is the example request from the plugin's README. The skill starts on its own when you build background queues in async Python apps backed by Redis."
+  },
+  "sources": [
+    {"label": "python-arq plugin on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/python-arq"},
+    {"label": "arq documentation", "url": "https://arq-docs.helpmanual.io/"}
+  ]
+}

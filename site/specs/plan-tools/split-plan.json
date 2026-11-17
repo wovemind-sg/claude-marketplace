@@ -1,0 +1,329 @@
+{
+  "title": "Split a Plan",
+  "page_type": "how-to",
+  "gist": {
+    "kind": "chain",
+    "nodes": [
+      {
+        "icon": "code",
+        "label": "Run split-plan"
+      },
+      {
+        "icon": "file",
+        "label": "Claude reads your plan",
+        "arrow": "finds the plan"
+      },
+      {
+        "icon": "table",
+        "label": "Sessions designed",
+        "arrow": "cuts into sessions"
+      },
+      {
+        "icon": "check-circle",
+        "label": "Session files ready",
+        "arrow": "writes .planning",
+        "outcome": true
+      }
+    ]
+  },
+  "bottom_line": "Run /plan-tools:split-plan on a big implementation plan and you get isolated, context-sized session files, one per work session, ready to build one at a time.",
+  "sections": [
+    {
+      "heading": "Type one command, with no arguments",
+      "short": "Start it",
+      "blocks": [
+        {
+          "type": "code",
+          "code": "/plan-tools:split-plan",
+          "caption": "The README shows it with nothing after the command. Claude asks where your plan lives if it does not already know."
+        },
+        {
+          "type": "flow",
+          "title": "Two ways in, same result",
+          "nodes": [
+            {
+              "id": "have",
+              "label": "You point Claude at your plan"
+            },
+            {
+              "id": "none",
+              "label": "You only describe the feature"
+            },
+            {
+              "id": "draft",
+              "label": "Claude interviews you and drafts one"
+            },
+            {
+              "id": "agree",
+              "label": "You agree the plan"
+            },
+            {
+              "id": "split",
+              "label": "Plan split into sessions"
+            }
+          ],
+          "edges": [
+            {
+              "from": "have",
+              "to": "split",
+              "label": "restructured"
+            },
+            {
+              "from": "none",
+              "to": "draft",
+              "label": "no plan yet"
+            },
+            {
+              "from": "draft",
+              "to": "agree",
+              "label": "then"
+            },
+            {
+              "from": "agree",
+              "to": "split",
+              "label": "then"
+            }
+          ],
+          "caption": "Either way you end up with the same set of files."
+        },
+        {
+          "type": "text",
+          "text": "With a plan, Claude locates it, reads it and restructures it into sessions. If Claude does not know where the plan is, it asks you. It does not guess."
+        },
+        {
+          "type": "glossary",
+          "terms": [
+            {
+              "term": "Implementation plan",
+              "definition": "A written list of what to build and how, step by step, before any code is written."
+            },
+            {
+              "term": "Session",
+              "definition": "One Claude Code conversation. A session can only hold so much work before its memory (its context window) fills up."
+            },
+            {
+              "term": "Context window",
+              "definition": "How much text Claude can keep in mind at once in one session."
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "title": "When to use it",
+          "items": [
+            "You have an implementation plan and want it split into sessions.",
+            "You describe a feature big enough to need several Claude Code sessions, but you have no plan yet.",
+            "You want to prepare work so it fits Claude Code's context limits."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "With no plan, Claude drafts one and asks you to approve",
+      "short": "No plan yet",
+      "blocks": [
+        {
+          "type": "stepper",
+          "steps": [
+            {
+              "title": "Claude interviews you",
+              "text": "It asks about scope, constraints, the stack, and what \"done\" looks like."
+            },
+            {
+              "title": "Claude reads your code",
+              "text": "It reads the existing code that the feature touches."
+            },
+            {
+              "title": "Claude drafts the plan",
+              "text": "It writes the full implementation plan, following /plan-tools:plan-helper."
+            },
+            {
+              "title": "You agree the plan",
+              "text": "Claude gets your agreement before it splits anything. The drafted plan becomes `.planning/SPEC.md`."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "The plan Claude drafts is the one that gets split, so it waits for your sign-off. Splitting a plan you have not agreed to would copy a wrong design into every session file."
+        }
+      ]
+    },
+    {
+      "heading": "Small plans are not split at all",
+      "short": "Is it needed?",
+      "blocks": [
+        {
+          "type": "stats",
+          "items": [
+            {
+              "value": "~120k",
+              "label": "tokens of work per session",
+              "icon": "chart",
+              "note": "what one session comfortably holds"
+            }
+          ]
+        },
+        {
+          "type": "before_after",
+          "before": {
+            "label": "Plan fits one session",
+            "text": "Claude stops and tells you the plan is small enough to build in a single session."
+          },
+          "after": {
+            "label": "Plan is bigger",
+            "text": "Claude designs the sessions and writes one file per session."
+          }
+        }
+      ]
+    },
+    {
+      "heading": "Each session has one goal and ends in working code",
+      "short": "Session rules",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "One goal",
+              "state": "done",
+              "text": "A single feature, module or vertical slice."
+            },
+            {
+              "title": "Fits one session",
+              "state": "done",
+              "text": "About 120k tokens of work, so it fits one context window."
+            },
+            {
+              "title": "Ends working",
+              "state": "done",
+              "text": "Each session ends in a fully working state you could commit. No half-built feature crosses into the next session."
+            },
+            {
+              "title": "Clear inputs and outputs",
+              "state": "done",
+              "text": "Each session says which files and context it needs and what it produces."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "Sessions are written for Sonnet, which is the model that implements them."
+        }
+      ]
+    },
+    {
+      "heading": "You get a .planning folder with one file per session",
+      "short": "What you get",
+      "blocks": [
+        {
+          "type": "chain",
+          "title": "What the files are for",
+          "nodes": [
+            {
+              "icon": "file",
+              "label": "SPEC.md keeps the plan"
+            },
+            {
+              "icon": "flag",
+              "label": "progress.md tracks status",
+              "arrow": "then"
+            },
+            {
+              "icon": "file",
+              "label": "CLAUDE.md holds conventions",
+              "arrow": "then"
+            },
+            {
+              "icon": "table",
+              "label": "One file per session",
+              "arrow": "then",
+              "outcome": true
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "title": "The files it writes",
+          "columns": [
+            "File",
+            "What it holds"
+          ],
+          "rows": [
+            [
+              "`.planning/SPEC.md`",
+              "The full plan, kept as reference: your original if you had one, otherwise the one Claude drafted."
+            ],
+            [
+              "`.planning/progress.md`",
+              "The status tracker. Session 1 starts as \"active\", every other session as \"not_started\"."
+            ],
+            [
+              "`.planning/CLAUDE.md`",
+              "Project conventions, stack, folder structure and key decisions the sessions need, in under 60 lines. Your project's own root CLAUDE.md is never changed."
+            ],
+            [
+              "`.planning/sessions/session-01.md`, `session-02.md`, …",
+              "One per session: goal, prerequisites, numbered tasks, files to create or change, how to check it is done, an instruction to update the project root CLAUDE.md with what changed, and handoff notes for progress.md."
+            ]
+          ]
+        },
+        {
+          "type": "text",
+          "text": "The default folder is `.planning/` at the project root. Claude uses a different folder only if you name one."
+        },
+        {
+          "type": "text",
+          "text": "When the plan came from plan-helper, each session file also carries the plan's `## Implementation rules` block, the Decisions that apply to that session and the requirement-map rows it delivers. Those rows are ticked in `SPEC.md`."
+        }
+      ]
+    },
+    {
+      "heading": "Nothing is built; you review the session list first",
+      "short": "Review",
+      "blocks": [
+        {
+          "type": "before_after",
+          "before": {
+            "label": "split-plan does",
+            "text": "Plans only. It ends by showing a one-line summary per session so you can review and adjust before anything starts."
+          },
+          "after": {
+            "label": "It never does",
+            "text": "Implement anything from the plan in this session."
+          }
+        },
+        {
+          "type": "text",
+          "text": "In plan mode, where Claude cannot write files, it still locates the plan, decides whether splitting is needed and designs the sessions, then shows you the session breakdown as its plan. It writes the files only after you approve. If it also drafted the plan, you see the plan and the breakdown together in one approval."
+        },
+        {
+          "type": "code",
+          "title": "The README's example sequence",
+          "code": "/plan-tools:split-plan\n/plan-tools:plan-split-implment --branch feature/meal-plans\n/plan-tools:finalize-pr\n/plan-tools:monitor-pr",
+          "caption": "The README's example for an existing repo that already has a plan."
+        }
+      ]
+    }
+  ],
+  "reference": [
+    {
+      "title": "About the plan-tools plugin",
+      "items": [
+        "Plugin purpose: plan-driven workflow tools that bootstrap a new web or mobile app end to end, split implementation plans into context-sized resumable sessions, and drive them to PRs.",
+        "Installing plan-tools also installs the plugins it depends on: `ntfy`, `fastapi-template` and `htmx-vs-alpine`.",
+        "No environment variables are needed. The one setting, `designer_ui_review` (default `false`), is changed with `/plugin configure plan-tools@wovemind`. It runs the ui-change-guard designer review (/ui-change-guard:review-ui-change) before finalize-pr raises a PR."
+      ]
+    }
+  ],
+  "next_action": {
+    "text": "Run /plan-tools:split-plan in your project.",
+    "detail": "Claude asks where your plan lives if it does not already know. With no plan yet, describe the feature and Claude drafts one with you first."
+  },
+  "sources": [
+    {
+      "label": "plan-tools on GitHub",
+      "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/plan-tools"
+    }
+  ]
+}

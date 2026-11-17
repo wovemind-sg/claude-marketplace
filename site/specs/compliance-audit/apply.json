@@ -1,0 +1,105 @@
+{
+  "title": "Apply Compliance Fixes",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "code", "label": "/compliance-audit:apply"},
+    {"icon": "table", "label": "Open cards ordered", "arrow": "reads report"},
+    {"icon": "repeat", "label": "One PR per card", "arrow": "for each card"},
+    {"icon": "check-circle", "label": "Merged, card marked Done", "arrow": "auto-merge", "outcome": true}
+  ]},
+  "bottom_line": "After you answer the audit's planning questions, one command turns each open in-repo card into its own merged pull request, one card at a time.",
+  "sections": [
+    {"heading": "Answer the planning questions, then type one command", "short": "The command", "blocks": [
+      {"type": "code", "code": "/compliance-audit:apply [artifact url] [--planner opus] [--implementer sonnet] [--base <branch>] [--branch-prefix <prefix>]", "caption": "Run it from the root of the audited repo, after `/compliance-audit:audit` has published its report and you have answered the planning questions on that page."},
+      {"type": "table", "title": "What you can add after the command", "columns": ["Argument", "Default", "What it means"], "rows": [
+        ["artifact URL", "The newest compliance audit for the current repo. It asks you if none or several match.", "The report to apply"],
+        ["`--planner <model>`", "`opus`", "The model that plans each fix"],
+        ["`--implementer <model>`", "`sonnet`", "The model that implements, reviews, tests and resolves merge conflicts"],
+        ["`--base <branch>`", "The `default_base_branch` setting; when that is empty, the repository's default branch", "The branch each pull request goes to. Every card branches from it and merges into it."],
+        ["`--branch-prefix <prefix>`", "`compliance/`", "The start of each card's branch name"]
+      ]},
+      {"type": "code", "title": "Example: implement the open cards against a develop branch", "code": "/compliance-audit:apply --base develop"},
+      {"type": "text", "text": "You can also ask in plain words, such as \"apply the audit\", \"fix the compliance cards\", \"implement the legal changes\" or \"I answered the questions, go\". It does not run the audit itself; use `audit` for that."}
+    ]},
+    {"heading": "Set up GitHub access and ntfy before you start", "short": "Before you start", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Claude Code with Artifacts", "state": "done", "text": "Artifacts must be enabled. It reads the report back from the claude.ai Artifact page."},
+        {"title": "git and GitHub CLI", "state": "done", "text": "`git`, and the GitHub CLI (`gh`) signed in with push access."},
+        {"title": "Auto-merge on the repo", "state": "done", "text": "Auto-merge must be enabled on the repository."},
+        {"title": "ntfy server setting", "state": "done", "text": "It sends push notifications through the `ntfy` plugin, so set the ntfy `server` setting first."},
+        {"title": "Python 3", "state": "done", "text": "For the card-reading script, which uses only the standard library."}
+      ]},
+      {"type": "text", "text": "It drives the `plan-tools` plugin (`split-plan`, `plan-split-implment`, `finalize-pr`) and the `ntfy` plugin. Both are installed together with compliance-audit. No environment variables are needed."},
+      {"type": "table", "title": "The one setting", "columns": ["Setting", "Default", "What it does"], "rows": [
+        ["`default_base_branch`", "Empty", "The branch `apply` opens pull requests against when you do not pass `--base`. Empty means the repository's default branch."]
+      ]},
+      {"type": "code", "title": "Change the setting with", "code": "/plugin configure compliance-audit@wovemind", "caption": "A setting only takes effect after you open the settings dialog and save it once."}
+    ]},
+    {"heading": "Cards run in dependency order, with legal documents last", "short": "Card order", "blocks": [
+      {"type": "flow", "title": "Which cards it picks up", "nodes": [
+        {"id": "card", "label": "A card on the report"},
+        {"id": "skip", "label": "Skipped"},
+        {"id": "out", "label": "Fix outside the repo"},
+        {"id": "list", "label": "Listed at the end"},
+        {"id": "do", "label": "Implemented, one PR"}
+      ], "edges": [
+        {"from": "card", "to": "skip", "label": "Done or Won't fix"},
+        {"from": "card", "to": "out", "label": "still open"},
+        {"from": "out", "to": "list", "label": "yes"},
+        {"from": "out", "to": "do", "label": "no"}
+      ], "caption": "Fixes outside the repo are store consoles, registrations and lawyer review."},
+      {"type": "text", "text": "Legal documents come last because they describe what the product does. The privacy policy, terms, cookie policy, DPA, sub-processor list, imprint, accessibility statement and store privacy labels wait for the cards that change what they describe."},
+      {"type": "text", "text": "Before starting, it prints the order as one line per card, then starts without waiting. For a card shared between owners, it implements the repo part and lists the rest in the pull request description."}
+    ]},
+    {"heading": "Each card becomes one pull request that merges on its own", "short": "Per card", "blocks": [
+      {"type": "stepper", "steps": [
+        {"title": "Plan", "text": "An Opus subagent plans from the card and your saved answers. It asks you anything they do not settle."},
+        {"title": "Split", "text": "`/plan-tools:split-plan` splits the plan if needed."},
+        {"title": "Implement", "text": "Sonnet subagents implement it (`/plan-tools:plan-split-implment` when the plan was split)."},
+        {"title": "Fix what they surface", "text": "Anything they surface is fixed on the same branch, never opened as a follow-up issue."},
+        {"title": "Review and raise the PR", "text": "`/plan-tools:finalize-pr` reviews, runs the test plan once and raises the pull request against `--base`, with the results in its description."},
+        {"title": "Auto-merge and wait", "text": "The pull request is set to squash auto-merge and the skill waits for the merge. It merges the base branch back in whenever it moves."},
+        {"title": "Mark Done", "text": "The card is marked Done on the report and the next card starts."}
+      ]},
+      {"type": "table", "title": "Built-in defaults", "columns": ["Default", "Change it with"], "rows": [
+        ["Plans with Opus and implements with Sonnet", "`--planner <model>`, `--implementer <model>`"],
+        ["Each card gets a branch named `compliance/<card>`", "`--branch-prefix <prefix>`"],
+        ["Each card's pull request is set to squash auto-merge and the skill waits for the merge", "Not configurable"],
+        ["Pull requests go to the repository's default branch", "`--base <branch>` or the `default_base_branch` setting"]
+      ]},
+      {"type": "list", "title": "What you allow by running it", "items": [
+        "For the whole run it may create branches, commit, push, open pull requests against the base branch, edit their descriptions, enable auto-merge, merge the base branch into the card branch, and update card statuses on the report. It does not stop to confirm these.",
+        "It leaves GitHub issues that existed before the run alone. It does not implement, close, comment on or reference them."
+      ]}
+    ]},
+    {"heading": "It runs unattended and pings your phone when stuck", "short": "When stuck", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Auto-merge disabled", "state": "warn", "text": "The repository does not allow auto-merge."},
+        {"title": "Pull request closed", "state": "warn", "text": "It was closed without merging."},
+        {"title": "A check keeps failing", "state": "warn", "text": "The same check failed three times."},
+        {"title": "Review needed for hours", "state": "warn", "text": "The pull request is still open after 6 hours."},
+        {"title": "Needs a product decision", "state": "warn", "text": "A merge conflict it cannot resolve without one."},
+        {"title": "Credentials or console access", "state": "warn", "text": "The fix needs your own access."},
+        {"title": "Someone else's changes", "state": "warn", "text": "The working tree has changes that are not its own."}
+      ]},
+      {"type": "text", "text": "Apart from planning questions, it works without you. When stuck, it sends an ntfy push at priority 4, tells you in chat what is blocked and what it needs, and waits. It does not skip to the next card, because later cards may depend on this one."}
+    ]},
+    {"heading": "Re-running picks up where it stopped", "short": "Resume", "blocks": [
+      {"type": "before_after", "before": {"label": "First run stopped", "text": "For example, a first run stopped with some cards marked Done and one card's pull request still open."}, "after": {"label": "Run it again", "text": "Done cards are skipped and open card pull requests are picked up where they were."}}
+    ]},
+    {"heading": "The final reply lists what merged and what is left", "short": "Final report", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Merged cards", "state": "done", "text": "When every card is merged or set aside, the reply lists each merged card as `#id title` with its pull request link."},
+        {"title": "Cards set aside", "state": "open", "text": "Fixes outside the repo, each with its owner and the exact action left."},
+        {"title": "Parts left to others", "state": "info", "text": "Parts of merged cards left to the founder or lawyer."}
+      ]}
+    ]}
+  ],
+  "next_action": {
+    "text": "Answer the planning questions on your audit report page, then run `/compliance-audit:apply` from the repo root.",
+    "detail": "Check first that `gh` is signed in with push access, auto-merge is on, and the ntfy server is set."
+  },
+  "sources": [
+    {"label": "compliance-audit on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/compliance-audit"}
+  ]
+}

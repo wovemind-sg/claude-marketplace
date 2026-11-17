@@ -1,0 +1,114 @@
+{
+  "title": "flagd Reference",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "flag", "label": "Mention flagd or rollouts"},
+    {"icon": "lightbulb", "label": "Skill loads automatically", "arrow": "triggers"},
+    {"icon": "user", "label": "Ask for flag work", "arrow": "then"},
+    {"icon": "check-circle", "label": "Working flag setup", "arrow": "without browsing", "outcome": true}
+  ]},
+  "bottom_line": "When you work with flagd feature flags, Claude uses this reference to write flag files, run flagd, connect your app and fix failures without browsing.",
+  "sections": [
+    {"heading": "Type the command or just talk about flagd", "short": "Start it", "blocks": [
+      {"type": "code", "code": "/flagd:flagd", "caption": "The command takes no arguments. You can also skip it: the skill starts on its own."},
+      {"type": "flow", "title": "Two ways the skill starts", "nodes": [
+        {"id": "cmd", "label": "You type the command"},
+        {"id": "name", "label": "You mention flagd or its parts"},
+        {"id": "want", "label": "You want self-hosted feature flags"},
+        {"id": "skill", "label": "Claude uses the flagd reference"}
+      ], "edges": [
+        {"from": "cmd", "to": "skill", "label": "by hand"},
+        {"from": "name", "to": "skill", "label": "automatically"},
+        {"from": "want", "to": "skill", "label": "automatically"}
+      ], "caption": "You do not need to say \"flagd\". flagd is the reference OpenFeature backend, so related requests start the skill too."},
+      {"type": "text", "text": "**flagd** (https://flagd.dev) is the CNCF/OpenFeature feature-flag evaluation engine. A **feature flag** is a switch that turns a feature on or off, or picks one of several variants. flagd has no UI and no database: the flag file is the source of truth, kept in git."},
+      {"type": "list", "title": "Claude uses it when you mention any of these", "items": [
+        "flagd or flagd-proxy",
+        "the OpenFeature Operator",
+        "OFREP",
+        "`flagSetId`",
+        "a `*.flagd.json` or `*.flagd.yaml` file",
+        "`$evaluators`",
+        "`fractional` or `sem_ver` targeting",
+        "the OpenFeature flagd provider in any language (Go, Java, Node, web, Python, .NET, PHP, Rust)"
+      ]},
+      {"type": "list", "title": "It also starts when you want these via OpenFeature, even without saying \"flagd\"", "items": [
+        "self-hosted, open-source or vendor-neutral feature flags",
+        "percentage rollouts",
+        "A/B variants",
+        "context-based targeting"
+      ]}
+    ]},
+    {"heading": "Claude covers the whole flagd job, from flag file to troubleshooting", "short": "What you get", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Flag definition files", "state": "info", "text": "Write and debug `*.flagd.json` / `.yaml` files: variants, JSON Logic targeting, `fractional` rollouts, `sem_ver` gates, `$evaluators`, metadata and flag sets."},
+        {"title": "Install and run flagd", "state": "info", "text": "Docker, binary, systemd, or Kubernetes via the OpenFeature Operator. Sync sources (`--uri`, `--sources`), selectors, static/header context and metrics."},
+        {"title": "Connect your app", "state": "info", "text": "The OpenFeature SDK and the flagd provider in Go, Java, Node.js, browser, Python, .NET, PHP or Rust, in RPC, in-process or offline mode."},
+        {"title": "Call flagd directly", "state": "info", "text": "Over Connect/gRPC, OFREP and the sync service, with `curl` and `grpcurl`."},
+        {"title": "Troubleshoot", "state": "info", "text": "Common failures, and where to look online when the bundled docs don't cover a topic."}
+      ], "caption": "The five areas the skill gives Claude, so it can work with flagd without browsing."},
+      {"type": "text", "title": "The full topic list", "text": "The skill covers writing and debugging flag definitions, running flagd (Docker, binary, Kubernetes, systemd), sync sources, RPC vs in-process providers, calling flagd over gRPC/Connect/OFREP, monitoring, and troubleshooting."}
+    ]},
+    {"heading": "Ask for a 10% rollout and get a ready flag", "short": "Example", "blocks": [
+      {"type": "before_after",
+        "before": {"label": "You ask", "text": "\"Add a 10% rollout of `new-checkout` to our flagd config.\""},
+        "after": {"label": "Claude delivers", "text": "A flag whose targeting uses `fractional`, which buckets users by their `targetingKey`, plus a reminder that your application must pass a `targetingKey`."},
+        "caption": "The example from the plugin's README."},
+      {"type": "code", "title": "The flag Claude adds", "code": "{\n  \"$schema\": \"https://flagd.dev/schema/v0/flags.json\",\n  \"flags\": {\n    \"new-checkout\": {\n      \"state\": \"ENABLED\",\n      \"variants\": { \"on\": true, \"off\": false },\n      \"defaultVariant\": \"off\",\n      \"targeting\": { \"fractional\": [[\"on\", 10], [\"off\", 90]] }\n    }\n  }\n}"},
+      {"type": "text", "title": "The reminder that comes with it", "text": "Your application must pass a `targetingKey` (for example the user id) in the evaluation context. Without one, the evaluation fails and your code falls back to its default value."},
+      {"type": "list", "title": "More things you can ask", "items": [
+        "\"Add a 10% rollout of `new-checkout` for logged-in users to our flagd config\"",
+        "\"Run flagd in docker-compose next to my FastAPI app and evaluate a flag from Python\"",
+        "\"Why does my in-process flagd provider return the default for every flag?\"",
+        "\"Gate the feature on app version >= 2.3.0 using flagd semver targeting\""
+      ]}
+    ]},
+    {"heading": "Claude follows seven rules that prevent common flag mistakes", "short": "Rules it follows", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Always set targetingKey", "state": "warn", "text": "Needed for `fractional` rollouts with the default bucketing."},
+        {"title": "Return variant names", "state": "warn", "text": "Targeting returns a variant name, never a value."},
+        {"title": "Keep variants one type", "state": "warn", "text": "And call the matching getter."},
+        {"title": "Validate before deploying", "state": "info", "text": "Use `.flagd.json` naming and `$schema`, and validate in CI."},
+        {"title": "No UI by design", "state": "info", "text": "Flags live in files you control."},
+        {"title": "Read reason and errorCode", "state": "info", "text": "Before blaming targeting."},
+        {"title": "Say which source it used", "state": "info", "text": "When the bundled docs are silent."}
+      ], "caption": "Each rule in full is in the list below."},
+      {"type": "list", "title": "The rules in full", "ordered": true, "items": [
+        "Always set `targetingKey` in evaluation context when a flag uses `fractional` with the default bucketing; without it the evaluation errors and falls to the code default. To bucket on another attribute, pass an expression (e.g. `{\"var\":\"email\"}`) as the first `fractional` element.",
+        "Targeting must return a variant name, not a value. `\"if\":[cond, true]` is a bug; write `\"if\":[cond, \"on\"]`.",
+        "Keep all variants the same type and call the matching `get<Type>Value`; a type mismatch gives a `TYPE_MISMATCH` error and the code default.",
+        "Prefer `.flagd.json` naming plus `$schema` so editors validate, and validate in CI before deploying. A malformed file is rejected as a whole and flagd keeps serving the previous good state.",
+        "Don't reach for a UI: flagd has none by design. Flags live in git, a ConfigMap or an HTTP endpoint you control. If you want a hosted UI, Claude points you at OpenFeature-compatible vendors, but flagd itself stays file-driven.",
+        "Check `reason` and `errorCode` before blaming targeting: `DEFAULT` means the rule evaluated but matched nothing; `FLAG_NOT_FOUND` often means the wrong selector or flag set.",
+        "When the bundled docs are silent or ambiguous, Claude reads the live page on https://flagd.dev/, greps the source (`git clone --depth 1 https://github.com/open-feature/flagd`), or searches issues on https://github.com/open-feature/flagd/issues, and says which source it used."
+      ]}
+    ]},
+    {"heading": "The skill needs nothing; running its output needs flagd and an SDK", "short": "Requirements", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "The skill itself", "state": "done", "text": "No requirements, no arguments and no environment variables."},
+        {"title": "Running what it writes", "state": "open", "text": "flagd (as a Docker image, a binary or on Kubernetes) and, in your application, the OpenFeature SDK with the flagd provider for your language."}
+      ]},
+      {"type": "text", "title": "Environment variables", "text": "None are required by the skill itself. flagd and its providers read `FLAGD_*` variables; these are documented in the skill's reference files."},
+      {"type": "table", "title": "How current the knowledge is", "columns": ["Item", "Value"], "rows": [
+        ["flagd release covered", "v0.16.x (Sep 2026)"],
+        ["Docker image", "`ghcr.io/open-feature/flagd`"],
+        ["Distilled from", "The `docs/` directory of https://github.com/open-feature/flagd (commit b13483f, 2026-09-18) and the OpenFeature contrib provider READMEs"],
+        ["Refresh plan", "Re-run the distillation when flagd ships a new minor version"]
+      ]},
+      {"type": "table", "title": "Plugin details", "columns": ["Field", "Value"], "rows": [
+        ["Plugin version", "1.0.2"],
+        ["Licence", "MIT"],
+        ["Dependencies on other plugins", "None"],
+        ["Settings to fill in", "None"]
+      ]}
+    ]}
+  ],
+  "next_action": {
+    "text": "Ask Claude: \"Add a 10% rollout of `new-checkout` to our flagd config.\"",
+    "detail": "Then make sure your app passes a `targetingKey`, such as the user id, when it checks the flag."
+  },
+  "sources": [
+    {"label": "flagd plugin on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/flagd"},
+    {"label": "flagd documentation", "url": "https://flagd.dev/"}
+  ]
+}

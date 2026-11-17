@@ -1,0 +1,258 @@
+{
+  "title": "Add Repo Checks",
+  "page_type": "how-to",
+  "gist": {
+    "kind": "chain",
+    "nodes": [
+      {
+        "icon": "code",
+        "label": "Run hook-finalize-pr"
+      },
+      {
+        "icon": "search",
+        "label": "Claude proposes steps",
+        "arrow": "inspects the repo"
+      },
+      {
+        "icon": "check",
+        "label": "You pick steps",
+        "arrow": "asks you"
+      },
+      {
+        "icon": "file",
+        "label": "finalize-pr.md written",
+        "arrow": "writes the file",
+        "outcome": true
+      }
+    ]
+  },
+  "bottom_line": "Run /plan-tools:hook-finalize-pr to write .claude/finalize-pr.md: your repo's own checks, such as lint or migrations, that finalize-pr runs before it opens the pull request.",
+  "sections": [
+    {
+      "heading": "Run it, optionally describing the steps you want",
+      "short": "Start it",
+      "blocks": [
+        {
+          "type": "code",
+          "code": "/plan-tools:hook-finalize-pr [optional description of the steps to add]",
+          "caption": "With a description, Claude uses it. Without one, Claude looks through the repo and suggests steps."
+        },
+        {
+          "type": "before_after",
+          "before": {
+            "label": "With a description",
+            "text": "Claude writes the steps you described."
+          },
+          "after": {
+            "label": "Without one",
+            "text": "Claude inspects the repo and proposes at most 5 candidate steps, then asks which to keep."
+          }
+        },
+        {
+          "type": "text",
+          "text": "It works interactively: it inspects the repo, proposes steps and writes `.claude/finalize-pr.md`, a file of free-form markdown instructions. Use it to create the file or to edit an existing one."
+        },
+        {
+          "type": "list",
+          "title": "Where Claude looks for candidate steps",
+          "items": [
+            "`Makefile`",
+            "`package.json` scripts",
+            "`pyproject.toml`",
+            "CI workflows",
+            "`migrations/`",
+            "`CHANGELOG*`",
+            "version files"
+          ]
+        },
+        {
+          "type": "list",
+          "title": "When to use it",
+          "items": [
+            "You want to configure, add, change or review repo-specific finalize-pr checks, such as lint, migrations, version bumps or a changelog.",
+            "You say \"set up the finalize-pr hook\"."
+          ]
+        },
+        {
+          "type": "glossary",
+          "terms": [
+            {
+              "term": "finalize-pr",
+              "definition": "The /plan-tools:finalize-pr skill. The steps in your file run as its step 3b."
+            },
+            {
+              "term": "Pull request (PR)",
+              "definition": "A request on GitHub to merge a branch of code into the main code."
+            },
+            {
+              "term": "Residual work",
+              "definition": "Problems finalize-pr found but did not fix, recorded for later."
+            },
+            {
+              "term": "Incremental run",
+              "definition": "A later finalize-pr run, which is told the `$BASE..HEAD` range of commits that changed since the last finalize."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Your steps run inside finalize-pr, just before the PR",
+      "short": "When it runs",
+      "blocks": [
+        {
+          "type": "chain",
+          "title": "Where your steps sit in finalize-pr",
+          "nodes": [
+            {
+              "icon": "check",
+              "label": "Test plan, user flows",
+              "note": "the test plan and the user-flows sync"
+            },
+            {
+              "icon": "file",
+              "label": "Your repo steps",
+              "arrow": "then",
+              "note": "step 3b, run by a Sonnet helper"
+            },
+            {
+              "icon": "flag",
+              "label": "Residual work",
+              "arrow": "then"
+            },
+            {
+              "icon": "rocket",
+              "label": "Pull request",
+              "arrow": "then",
+              "outcome": true
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "title": "How the file is used",
+          "items": [
+            "It lives at `.claude/finalize-pr.md` at the top of the repo. If it is empty or missing, the step is skipped.",
+            "A Sonnet helper reads it word for word, with no other context, so it is written as plain instructions.",
+            "On a first run the pull request does not exist yet, so steps must not use `gh pr ...`.",
+            "On an incremental run the helper is told the `$BASE..HEAD` range that changed since the last finalize, and each step says whether to look only at that range or run in full.",
+            "The helper commits its own fixes and reports what it fixed and what it found but did not fix. The unfixed findings become residual work."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Each step says what to run, when, and what if it fails",
+      "short": "Step format",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "The exact command",
+              "state": "done",
+              "text": "Checked to exist in the repo."
+            },
+            {
+              "title": "When it applies",
+              "state": "done",
+              "text": "For example, \"if `migrations/` changed in the diff\"."
+            },
+            {
+              "title": "On failure",
+              "state": "done",
+              "text": "Fix and commit, or report only."
+            }
+          ],
+          "caption": "Every step is a numbered instruction written as a command."
+        },
+        {
+          "type": "list",
+          "title": "What steps may not do",
+          "items": [
+            "Ask questions while running. Steps are non-interactive.",
+            "Give a different result when run twice. Steps are idempotent.",
+            "Push, open or edit the pull request.",
+            "Need secrets."
+          ]
+        },
+        {
+          "type": "code",
+          "title": "An example file",
+          "code": "1. Run `make lint` and fix what it reports. Scope to files in `git diff --name-only $BASE..HEAD` when a range is given.\n2. If `migrations/` changed, check every new migration has a downgrade; fix and commit if missing.\n3. If `src/` changed, bump the patch version in `pyproject.toml` once per branch (skip if already bumped vs. the base branch).",
+          "caption": "From the skill."
+        },
+        {
+          "type": "code",
+          "title": "A shorter example",
+          "code": "1. Run `make lint` and fix what it reports.\n2. If `migrations/` changed, check the new migration has a downgrade.",
+          "caption": "From the README."
+        }
+      ]
+    },
+    {
+      "heading": "Your existing file is never overwritten without asking",
+      "short": "Safety",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "File already has content",
+              "state": "warn",
+              "text": "Claude shows you what is there.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "It asks whether to add, change or replace. It never overwrites without your confirmation."
+                }
+              ]
+            },
+            {
+              "title": "No commit by default",
+              "state": "info",
+              "text": "Claude writes the file and does not commit it unless you ask."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "You end up with the file written and shown to you",
+      "short": "Result",
+      "blocks": [
+        {
+          "type": "before_after",
+          "before": {
+            "label": "Before",
+            "text": "finalize-pr skips step 3b because `.claude/finalize-pr.md` is empty or missing."
+          },
+          "after": {
+            "label": "After",
+            "text": "`.claude/finalize-pr.md` holds your numbered steps, and Claude shows you the final content. It creates the `.claude/` folder if needed."
+          }
+        }
+      ]
+    }
+  ],
+  "reference": [
+    {
+      "title": "About the plan-tools plugin",
+      "items": [
+        "Plugin purpose: plan-driven workflow tools that bootstrap a new web or mobile app end to end, split implementation plans into context-sized resumable sessions, and drive them to PRs.",
+        "Installing plan-tools also installs the plugins it depends on: `ntfy`, `fastapi-template` and `htmx-vs-alpine`.",
+        "No environment variables are needed. The one setting, `designer_ui_review` (default `false`), is changed with `/plugin configure plan-tools@wovemind`. It runs the ui-change-guard designer review (/ui-change-guard:review-ui-change) before finalize-pr raises a PR."
+      ]
+    }
+  ],
+  "next_action": {
+    "text": "Run /plan-tools:hook-finalize-pr in your repo and pick which proposed steps to keep.",
+    "detail": "Or describe the steps yourself, for example \"run make lint and fix what it reports\"."
+  },
+  "sources": [
+    {
+      "label": "plan-tools on GitHub",
+      "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/plan-tools"
+    }
+  ]
+}

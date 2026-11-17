@@ -1,0 +1,575 @@
+{
+  "title": "Start a Mobile App",
+  "page_type": "how-to",
+  "gist": {
+    "kind": "chain",
+    "nodes": [
+      {
+        "icon": "lightbulb",
+        "label": "Describe your app"
+      },
+      {
+        "icon": "key",
+        "label": "Answer questions, give credentials",
+        "arrow": "then"
+      },
+      {
+        "icon": "file",
+        "label": "Plan written and split",
+        "arrow": "toolchain checked"
+      },
+      {
+        "icon": "rocket",
+        "label": "App that builds",
+        "arrow": "helpers build it",
+        "outcome": true
+      }
+    ]
+  },
+  "bottom_line": "Run /plan-tools:create-app, answer its questions up front, and Claude plans and builds a new iOS or Android app on Expo that builds through EAS.",
+  "sections": [
+    {
+      "heading": "Start in an empty folder with a one-line idea",
+      "short": "Start it",
+      "blocks": [
+        {
+          "type": "code",
+          "code": "/plan-tools:create-app [optional one-line app idea]",
+          "caption": "The idea is optional. Claude asks for everything it still needs."
+        },
+        {
+          "type": "before_after",
+          "before": {
+            "label": "Use create-app for",
+            "text": "Apps that are mobile only, with no web UI, whose screens are native React Native. iOS, Android or both."
+          },
+          "after": {
+            "label": "Use create-webapp for",
+            "text": "Web apps, or a web app that also ships to the app stores. If that is what you want, Claude stops and points you to /plan-tools:create-webapp, which wraps a server-rendered app in Capacitor."
+          }
+        },
+        {
+          "type": "text",
+          "text": "It is the same end-to-end flow as /plan-tools:create-webapp, for mobile-only apps. Claude does not write app code itself. It gathers what its helpers need, removes everything that would stall them, then hands off planning and building. Native build tools fail late and loudly, so the effort goes in up front."
+        },
+        {
+          "type": "list",
+          "title": "When to use it",
+          "items": [
+            "You want to start, bootstrap, kick off or build a new mobile app, iOS app, Android app, React Native app or Expo app from scratch, planned and implemented end to end.",
+            "Even if you only say \"new app\", \"build me an iPhone app that…\" or \"start a mobile project for…\"."
+          ]
+        },
+        {
+          "type": "glossary",
+          "terms": [
+            {
+              "term": "Expo",
+              "definition": "A toolkit for building React Native apps for iOS and Android from one code base."
+            },
+            {
+              "term": "EAS",
+              "definition": "Expo's service that builds the app and submits it to the stores (EAS Build and EAS Submit)."
+            },
+            {
+              "term": "Bundle identifier",
+              "definition": "The app's unique ID in the stores, such as `com.example.app`. Android calls it the package name."
+            },
+            {
+              "term": "Native module",
+              "definition": "Custom Swift (iOS) or Kotlin (Android) code for things JavaScript cannot do."
+            },
+            {
+              "term": "Blocker",
+              "definition": "Something the unattended helpers cannot do themselves, such as a missing tool or login."
+            },
+            {
+              "term": "Session",
+              "definition": "One chunk of the plan, sized to fit one Claude Code conversation."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Have the build tools for your platforms installed",
+      "short": "Before you start",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Node and npm",
+              "state": "done",
+              "text": "Node 26.x is expected, your own local install."
+            },
+            {
+              "title": "Expo and EAS login",
+              "state": "done",
+              "text": "The Expo and EAS command-line tools, and an Expo account signed in with `eas login`."
+            },
+            {
+              "title": "For iOS",
+              "state": "done",
+              "text": "Xcode 16 or later with an available simulator, and CocoaPods. The Xcode licence must be accepted (`sudo xcodebuild -license accept` if the check complains)."
+            },
+            {
+              "title": "For Android",
+              "state": "done",
+              "text": "Java (JDK) 17, the Android SDK with `ANDROID_HOME` set, `adb`, Android platform 35 or 36 and build tools, and at least one emulator or a device."
+            },
+            {
+              "title": "An empty project folder",
+              "state": "done",
+              "text": "Claude confirms the current folder is the project root. If it is not empty, Claude stops and asks."
+            }
+          ],
+          "caption": "Claude checks all of this before it plans, for the platforms you pick."
+        }
+      ]
+    },
+    {
+      "heading": "Claude asks everything up front, in as few rounds as it can",
+      "short": "Questions",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "What Claude asks",
+          "columns": [
+            "Question",
+            "Details"
+          ],
+          "rows": [
+            [
+              "App name and display name",
+              "Name in kebab-case. Default: the current folder's name."
+            ],
+            [
+              "Platforms",
+              "iOS, Android or both. This decides the tool checks, native module work and store setup."
+            ],
+            [
+              "Bundle identifier",
+              "Such as `com.example.app`, needed for `app.json`, EAS and both stores. Claude proposes one from the app name if you have no preference."
+            ],
+            [
+              "Features",
+              "What the app must do, as concrete behaviour (\"scan the photo library, group near-duplicate photos, let the user delete a group in one tap\"), not categories (\"media\", \"ML\"). Claude asks about anything unclear now, because the planner cannot ask you."
+            ],
+            [
+              "Design reference (optional)",
+              "A link, a screenshot or image path, an app to imitate, or a few words (\"dark, playful, big thumbnails\"). Without one, the planner picks a restrained default and writes it down."
+            ],
+            [
+              "Distribution",
+              "The default is EAS Build and Submit to App Store Connect (TestFlight) and the Play alpha track. Claude confirms this and asks whether store submission is in scope now or just internal builds."
+            ],
+            [
+              "Planning model",
+              "Default `sonnet`."
+            ],
+            [
+              "Implementing model",
+              "Default `sonnet`. Options: `sonnet`, `opus`, `haiku`, `fable`."
+            ]
+          ]
+        },
+        {
+          "type": "list",
+          "title": "Feature questions Claude makes sure to ask",
+          "items": [
+            "Offline or local-only, or a backend?",
+            "On-device machine learning?",
+            "Access to photos, camera, contacts or location?",
+            "Background work?",
+            "Purchases?"
+          ]
+        },
+        {
+          "type": "text",
+          "text": "Claude skips anything you already said."
+        }
+      ]
+    },
+    {
+      "heading": "A fixed core, plus only the libraries your features need",
+      "short": "Stack",
+      "blocks": [
+        {
+          "type": "before_after",
+          "before": {
+            "label": "Always included",
+            "text": "Expo SDK 57, React Native 0.86, React 19.2, TypeScript 6.0, expo-router, zustand, Jest 29 with jest-expo, and EAS. The full list is below."
+          },
+          "after": {
+            "label": "Only when needed",
+            "text": "Libraries from a menu, and custom native modules, each added only if a feature calls for it."
+          },
+          "caption": "Every library added is a native dependency, so Claude adds only what your features need and confirms the list with you in one message."
+        },
+        {
+          "type": "list",
+          "title": "Always included",
+          "items": [
+            "Expo SDK 57 (the `ios/` and `android/` folders are generated, never committed)",
+            "React Native 0.86",
+            "React 19.2",
+            "TypeScript 6.0",
+            "expo-router",
+            "zustand",
+            "`react-native-screens`",
+            "`react-native-safe-area-context`",
+            "`react-native-gesture-handler`",
+            "`react-native-reanimated` 4 + worklets",
+            "`expo-font`",
+            "`expo-splash-screen`",
+            "Jest 29 + `jest-expo`",
+            "EAS (`eas.json`)"
+          ]
+        },
+        {
+          "type": "list",
+          "title": "From the menu, when features call for it",
+          "items": [
+            "`expo-sqlite`",
+            "`expo-media-library`",
+            "`expo-image`",
+            "`expo-image-picker`",
+            "`expo-blur`",
+            "`expo-linear-gradient`",
+            "`react-native-pager-view`",
+            "`react-native-svg`",
+            "`react-native-confetti-cannon`",
+            "Local Expo Modules (Swift on iOS, Kotlin on Android) for anything JavaScript cannot do, such as on-device similarity with Apple Vision or LiteRT, or fast thumbnails with `PHImageManager` or `BitmapFactory`."
+          ]
+        },
+        {
+          "type": "text",
+          "text": "A native module is added only when no maintained Expo or React Native library covers the need. Anything not on the menu, such as a backend, an auth provider, payments or analytics, is allowed but must be named in the plan with its env vars and setup steps."
+        }
+      ]
+    },
+    {
+      "heading": "You supply settings and store credentials; Claude writes .env",
+      "short": "Credentials",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "What Claude collects",
+          "columns": [
+            "Item",
+            "When",
+            "Where it comes from"
+          ],
+          "rows": [
+            [
+              "`EXPO_PUBLIC_*` variables",
+              "Any API address or public key the app reads while running",
+              "You give them. They go in `.env`; Expo builds them into the app."
+            ],
+            [
+              "Server-side secrets",
+              "Never in the app",
+              "If a feature needs one, it needs a backend. Claude flags it and does not put it in `.env`."
+            ],
+            [
+              "Expo account",
+              "Always (EAS)",
+              "`eas whoami`. If you are not signed in, run `eas login` yourself; it is interactive (suggested as `! eas login`)."
+            ],
+            [
+              "EAS project",
+              "Always",
+              "`eas init` creates it and writes `extra.eas.projectId` into `app.json`."
+            ],
+            [
+              "Apple Developer team and App Store Connect API key",
+              "iOS, with submission in scope",
+              "You create the key in App Store Connect. `eas credentials` or `eas submit` asks for it."
+            ],
+            [
+              "Google Play service account JSON",
+              "Android, with submission in scope",
+              "You create it in Play Console. Its path goes in `eas.json` at `submit.production.android.serviceAccountKeyPath`, and the file is kept out of git."
+            ],
+            [
+              "ML model files, such as `mobilenet_v3_small.tflite`",
+              "With an on-device ML module",
+              "You provide it or approve the download. It goes under `modules/<name>/android/src/main/assets/`."
+            ]
+          ]
+        },
+        {
+          "type": "stepper",
+          "title": "What Claude does with them",
+          "steps": [
+            {
+              "title": "Starts git",
+              "text": "Runs `git init` if the folder is not already a repository."
+            },
+            {
+              "title": "Writes .env and .env.example",
+              "text": "`.env` holds any `EXPO_PUBLIC_*` values; `.env.example` has the same keys with placeholders. From here on Claude never repeats a secret value in the conversation."
+            },
+            {
+              "title": "Keeps secrets out of git",
+              "text": "Makes sure `.gitignore` covers `.env`, `ios/`, `android/`, `node_modules/`, `.expo/`, `*.jks`, `*.p8`, `*.p12`, `*.mobileprovision` and `google-service-account*.json`, and checks it works."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Every tool and account is checked before building starts",
+      "short": "Blockers",
+      "blocks": [
+        {
+          "type": "text",
+          "text": "The building helpers run unattended, so anything they cannot do themselves is done now."
+        },
+        {
+          "type": "cards",
+          "title": "What is checked",
+          "cards": [
+            {
+              "title": "Node and npm",
+              "state": "open"
+            },
+            {
+              "title": "Expo and EAS tools",
+              "state": "open",
+              "text": "They respond, and `eas whoami` returns an account."
+            },
+            {
+              "title": "iOS tools",
+              "state": "open",
+              "text": "If iOS is targeted."
+            },
+            {
+              "title": "Android tools",
+              "state": "open",
+              "text": "If Android is targeted."
+            },
+            {
+              "title": "Apple and Play accounts",
+              "state": "open",
+              "text": "If submission is in scope, you confirm the app record exists with your bundle identifier. This cannot be tested."
+            },
+            {
+              "title": "Model files",
+              "state": "open",
+              "text": "With on-device ML: present at the agreed path, with a sane size."
+            },
+            {
+              "title": "Design reference readable",
+              "state": "open",
+              "text": "The image path exists or the link opens."
+            },
+            {
+              "title": "Anything feature-specific",
+              "state": "open",
+              "text": "Third-party APIs, backend availability, paid accounts the features imply."
+            }
+          ],
+          "caption": "Each check is actually run and reported as pass or fail in a short checklist."
+        },
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "A check fails",
+              "state": "warn",
+              "text": "Failures come as a numbered list, one line each.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Fix them and tell Claude you are done. It tests again."
+                },
+                {
+                  "sign": "-",
+                  "text": "It will not move on while a tool is known to be broken."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "A planner writes the plan and you approve it before splitting",
+      "short": "Plan",
+      "blocks": [
+        {
+          "type": "chain",
+          "nodes": [
+            {
+              "icon": "file",
+              "label": "Planner drafts plan",
+              "note": "follows plan-helper, on your planning model"
+            },
+            {
+              "icon": "question",
+              "label": "You answer its questions",
+              "arrow": "open decisions"
+            },
+            {
+              "icon": "check",
+              "label": "You approve summary",
+              "arrow": "one screen"
+            },
+            {
+              "icon": "table",
+              "label": "Plan split",
+              "arrow": "split-plan",
+              "outcome": true
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "title": "What the plan includes",
+          "items": [
+            "The exact library installs for each session.",
+            "A design brief: colours, typography, spacing, navigation shape and component look, from your design reference or a restrained default.",
+            "Scaffolding first. The first milestone is the home screen running on a simulator or emulator.",
+            "Each native module as its own slice: the JavaScript side first with a stand-in, then Swift, then Kotlin, each checked on a simulator or emulator.",
+            "Features as vertical slices, each with `jest-expo` tests.",
+            "The `eas.json` profiles: development, preview and production.",
+            "If in scope, the store submission setup as the final slice."
+          ]
+        },
+        {
+          "type": "text",
+          "text": "The plan is saved to `.planning/SPEC.md`. Claude asks the planner's questions in plain English and passes your answers back."
+        },
+        {
+          "type": "before_after",
+          "before": {
+            "label": "Split",
+            "text": "`.planning/progress.md`, `.planning/CLAUDE.md` and `.planning/sessions/session-NN.md` now exist."
+          },
+          "after": {
+            "label": "Not split",
+            "text": "The whole plan fits one session, and `.planning/SPEC.md` stays the single source."
+          },
+          "caption": "split-plan runs on `.planning/SPEC.md` and writes its files directly under `.planning/`."
+        }
+      ]
+    },
+    {
+      "heading": "Approve commits once, then helpers build the app",
+      "short": "Build",
+      "blocks": [
+        {
+          "type": "flow",
+          "title": "How the building runs",
+          "nodes": [
+            {
+              "id": "ask",
+              "label": "You approve commits once"
+            },
+            {
+              "id": "split",
+              "label": "plan-split-implment builds each session"
+            },
+            {
+              "id": "single",
+              "label": "One helper builds the plan"
+            },
+            {
+              "id": "report",
+              "label": "Report relayed to you"
+            }
+          ],
+          "edges": [
+            {
+              "from": "ask",
+              "to": "split",
+              "label": "plan was split"
+            },
+            {
+              "from": "ask",
+              "to": "single",
+              "label": "not split"
+            },
+            {
+              "from": "split",
+              "to": "report",
+              "label": "then"
+            },
+            {
+              "from": "single",
+              "to": "report",
+              "label": "then"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "The one question: do you approve committing after every session (or at the end, if not split) without further confirmation? Nothing starts until you answer."
+        },
+        {
+          "type": "list",
+          "title": "What each path does",
+          "items": [
+            "Split: a helper on your implementing model runs /plan-tools:plan-split-implment, with a commit per session already approved, and reports the final progress and any session that stopped.",
+            "Not split: one helper on your implementing model builds the plan and checks it (`npx expo prebuild --clean` succeeds, the app boots on each platform, `npx jest` passes, each feature works on a simulator or emulator). Then it writes the project CLAUDE.md, commits and reports what was built and anything left undone.",
+            "If the single helper ends with a question, Claude asks you and passes the answer back."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "You get the builder's report and any real next steps",
+      "short": "Result",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "The builder's report",
+              "state": "done",
+              "text": "Passed on to you as it is."
+            },
+            {
+              "title": "Unresolved blockers",
+              "state": "open",
+              "text": "Listed only if there are any."
+            },
+            {
+              "title": "Deferred items",
+              "state": "open",
+              "text": "Listed only if there are any."
+            },
+            {
+              "title": "Store submission",
+              "state": "open",
+              "text": "If submission was out of scope, the next step is `eas build --profile production` and then `eas submit`."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "reference": [
+    {
+      "title": "About the plan-tools plugin",
+      "items": [
+        "Plugin purpose: plan-driven workflow tools that bootstrap a new web or mobile app end to end, split implementation plans into context-sized resumable sessions, and drive them to PRs.",
+        "Installing plan-tools also installs the plugins it depends on: `ntfy`, `fastapi-template` and `htmx-vs-alpine`.",
+        "Default conventions: new mobile apps use Expo + React Native + expo-router, built and shipped with EAS (fixed). Helpers run on `sonnet` unless you pick another model when asked.",
+        "No environment variables are needed for the plugin itself. The one setting, `designer_ui_review` (default `false`), is changed with `/plugin configure plan-tools@wovemind`. It runs the ui-change-guard designer review (/ui-change-guard:review-ui-change) before finalize-pr raises a PR."
+      ]
+    }
+  ],
+  "next_action": {
+    "text": "In an empty folder, run /plan-tools:create-app, optionally followed by a one-line idea for your app.",
+    "detail": "Claude checks your Expo sign-in (eas login) and build tools before it plans."
+  },
+  "sources": [
+    {
+      "label": "plan-tools on GitHub",
+      "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/plan-tools"
+    }
+  ]
+}

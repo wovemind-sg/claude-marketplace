@@ -1,0 +1,131 @@
+{
+  "title": "Scaffold a FastAPI App",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "code", "label": "Type the command"},
+    {"icon": "question", "label": "Answer three questions", "arrow": "Claude asks"},
+    {"icon": "file", "label": "Project files written", "arrow": "generates"},
+    {"icon": "rocket", "label": "App runs locally", "arrow": "make dev", "outcome": true}
+  ]},
+  "bottom_line": "Type one command, answer a few questions, and Claude writes a FastAPI web app. Fill in `.env`, migrate, then run `make dev`.",
+  "sections": [
+    {"heading": "One command starts a new web app", "short": "The command", "blocks": [
+      {"type": "code", "code": "/fastapi-template:fastapi-template [--host railway|generic] [--ai-model <openrouter model id>]", "caption": "Both flags are optional. Without them the app targets Railway and uses the AI model openai/gpt-4o-mini."},
+      {"type": "text", "text": "The skill scaffolds a complete FastAPI web application skeleton, drawn from production apps. **Scaffolding** means writing the starting files and folders of a new project, so you begin from a working app instead of an empty folder."},
+      {"type": "cards", "title": "Three ways to start it", "cards": [
+        {"title": "Name the app", "state": "info", "text": "`/fastapi-template:fastapi-template create a new app called my-app`"},
+        {"title": "Add flags", "state": "info", "text": "`/fastapi-template:fastapi-template [--host railway|generic] [--ai-model <openrouter model id>]`. The defaults are railway and openai/gpt-4o-mini."},
+        {"title": "Just describe it", "state": "info", "text": "Say what you want in plain words, for example: \"Scaffold a new FastAPI project for a task management app\"."}
+      ]},
+      {"type": "text", "text": "Claude also uses this skill on its own whenever you ask to create a new project, scaffold a web app, start a FastAPI app, set up a project skeleton, start a new web app, or bootstrap a Python web application from scratch."},
+      {"type": "text", "text": "The plugin needs no environment variables and has no plugin settings. The plan-tools plugin installs this plugin for you, and its create-webapp skill uses it to start a full app."}
+    ]},
+    {"heading": "Two flags change where it deploys and which AI model it uses", "short": "The flags", "blocks": [
+      {"type": "table", "columns": ["Flag", "Default", "What it changes"], "rows": [
+        ["`--host railway|generic`", "`railway`", "With `generic`, the skill leaves out the `Procfile`, the Railway deploy instructions and the ping retries for sleeping serverless containers."],
+        ["`--ai-model <openrouter model id>`", "`openai/gpt-4o-mini`", "The default model the app's AI helper (`invoke_ai_model`) sends requests to through OpenRouter."]
+      ]},
+      {"type": "text", "text": "With `--host generic` there is no Procfile and no Railway-specific code, so you deploy to any host that runs a Python web server. The app still reads `PORT` and its connection strings from the environment."},
+      {"type": "table", "title": "Opinionated defaults and how to change them", "columns": ["Default", "Change it with"], "rows": [
+        ["Deploy to Railway: a `Procfile`, and database/Redis pings retried while a sleeping Railway service wakes up", "`--host generic`"],
+        ["AI calls go to OpenRouter with the model `openai/gpt-4o-mini`", "`--ai-model <openrouter model id>`"],
+        ["Dev server on port 8000", "`PORT` in the environment or `make dev PORT=<port>`"],
+        ["Production server is gunicorn with 8 uvicorn workers", "edit the `server` target in the generated `Makefile`"],
+        ["Python 3.11, managed by `uv`", "edit `.python-version` and `pyproject.toml`"],
+        ["Database included; AI asked about; Redis included when AI is", "the skill asks which features to include"]
+      ]}
+    ]},
+    {"heading": "Claude asks three questions before it writes anything", "short": "Its questions", "blocks": [
+      {"type": "stepper", "steps": [
+        {"title": "The app name", "text": "Claude asks for the app name in kebab-case (lowercase words joined by hyphens, like `my-app`) if you did not give one in the command."},
+        {"title": "Which features to include", "text": "Claude confirms which optional parts go in: the database, AI through OpenRouter, and Redis caching. The defaults are in the table below."},
+        {"title": "Where to put it", "text": "Claude asks for the target directory. The default is the current directory."},
+        {"title": "Files are generated", "text": "Claude then generates all the files of the project."}
+      ]},
+      {"type": "table", "title": "Optional features and their defaults", "columns": ["Feature", "Default"], "rows": [
+        ["Database/Alembic", "yes"],
+        ["AI/OpenRouter", "ask"],
+        ["Redis caching", "yes if AI is included, otherwise ask"]
+      ]}
+    ]},
+    {"heading": "You get a full project folder with server, pages and database", "short": "What you get", "blocks": [
+      {"type": "table", "title": "The stack inside the generated app", "columns": ["Part", "What it uses"], "rows": [
+        ["Server", "FastAPI + Jinja2 (server-side rendering)"],
+        ["Client", "HTMX 2.x + Alpine.js 3.x"],
+        ["Database", "PostgreSQL via SQLModel + Alembic"],
+        ["AI", "OpenRouter + Jinja2 prompt templates + Redis caching"],
+        ["Cache", "Redis via fastapi-cache2"],
+        ["Auth/session state", "HMAC-signed cookies (`app/utils.py`), no SessionMiddleware"],
+        ["Runtime", "uv"],
+        ["Deploy", "Railway (Procfile) by default; with `--host generic`, no Procfile and no Railway-specific code"]
+      ]},
+      {"type": "glossary", "terms": [
+        {"term": "FastAPI", "definition": "A Python framework for building web servers."},
+        {"term": "HTMX", "definition": "A small library that lets links and forms fetch new HTML from the server without reloading the page."},
+        {"term": "Alpine.js", "definition": "A small library for interface behaviour that stays in the browser, such as opening a menu."},
+        {"term": "Alembic", "definition": "The tool that applies database changes (migrations) in order."},
+        {"term": "Redis", "definition": "A fast in-memory store, used here as a cache."},
+        {"term": "OpenRouter", "definition": "A service that forwards AI requests to many AI models through one API key."},
+        {"term": "Railway", "definition": "A hosting service, the default place the app deploys to."},
+        {"term": "uv", "definition": "The tool that installs Python packages and runs the app."}
+      ]},
+      {"type": "list", "title": "What the generated app already does", "items": [
+        "Every link and form navigates without a full-page reload (hx-boost on the page body). This matters most when the app is wrapped with Capacitor, because a full-page reload flashes white and breaks the native app feel.",
+        "A failed request (server error, network/offline, timeout) shows the user visible feedback instead of leaving the page looking stuck.",
+        "Logins and other per-user state are kept in signed cookies, keyed by `SESSION_SECRET`.",
+        "Missing required environment variables make the app fail at startup, not on a request.",
+        "`DEV_MODE=ON` switches logging to DEBUG (INFO in production), turns off the secure flag on cookies, and adds `-dev` to the cache prefix.",
+        "Every request is logged with method, path, status and duration.",
+        "AI answers are cached in Redis."
+      ]},
+      {"type": "code", "title": "Generated structure", "code": "<app-name>/\n├── app/\n│   ├── __init__.py\n│   ├── main.py\n│   ├── dependencies.py\n│   ├── utils.py\n│   ├── ai.py\n│   ├── db/\n│   │   ├── models.py\n│   │   └── crud.py\n│   ├── routers/\n│   │   └── home.py\n│   └── schemas/\n├── templates/\n│   ├── base.html\n│   ├── index.html\n│   └── prompts/\n├── static/\n├── alembic/\n├── alembic.ini\n├── pyproject.toml\n├── Makefile\n├── Procfile              # only with --host railway (the default)\n├── .env.example\n└── .gitignore", "caption": "The Procfile only appears with --host railway, which is the default."}
+    ]},
+    {"heading": "Have these ready before you run the generated app", "short": "Before you run", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "uv and Python 3.11+", "state": "done", "text": "`uv` and Python 3.11 or newer. The project pins 3.11 in `.python-version`."},
+        {"title": "make", "state": "done", "text": "For the `make dev`, `make server` and Alembic targets."},
+        {"title": "PostgreSQL and Redis", "state": "done", "text": "A PostgreSQL database and a Redis server, when those parts are included."},
+        {"title": "OpenRouter API key", "state": "done", "text": "Needed when the AI part is included."},
+        {"title": "Railway account", "state": "done", "text": "For deploying with the default host. The generated app has a `Procfile` that Railway runs."}
+      ]}
+    ]},
+    {"heading": "Fill in .env, run the migration, then start the server", "short": "Start the app", "blocks": [
+      {"type": "stepper", "steps": [
+        {"title": "Go into the project", "text": "Open a terminal in the new folder.", "block": {"type": "code", "code": "cd <app-name>"}},
+        {"title": "Create your .env file", "text": "Copy the example settings file, then edit `.env` with real values (see the table below).", "block": {"type": "code", "code": "cp .env.example .env\n# edit .env with real values"}},
+        {"title": "Run the initial migration", "text": "This runs the initial database migration.", "block": {"type": "code", "code": "make alembic-upgrade  # run initial migration"}},
+        {"title": "Start the dev server", "text": "The app is now running at localhost:8000.", "block": {"type": "code", "code": "make dev              # start dev server at localhost:8000"}}
+      ]},
+      {"type": "table", "title": "Environment variables the generated app reads from .env", "columns": ["Variable", "Description"], "rows": [
+        ["`ENGINE_URL`", "PostgreSQL connection string"],
+        ["`REDIS_CONNECTION_STRING`", "Redis URL"],
+        ["`SESSION_SECRET`", "Random secret for HMAC-signing cookies (`app/utils.py`)"],
+        ["`OPENROUTER_API_KEY`", "OpenRouter API key (if using AI)"],
+        ["`DEV_MODE`", "Set to `ON` for development"]
+      ]},
+      {"type": "code", "title": "Quick Start in one block", "code": "cd <app-name>\ncp .env.example .env\n# edit .env with real values\nmake alembic-upgrade  # run initial migration\nmake dev              # start dev server at localhost:8000"}
+    ]},
+    {"heading": "Replace the example parts with your own", "short": "Make it yours", "blocks": [
+      {"type": "cards", "caption": "After generating, Claude reminds you of these steps.", "cards": [
+        {"title": "Rename placeholders", "state": "open", "text": "Replace all `<app-name>` placeholders with your actual app name."},
+        {"title": "Fill in .env", "state": "open", "text": "Put real values in `.env` (`ENGINE_URL`, `REDIS_CONNECTION_STRING`, and so on)."},
+        {"title": "Define your models", "state": "open", "text": "Delete the example `Item` model in `db/models.py` and define your own."},
+        {"title": "Write your prompts", "state": "open", "text": "Replace the example `prompts/example.txt` with real prompt templates."},
+        {"title": "Migrate after models", "state": "open", "text": "Run `make alembic-upgrade` after adding models."},
+        {"title": "Start the server", "state": "open", "text": "Run `make dev` to start the dev server."}
+      ]}
+    ]},
+    {"heading": "Example: a recipe app for any host with a different model", "short": "Example", "blocks": [
+      {"type": "before_after", "before": {"label": "You type", "text": "`/fastapi-template:fastapi-template create a new app called recipe-box --host generic --ai-model anthropic/claude-haiku-5-5`"}, "after": {"label": "You get", "text": "A `recipe-box/` folder without a `Procfile`, with `invoke_ai_model` defaulting to that OpenRouter model."}},
+      {"type": "code", "code": "/fastapi-template:fastapi-template create a new app called recipe-box --host generic --ai-model anthropic/claude-haiku-5-5"},
+      {"type": "text", "text": "Then follow the Quick Start steps in the stop above."}
+    ]}
+  ],
+  "next_action": {
+    "text": "Type `/fastapi-template:fastapi-template create a new app called my-app` in Claude Code, using your own app name.",
+    "detail": "Claude then asks which features to include and where to put the project."
+  },
+  "sources": [
+    {"label": "fastapi-template plugin on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/fastapi-template"}
+  ]
+}

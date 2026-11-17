@@ -1,0 +1,133 @@
+{
+  "title": "Run a Compliance Audit",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "code", "label": "/compliance-audit:audit"},
+    {"icon": "question", "label": "Answer a few questions", "arrow": "then"},
+    {"icon": "search", "label": "Code checked against rules", "arrow": "then"},
+    {"icon": "shield", "label": "Private report page", "arrow": "publishes", "outcome": true}
+  ]},
+  "bottom_line": "Run one command in your repo, answer up to two rounds of questions, and get a private page of compliance gaps ranked by legal risk.",
+  "sections": [
+    {"heading": "Type one command from the root of your repo", "short": "The command", "blocks": [
+      {"type": "code", "code": "/compliance-audit:audit [optional: repo path, or focus e.g. 'app stores only' / 'EU only'] [--markets <list>] [--size <size>]", "caption": "Everything after the command name is optional. With nothing added, it audits the current folder for all five markets as a micro company."},
+      {"type": "table", "title": "What you can add after the command", "columns": ["Part", "What it does", "Example"], "rows": [
+        ["Repo path", "Audits the repo at that path. Without it, the audit uses the folder you are in.", "Any folder path"],
+        ["Focus", "Narrows the audit to one area. It skips questions the focus already answers, checks only the matching rule sets plus the security baseline, and names the focus in the report's Profile.", "`EU only`, `app store only`, `licensing`"],
+        ["`--markets <list>`", "Answers the markets question for you, so it is not asked. Separate markets with commas.", "`--markets EU,UK`"],
+        ["`--size <size>`", "Answers the company-size question for you, so it is not asked.", "`--size small`"]
+      ]},
+      {"type": "list", "title": "Accepted values", "items": [
+        "Markets: `EU` (meaning EU/EEA), `US`, `UK`, `Israel` (or `IL`), `Singapore` (or `SG`). Default: all five.",
+        "Sizes: `micro`, `small`, `larger`, `unsure`. Default: `micro`.",
+        "Values you pass this way are recorded in the report's Profile as \"(from argument)\"."
+      ]},
+      {"type": "code", "title": "Example: only EU and UK rules, for a small company", "code": "/compliance-audit:audit --markets EU,UK --size small"},
+      {"type": "text", "text": "You do not have to type the command. Asking Claude things like \"are we compliant\", \"GDPR check\", \"do we need a privacy policy\", \"will this get rejected by the app store\", \"app store rejection\", \"can we launch in the EU\", \"ready to launch/distribute\", \"license audit\", \"SBOM\", \"terms of service\", \"legal review\" or \"what laws apply to us\" also starts it."}
+    ]},
+    {"heading": "Check you have Artifacts and Python 3 first", "short": "Before you start", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Claude Code with Artifacts", "state": "done", "text": "The report is published as a private claude.ai Artifact page, and the `apply` skill later reads it back from there."},
+        {"title": "Python 3", "state": "done", "text": "The detector scripts use only the standard library. The licence scan uses `pip-licenses`, `go-licenses` or `license-checker` when one is installed, and otherwise reads package metadata."},
+        {"title": "No environment variables", "state": "info", "text": "The audit needs no environment variables and no settings."}
+      ]},
+      {"type": "text", "text": "Installing compliance-audit also installs the plugins it depends on: `plan-tools` (which brings `fastapi-template` and `htmx-vs-alpine`) and `ntfy`."},
+      {"type": "table", "title": "Built-in defaults", "columns": ["Default", "Change it with"], "rows": [
+        ["Markets: EU/EEA, US, UK, Israel and Singapore (the audit confirms them with you)", "`--markets <list>`"],
+        ["Company size: micro (fewer than 10 staff and at most EUR 2M turnover)", "`--size micro|small|larger`"],
+        ["Target stack: FastAPI or Go backends with Postgres, Redis and Railway, native iOS/Android apps including Capacitor, web apps and SaaS. Other stacks are audited, but the security and hosting checks are written for this one.", "Not configurable"]
+      ]},
+      {"type": "text", "text": "It is built for micro software companies shipping native apps (iOS/Android, including Capacitor), web apps and SaaS."}
+    ]},
+    {"heading": "Answer at most two rounds of questions", "short": "Questions", "blocks": [
+      {"type": "flow", "title": "How the questions are chosen", "nodes": [
+        {"id": "q", "label": "A question about your product"},
+        {"id": "code", "label": "Code or docs already answer"},
+        {"id": "ask", "label": "Asked in a round"},
+        {"id": "skip", "label": "Not asked, listed as detected"},
+        {"id": "ans", "label": "You answer it"},
+        {"id": "def", "label": "Default used, marked (assumed)"}
+      ], "edges": [
+        {"from": "q", "to": "code", "label": "check first"},
+        {"from": "code", "to": "skip", "label": "yes"},
+        {"from": "code", "to": "ask", "label": "no"},
+        {"from": "ask", "to": "ans", "label": "answered"},
+        {"from": "ask", "to": "def", "label": "skipped"}
+      ], "caption": "The two rounds merge into one when the code already answers most of round 1."},
+      {"type": "table", "title": "Round 1, always asked unless the repo answers it", "columns": ["Question", "Options", "Default"], "rows": [
+        ["Markets", "EU/EEA, US, UK, Israel, Singapore (pick several)", "All five"],
+        ["Entity size", "Micro (under 10 staff and at most EUR 2M turnover), small, larger, unsure", "Micro"],
+        ["Customers", "B2C, B2B, both", "B2C"],
+        ["Could minors use it", "No, age-gated and enforced; unlikely, not enforced; yes", "Unlikely, not enforced"]
+      ]},
+      {"type": "list", "title": "Round 2, only the ones that apply, at most 4", "items": [
+        "AI features",
+        "Payments model",
+        "Marketing messages",
+        "Is the sub-processor list complete?",
+        "Data residency",
+        "A personal-data breach in the last 24 months"
+      ]}
+    ]},
+    {"heading": "The audit runs five stages and writes nothing into your repo", "short": "What it does", "blocks": [
+      {"type": "stepper", "steps": [
+        {"title": "Detect", "text": "It scans the code, then reads what scripts cannot judge: legal pages, consent UI, retention jobs, logging, store manifests, the README and docs, deploy config and mobile manifests."},
+        {"title": "Ask", "text": "It asks the question rounds described above."},
+        {"title": "Route", "text": "It loads only the rule sets that apply: privacy per jurisdiction, app stores, EU digital acts, AI, payments, minors, accessibility, licensing, security and contracts."},
+        {"title": "Audit", "text": "It checks each requirement against the code and config, assigns a severity and picks an owner."},
+        {"title": "Report", "text": "It publishes the report as an Artifact page. Re-running the audit republishes to the same page, so statuses and answers carry over."}
+      ]},
+      {"type": "text", "text": "Nothing in the audited repo is written or modified. When it finishes, the chat reply gives the report link and the three most urgent items, one line each."}
+    ]},
+    {"heading": "You get a private report page with one card per gap", "short": "The report", "blocks": [
+      {"type": "table", "title": "Sections of the report page, in order", "columns": ["Section", "What goes in it"], "rows": [
+        ["Header", "Disclaimer, a how-to-read legend and summary counts"],
+        ["Profile", "Markets, company, product, detected signals, assumptions, rule sets checked, licence scan, sources re-verified"],
+        ["Blockers", "Store rejection or unlawful to distribute today, with `file:line` evidence"],
+        ["Required", "Legal duty unmet, with lower enforcement risk or a future deadline (date stated)"],
+        ["Recommended", "Best practice, \"appropriate measures\", or depends on an unsure answer"],
+        ["Notes", "Informational, more than 12 months out, or below a threshold"],
+        ["Checked and fine", "Requirements checked and found fine"],
+        ["Needs a lawyer", "Always present and never empty"],
+        ["Deadlines", "Date, obligation and status"]
+      ]},
+      {"type": "list", "title": "What each card holds", "items": [
+        "A running ID and a title that names the gap in plain words.",
+        "The rule: the law or store rule, with its article, linked to a source.",
+        "What the rule says, in plain words.",
+        "What we found, with `file:line` evidence, or \"not found in\" the places it looked.",
+        "What to do: the exact fix, with a deadline date when there is one.",
+        "The owner: engineer, founder or lawyer.",
+        "A risk score from 1 to 10 for deploying without the fix. 8 and up means urgent; Blockers are usually 7 or more.",
+        "Two to six planning questions Claude would ask before fixing it, with answer boxes that are saved and shared.",
+        "A \"Copy for Claude\" button that copies the card plus your answers as a plan-mode prompt."
+      ]},
+      {"type": "text", "title": "Statuses are shared", "text": "People who can edit the page mark each card In progress, Done or Won't fix. Statuses and answers are shared with everyone who opens the page. A card's status is tied to its title. Secret values are never copied into the report, only their `file:line`."}
+    ]},
+    {"heading": "The report is not legal advice", "short": "Not legal advice", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Not legal advice", "state": "warn", "text": "The report is a generated audit. Items under \"Needs a lawyer\" require counsel."}
+      ]},
+      {"type": "text", "text": "This plugin produces an automated compliance audit to help prioritise work. It is not legal advice, does not create a lawyer-client relationship, and may be incomplete or out of date."},
+      {"type": "text", "text": "Confirm anything marked \"Needs a lawyer\", and any decision with legal consequences, with qualified counsel in the relevant jurisdiction."}
+    ]},
+    {"heading": "A Capacitor shell needs its server repo audited too", "short": "Capacitor shells", "blocks": [
+      {"type": "before_after", "before": {"label": "Shell repo alone", "text": "A Capacitor shell that loads a remote server (`server.url`) gets a scoped report. Server-side items such as accounts, deletion and legal pages are marked \"verify in the server repo\" and never become Blockers from the shell alone."}, "after": {"label": "Plus the server repo", "text": "Audit the server repo too."}}
+    ]},
+    {"heading": "Answer the planning questions, then run apply", "short": "Next: apply", "blocks": [
+      {"type": "chain", "nodes": [
+        {"icon": "file", "label": "Open the report page"},
+        {"icon": "check", "label": "Answer planning questions", "arrow": "then"},
+        {"icon": "rocket", "label": "/compliance-audit:apply", "arrow": "then", "outcome": true}
+      ]},
+      {"type": "text", "text": "After you answer the planning questions on the report page, run `/compliance-audit:apply`. It implements every card not marked Done or Won't fix, one pull request per card."}
+    ]}
+  ],
+  "next_action": {
+    "text": "Open your repo's root folder in Claude Code and run `/compliance-audit:audit`.",
+    "detail": "Add `--markets` or `--size` if you already know the answers, so those questions are skipped."
+  },
+  "sources": [
+    {"label": "compliance-audit on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/compliance-audit"}
+  ]
+}

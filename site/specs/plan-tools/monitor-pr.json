@@ -1,0 +1,484 @@
+{
+  "title": "Watch a PR Land",
+  "page_type": "how-to",
+  "gist": {
+    "kind": "chain",
+    "nodes": [
+      {
+        "icon": "code",
+        "label": "Run monitor-pr"
+      },
+      {
+        "icon": "clock",
+        "label": "Claude watches the PR",
+        "arrow": "checks every minute"
+      },
+      {
+        "icon": "gear",
+        "label": "Fixes and pushes",
+        "arrow": "when needed"
+      },
+      {
+        "icon": "check-circle",
+        "label": "PR merged",
+        "arrow": "keeps watching",
+        "outcome": true
+      }
+    ]
+  },
+  "bottom_line": "Run /plan-tools:monitor-pr and Claude watches an open pull request, fixing failed checks and catching up with the base branch, until it merges.",
+  "sections": [
+    {
+      "heading": "Point it at a pull request, or let it use your branch's",
+      "short": "Start it",
+      "blocks": [
+        {
+          "type": "code",
+          "code": "/plan-tools:monitor-pr <pr-number-or-url>",
+          "caption": "Leave the number or link out and it uses the pull request of the branch you are on."
+        },
+        {
+          "type": "cards",
+          "title": "Before you start",
+          "cards": [
+            {
+              "title": "GitHub CLI signed in",
+              "state": "done",
+              "text": "`git` and the GitHub CLI (`gh`), signed in with `gh auth login`, with push access to the pull request's branch. Every issue, PR and status command goes through `gh`."
+            },
+            {
+              "title": "A clean working folder",
+              "state": "done",
+              "text": "No uncommitted changes. If there are any, they are your work, so Claude will not stash or throw them away. It stops and asks instead."
+            }
+          ]
+        },
+        {
+          "type": "glossary",
+          "terms": [
+            {
+              "term": "Pull request (PR)",
+              "definition": "A request on GitHub to merge one branch of code into another, where reviewers and automatic checks look at it first."
+            },
+            {
+              "term": "Base branch",
+              "definition": "The branch the pull request will merge into, often `main`."
+            },
+            {
+              "term": "Check",
+              "definition": "An automatic test run (CI) on the pull request."
+            },
+            {
+              "term": "Auto-merge",
+              "definition": "A GitHub setting that merges the pull request by itself once everything it needs has passed."
+            },
+            {
+              "term": "Force-push",
+              "definition": "Overwriting the history already on GitHub. monitor-pr never does this."
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "title": "Things you might say that call for it",
+          "items": [
+            "Whenever you want a PR to land.",
+            "\"watch this PR\"",
+            "\"monitor PR #123\"",
+            "\"babysit the PR\"",
+            "\"keep the PR green\"",
+            "\"make sure this merges\"",
+            "\"get this PR over the line\"",
+            "asking to be told when a PR merges, even without the word \"monitor\""
+          ]
+        },
+        {
+          "type": "code",
+          "title": "Where it fits",
+          "code": "/plan-tools:split-plan\n/plan-tools:plan-split-implment --branch feature/meal-plans\n/plan-tools:finalize-pr\n/plan-tools:monitor-pr",
+          "caption": "The README's example for an existing repo with a plan."
+        }
+      ]
+    },
+    {
+      "heading": "First it checks the PR can be watched and asks about auto-merge",
+      "short": "Setup",
+      "blocks": [
+        {
+          "type": "stepper",
+          "steps": [
+            {
+              "title": "Finds the PR",
+              "text": "Already merged: it says so and stops. Closed: it is stuck. A fork: it likely cannot push there, so it is stuck unless a dry-run push proves otherwise."
+            },
+            {
+              "title": "Checks your folder is clean",
+              "text": "Uncommitted changes mean it stops and asks."
+            },
+            {
+              "title": "Checks out the PR branch",
+              "text": "It starts from what is already pushed to GitHub."
+            },
+            {
+              "title": "Asks about auto-merge",
+              "text": "If auto-merge is off, nothing will merge the PR once it goes green. Claude asks whether to turn it on, or whether you will merge by hand. Either answer is fine and it keeps watching."
+            },
+            {
+              "title": "Checks for the finalize-pr status",
+              "text": "It checks whether the base branch requires the `finalize-pr` status, which /plan-tools:finalize-pr sets."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "When it turns auto-merge on, it uses the repository's usual merge method (squash, merge or rebase). If more than one is allowed, it asks you which."
+        }
+      ]
+    },
+    {
+      "heading": "It checks the PR every 60 seconds and reacts",
+      "short": "Watching",
+      "blocks": [
+        {
+          "type": "flow",
+          "title": "What happens on each check",
+          "nodes": [
+            {
+              "id": "poll",
+              "label": "Check the PR"
+            },
+            {
+              "id": "merged",
+              "label": "Done: report back"
+            },
+            {
+              "id": "sync",
+              "label": "Merge the base branch in"
+            },
+            {
+              "id": "fix",
+              "label": "Fix the failed check"
+            },
+            {
+              "id": "fin",
+              "label": "Run finalize-pr"
+            },
+            {
+              "id": "stuck",
+              "label": "Stuck: ask you"
+            },
+            {
+              "id": "wait",
+              "label": "Tell you what it waits on"
+            }
+          ],
+          "edges": [
+            {
+              "from": "poll",
+              "to": "merged",
+              "label": "merged"
+            },
+            {
+              "from": "poll",
+              "to": "sync",
+              "label": "base moved on"
+            },
+            {
+              "from": "poll",
+              "to": "fix",
+              "label": "a check failed"
+            },
+            {
+              "from": "poll",
+              "to": "fin",
+              "label": "status missing"
+            },
+            {
+              "from": "poll",
+              "to": "stuck",
+              "label": "closed unmerged"
+            },
+            {
+              "from": "poll",
+              "to": "wait",
+              "label": "open after 6 h"
+            }
+          ],
+          "caption": "After every push it starts checking again. Expect several rounds on a busy repo."
+        },
+        {
+          "type": "stats",
+          "items": [
+            {
+              "value": "60 s",
+              "label": "between checks",
+              "icon": "clock",
+              "note": "for up to 6 hours, in the background"
+            },
+            {
+              "value": "6 h",
+              "label": "before it reports in",
+              "icon": "calendar",
+              "note": "usually the PR is waiting on a review"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "title": "What it does with each result",
+          "columns": [
+            "What it sees",
+            "What it does"
+          ],
+          "rows": [
+            [
+              "Merged",
+              "Done"
+            ],
+            [
+              "Base branch moved on (behind or conflicting)",
+              "Catches up with the base branch"
+            ],
+            [
+              "A check failed",
+              "Fixes the check"
+            ],
+            [
+              "The newest commit has no successful `finalize-pr` status",
+              "Runs finalize-pr"
+            ],
+            [
+              "Closed without merging",
+              "Stuck"
+            ],
+            [
+              "Still open after 6 h, usually waiting on a review",
+              "Tells you what it is waiting on (the review decision, pending checks), then keeps watching"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "When the base branch moves, it merges it in, keeping both",
+      "short": "Catch up",
+      "blocks": [
+        {
+          "type": "before_after",
+          "before": {
+            "label": "Rebase (never)",
+            "text": "Rewrites the pushed history, which needs a force-push and breaks review comments."
+          },
+          "after": {
+            "label": "Merge (always)",
+            "text": "Keeps the pushed history intact, so there is no force-push and review comments stay valid."
+          }
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "title": "How it catches up",
+          "items": [
+            "Merges the latest base branch into the PR branch.",
+            "With no conflicts, it runs the project's fast checks (lint, type checks, unit tests, whatever CI runs that is cheap locally), so it does not push a merge that is broken, then pushes.",
+            "With conflicts, it resolves them so both sides' intent survives, reading the commits that produced each side. Silently dropping the base branch's change would undo someone else's merged work.",
+            "Commits the merge with git's default message, runs the fast checks, and pushes."
+          ]
+        },
+        {
+          "type": "text",
+          "text": "If a conflict needs a product decision, because both sides changed the same behaviour in incompatible ways, it cancels the merge, describes both sides to you and waits."
+        }
+      ]
+    },
+    {
+      "heading": "A failed check gets a real fix, never a skipped test",
+      "short": "Fix checks",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Caused by the PR",
+              "state": "info",
+              "text": "Or by the merged base branch.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Fixes the root cause in the code."
+                },
+                {
+                  "sign": "-",
+                  "text": "Never skips, marks xfail, loosens assertions or disables the check."
+                }
+              ]
+            },
+            {
+              "title": "Flaky or infrastructure",
+              "state": "info",
+              "text": "A network timeout, a runner that died, a cancelled run, or an unrelated test that passes locally.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Reruns the failed jobs once instead of changing code."
+                }
+              ]
+            },
+            {
+              "title": "Needs access it lacks",
+              "state": "warn",
+              "text": "A secret, permission or config it cannot change.",
+              "points": [
+                {
+                  "sign": "-",
+                  "text": "Stuck: it asks you."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "title": "How it fixes one",
+          "items": [
+            "Finds the failing run and reads its failure log.",
+            "Decides which of the three kinds of failure it is.",
+            "Reproduces it locally where possible, fixes it, runs the same check locally, commits as `fix: <what>` (semantic format), and pushes.",
+            "The third failure of the same check means it is stuck."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "If the PR needs a fresh finalize-pr, it runs one",
+      "short": "finalize-pr",
+      "blocks": [
+        {
+          "type": "chain",
+          "nodes": [
+            {
+              "icon": "repeat",
+              "label": "New commits landed",
+              "note": "after the last finalize-pr run"
+            },
+            {
+              "icon": "gear",
+              "label": "Runs finalize-pr",
+              "arrow": "status missing",
+              "note": "an incremental run over the new commits, pushing any fixes to this PR"
+            },
+            {
+              "icon": "check-circle",
+              "label": "Status on pushed commit",
+              "arrow": "verifies",
+              "outcome": true
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "items": [
+            "It first makes sure it is on the PR branch, with a clean folder and up to date.",
+            "It does not ask again for permission to push, because monitoring this PR already established that.",
+            "If finalize-pr finished its steps but the status is missing, Claude sets the status itself.",
+            "If finalize-pr stopped short, with a failure it could not fix or a decision it needed, Claude is stuck and does not set the status by hand.",
+            "If finalize-pr twice ends without leaving the status on the same commit, Claude is stuck."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "When it is stuck, it tells you what it needs and waits",
+      "short": "Stuck",
+      "blocks": [
+        {
+          "type": "cards",
+          "title": "When it stops and asks",
+          "cards": [
+            {
+              "title": "PR closed",
+              "state": "blocked"
+            },
+            {
+              "title": "A fork it cannot push",
+              "state": "blocked"
+            },
+            {
+              "title": "Uncommitted changes",
+              "state": "blocked"
+            },
+            {
+              "title": "Conflict needing a decision",
+              "state": "blocked"
+            },
+            {
+              "title": "Same check failed three times",
+              "state": "blocked"
+            },
+            {
+              "title": "Missing credentials or permissions",
+              "state": "blocked"
+            },
+            {
+              "title": "gh keeps erroring",
+              "state": "blocked"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "It tells you in one short block what is blocked, what it tried and what it needs, then waits. If you asked to be notified, or you normally use the `ntfy` or `desktop-notify` skills, it sends that notification too."
+        }
+      ]
+    },
+    {
+      "heading": "When it merges, you get a short report",
+      "short": "Done",
+      "blocks": [
+        {
+          "type": "before_after",
+          "before": {
+            "label": "While watching",
+            "text": "Claude never merges the PR itself and never force-pushes. The aim is to land the PR the reviewers approved, not a rewritten one."
+          },
+          "after": {
+            "label": "Once merged",
+            "text": "A few lines: the PR link, that it merged, and what it did along the way: base merges, check fixes with their commit IDs, reruns and finalize-pr runs."
+          }
+        },
+        {
+          "type": "text",
+          "text": "It then offers to switch back to the base branch and pull. It does not do that unless you say yes."
+        }
+      ]
+    }
+  ],
+  "reference": [
+    {
+      "title": "Fixed conventions it relies on",
+      "items": [
+        "A finished PR gets a `finalize-pr` commit status, and a UI audit gets a `ui-audit` status. This applies to finalize-pr and monitor-pr and is fixed; a branch rule can require `finalize-pr`.",
+        "Auto-merge uses a merge method the repository allows. monitor-pr asks when more than one is allowed (plan-implement-complete prefers squash). The repository's merge settings decide which are allowed."
+      ]
+    },
+    {
+      "title": "About the plan-tools plugin",
+      "items": [
+        "Plugin purpose: plan-driven workflow tools that bootstrap a new web or mobile app end to end, split implementation plans into context-sized resumable sessions, and drive them to PRs.",
+        "Installing plan-tools also installs the plugins it depends on: `ntfy`, `fastapi-template` and `htmx-vs-alpine`.",
+        "No environment variables are needed. The one setting, `designer_ui_review` (default `false`), is changed with `/plugin configure plan-tools@wovemind`. It runs the ui-change-guard designer review (/ui-change-guard:review-ui-change) before finalize-pr raises a PR."
+      ]
+    }
+  ],
+  "next_action": {
+    "text": "On the branch of your open pull request, run /plan-tools:monitor-pr.",
+    "detail": "Or pass the PR number or link. Make sure `gh` is signed in with push access first."
+  },
+  "sources": [
+    {
+      "label": "plan-tools on GitHub",
+      "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/plan-tools"
+    }
+  ]
+}

@@ -1,0 +1,354 @@
+{
+  "title": "Plans Without Guesswork",
+  "page_type": "how-to",
+  "gist": {
+    "kind": "chain",
+    "nodes": [
+      {
+        "icon": "user",
+        "label": "You ask for something"
+      },
+      {
+        "icon": "question",
+        "label": "Claude asks every decision",
+        "arrow": "no guessing"
+      },
+      {
+        "icon": "search",
+        "label": "Plan checks itself",
+        "arrow": "self-audit"
+      },
+      {
+        "icon": "check-circle",
+        "label": "Plan you can trust",
+        "arrow": "then presented",
+        "outcome": true
+      }
+    ]
+  },
+  "bottom_line": "plan-helper makes Claude ask you every open decision, cut unrequested changes, keep each change small, and prove its plan covers everything you asked.",
+  "sections": [
+    {
+      "heading": "It runs on its own whenever Claude writes a plan",
+      "short": "Start it",
+      "blocks": [
+        {
+          "type": "code",
+          "code": "/plan-tools:plan-helper",
+          "caption": "It runs automatically whenever Claude writes an implementation plan, and you can also invoke it directly."
+        },
+        {
+          "type": "before_after",
+          "before": {
+            "label": "Runs by itself",
+            "text": "Whenever Claude writes an implementation plan, plan-helper's rules apply without you typing anything."
+          },
+          "after": {
+            "label": "Or invoke it",
+            "text": "Type /plan-tools:plan-helper to call it directly."
+          }
+        },
+        {
+          "type": "list",
+          "title": "When it kicks in",
+          "items": [
+            "Whenever Claude is writing, drafting, revising or presenting an implementation plan.",
+            "In plan mode, before Claude leaves plan mode (ExitPlanMode).",
+            "Inside split-plan step 1b.",
+            "When you say \"plan this\", \"make a plan\" or \"how would you implement\", even if you never mention plan-helper."
+          ]
+        },
+        {
+          "type": "glossary",
+          "terms": [
+            {
+              "term": "Implementation plan",
+              "definition": "A written list of what to build and how, step by step, before any code is written."
+            },
+            {
+              "term": "Ask",
+              "definition": "One atomic thing you requested, quoted word for word and numbered A1, A2 and so on."
+            },
+            {
+              "term": "Requirement map",
+              "definition": "A table in the plan with one row per ask, showing which step delivers it and how it is checked."
+            },
+            {
+              "term": "Implementer",
+              "definition": "Whoever builds the plan afterwards, which may be a Claude subagent."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "It exists to stop four ways a plan goes wrong",
+      "short": "Why",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Ask, not assume",
+              "state": "bad",
+              "text": "Problem: Claude filled gaps with its own decisions, and they were not yours.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Every decision your request or the code does not already settle becomes a question."
+                }
+              ]
+            },
+            {
+              "title": "No unrequested changes",
+              "state": "bad",
+              "text": "Problem: the PR held changes you could not connect to anything you asked for.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Each step cites the ask it serves (`Serves: A<n>`)."
+                },
+                {
+                  "sign": "+",
+                  "text": "Anything without one is cut or asked about."
+                }
+              ]
+            },
+            {
+              "title": "Smallest complete change",
+              "state": "bad",
+              "text": "Problem: the change was bigger than needed.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Each step says why nothing smaller works. Real smaller-or-larger choices come to you as questions."
+                }
+              ]
+            },
+            {
+              "title": "Cover everything",
+              "state": "bad",
+              "text": "Problem: after all the testing and review, the result still missed parts, looked bad or was awkward to use.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "A requirement map lists each ask word for word."
+                },
+                {
+                  "sign": "+",
+                  "text": "Each ask shows the step that delivers it and how it is checked."
+                }
+              ]
+            }
+          ],
+          "caption": "Each card is a past failure and the rule plan-helper uses against it."
+        },
+        {
+          "type": "text",
+          "text": "Plans that looked fine still produced the wrong result. The checks include running the real app or command, not only tests."
+        }
+      ]
+    },
+    {
+      "heading": "Claude works through five steps before you see the plan",
+      "short": "The steps",
+      "blocks": [
+        {
+          "type": "stepper",
+          "steps": [
+            {
+              "title": "Capture the asks",
+              "text": "Claude splits your request into atomic asks, quoting your words exactly (A1, A2, …). A vague ask such as \"make it nicer\" becomes a question in itself."
+            },
+            {
+              "title": "Read the code",
+              "text": "Everything the asks touch: callers, tests, fixtures, config, and existing helpers and patterns."
+            },
+            {
+              "title": "Ask every open decision",
+              "text": "A decision is open when neither your request nor the existing code settles it. When Claude is unsure whether something is a decision, it treats it as one."
+            },
+            {
+              "title": "Write the plan",
+              "text": "With a requirement map, a decisions list, the steps, how to verify, and the implementation rules."
+            },
+            {
+              "title": "Audit, then present",
+              "text": "Claude rereads the plan against every rule and fixes what fails. The plan is not ready to show you until this passes."
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "title": "What counts as an open decision",
+          "items": [
+            "UX: layout, wording, placement, interactions",
+            "Behaviour",
+            "Edge cases",
+            "Naming",
+            "Data shape",
+            "Libraries",
+            "File structure",
+            "Error handling",
+            "Migration"
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "You answer short multiple-choice questions, in plain English",
+      "short": "Questions",
+      "blocks": [
+        {
+          "type": "stats",
+          "items": [
+            {
+              "value": "4",
+              "label": "questions per round, at most",
+              "icon": "question",
+              "note": "as many rounds as needed"
+            },
+            {
+              "value": "2–4",
+              "label": "options per question",
+              "icon": "check",
+              "note": "recommendation first, with a one-line reason"
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "title": "How the questions are written",
+          "items": [
+            "Asked through AskUserQuestion, as many rounds as needed.",
+            "Questions, options and descriptions are full, plain English, never a compressed style, even if one is active. If the humanizer plugin is available, Claude runs /humanizer:humanizer on the question text first.",
+            "Each question stands on its own, since you may only see the dialog: it names the thing and says what Claude found if that matters.",
+            "Concrete options, with Claude's recommendation first, marked \"(Recommended)\".",
+            "Where there is a real smaller-or-larger choice, such as reusing an existing component or making a new one, or patching one screen or all of them, you get both options and what each covers.",
+            "No placeholder answer with \"we can change it later\". Claude waits for your answer.",
+            "Decisions that come up later, while writing or auditing, come back to you the same way."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Each step names the ask it serves and why that size",
+      "short": "The plan",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "Sections every plan contains",
+          "columns": [
+            "Section",
+            "What it holds"
+          ],
+          "rows": [
+            [
+              "Requirement map",
+              "One row per ask, with columns Ask (verbatim), Delivered by (step), Verified by, and Status. Status starts as `[ ]`; implementers tick it to `[x]` once the ask is delivered and verified."
+            ],
+            [
+              "Decisions",
+              "Every answer you gave, as `question → user's answer`. Implementers follow these and never decide them again."
+            ],
+            [
+              "Steps",
+              "For each step: the files and what changes in each, `Serves: A<n>`, and `Why this size:`, saying why no smaller change works."
+            ],
+            [
+              "Verification",
+              "Tests, plus running the real app or command and trying each ask the way you will use it. It names exactly what to run and check for each ask."
+            ],
+            [
+              "Implementation rules",
+              "A fixed block, copied word for word, that binds whoever builds the plan."
+            ]
+          ]
+        },
+        {
+          "type": "text",
+          "text": "Trying each ask the way you will use it means clicking through the UI, running the CLI, or opening the page at the right screen size."
+        },
+        {
+          "type": "text",
+          "text": "For `Why this size:`, reuse of existing code beats new code, and a one-line change beats a new abstraction. \"It's cleaner\" or \"while we're here\" are not reasons."
+        },
+        {
+          "type": "details",
+          "summary": "The implementation rules block, all 5 rules",
+          "blocks": [
+            {
+              "type": "code",
+              "code": "## Implementation rules\n\n- Change only what a step in this plan lists. Every changed line must trace to an ask in the requirement map. No drive-by refactors, renames, reformatting, dependency bumps, or \"while I'm here\" fixes — note them in the final report instead.\n- Follow the Decisions section exactly. If you hit a decision this plan doesn't answer, stop and ask the user (AskUserQuestion) — don't pick one yourself. If you are a subagent and can't ask the user directly, end your run with the question as your final report (plain English, 2–4 options, your recommendation first); the parent will ask the user and send you the answer so you can continue.\n- Tick each requirement map row's Status once it is delivered and verified. In a split plan, tick your session's rows in `.planning/SPEC.md`.\n- Keep each change as small as it can be while still complete. Reuse existing code and patterns before writing new ones.\n- Done means every requirement map row assigned to your work (the whole plan, or your session's rows) is delivered and verified — including running the real app/command per the Verification section, not only tests.",
+              "caption": "split-plan copies this block into every session file."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Before presenting, the plan is checked against every rule",
+      "short": "Self-audit",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Coverage",
+              "state": "done",
+              "text": "Every ask has a row, a step that delivers it and a real-use check. No ask is silently dropped or narrowed."
+            },
+            {
+              "title": "No unrequested changes",
+              "state": "done",
+              "text": "Every step and file has a `Serves:` pointing at a real ask."
+            },
+            {
+              "title": "Size",
+              "state": "done",
+              "text": "Could less code, fewer files or reuse do the same job? Claude shrinks it, or asks you if it is a real trade-off."
+            },
+            {
+              "title": "No assumed decisions",
+              "state": "done",
+              "text": "Any choice not in Decisions and not settled by the code becomes a question."
+            },
+            {
+              "title": "Rules block present",
+              "state": "done",
+              "text": "The implementation rules block is there, word for word."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "Something that seems needed but serves no ask, such as a bug Claude found, is asked about instead of included."
+        },
+        {
+          "type": "text",
+          "text": "Then Claude presents the plan. In plan mode that means leaving plan mode (ExitPlanMode), unless a calling skill such as split-plan says to present later."
+        }
+      ]
+    }
+  ],
+  "reference": [
+    {
+      "title": "About the plan-tools plugin",
+      "items": [
+        "Plugin purpose: plan-driven workflow tools that bootstrap a new web or mobile app end to end, split implementation plans into context-sized resumable sessions, and drive them to PRs.",
+        "Installing plan-tools also installs the plugins it depends on: `ntfy`, `fastapi-template` and `htmx-vs-alpine`.",
+        "No environment variables are needed. The one setting, `designer_ui_review` (default `false`), is changed with `/plugin configure plan-tools@wovemind`. It runs the ui-change-guard designer review (/ui-change-guard:review-ui-change) before finalize-pr raises a PR."
+      ]
+    }
+  ],
+  "next_action": {
+    "text": "Ask Claude to \"make a plan\" for your next change, or run /plan-tools:plan-helper directly.",
+    "detail": "Any decision your request and the code leave open comes back to you as a question before you see the plan."
+  },
+  "sources": [
+    {
+      "label": "plan-tools on GitHub",
+      "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/plan-tools"
+    }
+  ]
+}

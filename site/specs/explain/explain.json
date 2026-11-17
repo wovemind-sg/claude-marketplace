@@ -1,0 +1,120 @@
+{
+  "title": "Explain Your Code",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "question", "label": "Name code or question"},
+    {"icon": "search", "label": "Claude reads your project", "arrow": "builds on log"},
+    {"icon": "lightbulb", "label": "Explanation at your level", "arrow": "defines new terms", "outcome": true},
+    {"icon": "file", "label": "New concepts logged", "arrow": "then"}
+  ]},
+  "bottom_line": "Type /explain:explain with code, a file or a question. Claude explains it using only what you know or learned before, then logs the new concepts.",
+  "sections": [
+    {"heading": "You need only Claude Code, plus an optional IDE", "short": "Before you start", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Claude Code", "state": "done", "text": "Nothing else is required."},
+        {"title": "git (optional)", "state": "info", "text": "Used, when present, to name the current project after its repository."},
+        {"title": "A connected IDE (optional)", "state": "info", "text": "Without an argument, the skills use the code highlighted in the IDE, or the opened file. With no IDE connected, they fall back to the current project."}
+      ]},
+      {"type": "text", "title": "Settings", "text": "None. The plugin has no environment variables and no plugin settings."},
+      {"type": "glossary", "terms": [
+        {"term": "IDE", "definition": "The code editor connected to Claude Code, which tells Claude which lines you selected and which file you opened."},
+        {"term": "Topic", "definition": "A language, framework, tool or project, such as Go, .NET or your codebase."},
+        {"term": "Known list", "definition": "The topics you know well. Explanations may assume them."},
+        {"term": "Learning list", "definition": "The topics you are learning. Explanations define their concepts before using them."},
+        {"term": "Learning log", "definition": "Plain Markdown notes in ~/.explain_skill/ recording which concepts earlier explanations covered."},
+        {"term": "False friend", "definition": "A concept that looks familiar but behaves differently."}
+      ]}
+    ]},
+    {"heading": "Type the command with what you want explained", "short": "Run it", "blocks": [
+      {"type": "code", "title": "The command", "code": "/explain:explain <code path, symbol, question, or concept>"},
+      {"type": "text", "text": "The argument can be a code path, a symbol, a question or a concept. The target can be code, a file, a flow or a concept in the current project. Claude also starts this skill on its own when you ask it to explain, walk through, break down or help you understand something, even if you never say \"explain\"."},
+      {"type": "flow", "title": "What it explains when you give no argument", "nodes": [
+        {"id": "start", "label": "No argument given"},
+        {"id": "sel", "label": "Highlighted code: the selected lines"},
+        {"id": "file", "label": "Opened file: the whole file"},
+        {"id": "chat", "label": "What you just asked about"}
+      ], "edges": [
+        {"from": "start", "to": "sel", "label": "lines selected"},
+        {"from": "start", "to": "file", "label": "nothing selected"},
+        {"from": "start", "to": "chat", "label": "neither"}
+      ], "caption": "Only the most recent selection and the most recent opened file count."},
+      {"type": "text", "text": "The first line of the answer names the target, for example \"Explaining `pool.go:40-58` (your selection)\", so you can see which input was used."},
+      {"type": "list", "title": "What you can ask about", "items": ["Code, an idiom, a language feature, a framework concept, an architecture, or how something in the codebase works."]},
+      {"type": "list", "title": "Questions it is made for", "items": [
+        "\"what does this goroutine do\"",
+        "\"how does DI work in this .NET service\"",
+        "\"walk me through the request flow\"",
+        "\"why is this a struct and not a class\""
+      ]},
+      {"type": "code", "title": "Examples", "code": "/explain:explain-unknown .NET, C#, Go\n/explain:explain-known C++, Python\n/explain:explain how does internal/worker/pool.go shut down its goroutines?\n/explain:explain what is IServiceCollection doing in Program.cs\n/explain:explain                  # explain the IDE selection or opened file\n/explain:explain-known            # I understand the highlighted code (or, without an IDE: I know this codebase)"}
+    ]},
+    {"heading": "The first run asks what you know and want to learn", "short": "First use", "blocks": [
+      {"type": "stepper", "steps": [
+        {"title": "Claude asks two questions", "text": "In one message: which topics do you want to learn (languages, frameworks, tools, for example \".NET, C#, Go\"), and which topics do you already know well (for example \"C++, Python\")? Then it stops and waits."},
+        {"title": "You answer", "text": "Claude writes your profile from your answers. It does not guess them from context."},
+        {"title": "Your project joins the learning list", "text": "If the project is on neither list, it is added to the learning list as \"<name> (project)\", named after the git repo. Claude tells you this in one line, and that `/explain:explain-known` marks it as known."},
+        {"title": "Your original request is answered", "text": "Claude then continues with what you asked in the first place."}
+      ]},
+      {"type": "text", "title": "Why the project counts as a topic", "text": "A codebase's components and conventions are as unfamiliar to a newcomer as its language."}
+    ]},
+    {"heading": "Each explanation builds only on what you know", "short": "At your level", "blocks": [
+      {"type": "chain", "title": "What an explanation may rely on", "nodes": [
+        {"icon": "check", "label": "Your known topics", "note": "For example C++ and Python."},
+        {"icon": "file", "label": "Concepts already logged", "arrow": "plus", "note": "Covered by earlier explanations."},
+        {"icon": "lightbulb", "label": "Everything else defined first", "arrow": "then", "outcome": true}
+      ]},
+      {"type": "text", "text": "It is written for an engineer learning an unfamiliar stack, for example a C++/Python developer who is new to Go and .NET. Claude reads your project's actual code and points to places as `path:line`."},
+      {"type": "text", "text": "If you ask about a pure concept, such as \"what is a channel\", with no code attached, Claude looks for a real use of it in your project and uses that as the example when one exists."},
+      {"type": "list", "title": "How new concepts are introduced", "items": [
+        "A small concept is defined inline, in one or two sentences, where it first appears.",
+        "A large concept gets a short primer before the main explanation.",
+        "Each is compared to the most comparable topic on your known list, and the answer says where the comparison breaks.",
+        "If no known topic has an honest comparison, the concept is explained from first principles.",
+        "A concept already in the log is mentioned briefly (\"the `context.Context` we covered before\") instead of being explained again."
+      ]},
+      {"type": "list", "title": "False friends it flags, for example", "items": [
+        "Go slices sharing their backing array.",
+        "C# `struct` being a value type while `class` is a reference type.",
+        "`defer` being function-scoped rather than block-scoped.",
+        "`async void` in C#."
+      ]}
+    ]},
+    {"heading": "The answer comes in up to six parts", "short": "The answer", "blocks": [
+      {"type": "table", "columns": ["Part", "What it holds"], "rows": [
+        ["1. TL;DR", "Two or three sentences."],
+        ["2. New concepts", "The primers, if any."],
+        ["3. Walk-through", "The actual explanation, grounded in the project's code with `path:line` references and short code excerpts."],
+        ["4. Diagram", "Box-and-arrow art in ASCII or Unicode, inside a code block, about 80 columns wide, with each arrow labelled with what flows along it."],
+        ["5. Gotchas", "False friends and surprising behavior relevant to this code."],
+        ["6. Logged", "One line listing the concepts being added to the log."]
+      ], "caption": "Parts that add nothing for a specific question are left out."},
+      {"type": "list", "title": "When a diagram is drawn", "items": [
+        "Drawn for request flows, call chains across layers, ownership or lifetimes, concurrency, startup and registration sequences, and type hierarchies.",
+        "Skipped for a single idiom or a one-function answer.",
+        "A flow too big for about 40 lines is split into an overview and a zoomed-in diagram."
+      ]}
+    ]},
+    {"heading": "The log saves what you learned, and you can edit it", "short": "The log", "blocks": [
+      {"type": "before_after", "before": {"label": "Before an explanation", "text": "A concept you have not been taught yet is defined before it is used."}, "after": {"label": "After it", "text": "The concept is in the log, so the next explanation refers to it briefly and builds on it."}},
+      {"type": "list", "title": "How the log works for you", "items": [
+        "It is written after the explanation is given, so you never wait on bookkeeping.",
+        "Language concepts go under the language's topic. What your project's components do, how modules connect, domain terms and conventions go under the project's topic.",
+        "Topics on your known list are not logged.",
+        "Everything lives in `~/.explain_skill/` as plain Markdown files. Edit them by hand if you want to correct what the skill thinks you know.",
+        "The log can grow large without filling the context window."
+      ]},
+      {"type": "table", "title": "Defaults and how to change them", "columns": ["Default", "Change it with"], "rows": [
+        ["The learning log lives in `~/.explain_skill/`, shared by every project on the machine", "Not configurable; edit or delete the files by hand"],
+        ["The current project (its git repo name) is registered as a topic you are learning", "`/explain:explain-known` with no argument and no IDE marks it known"],
+        ["Explanations go only as deep as your known topics and the log allow", "`/explain:explain-known` and `/explain:explain-unknown`"]
+      ]}
+    ]}
+  ],
+  "next_action": {
+    "text": "Run `/explain:explain` with a question about your code, then answer the two first-use questions.",
+    "detail": "Your answers set which topics explanations may assume and which they must define."
+  },
+  "sources": [
+    {"label": "explain plugin on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/explain"}
+  ]
+}

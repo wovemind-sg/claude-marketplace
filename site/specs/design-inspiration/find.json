@@ -1,0 +1,499 @@
+{
+  "title": "Find Design Inspiration",
+  "page_type": "how-to",
+  "gist": {
+    "kind": "chain",
+    "nodes": [
+      {
+        "icon": "code",
+        "label": "Run the find command"
+      },
+      {
+        "icon": "question",
+        "label": "Answer a few questions",
+        "arrow": "reads your repo"
+      },
+      {
+        "icon": "search",
+        "label": "Free inspiration sites searched",
+        "arrow": "then"
+      },
+      {
+        "icon": "check-circle",
+        "label": "Shortlist to rate",
+        "arrow": "publishes",
+        "outcome": true
+      }
+    ]
+  },
+  "bottom_line": "Run `/design-inspiration:find`, answer a few design questions, and get a private page of 6 to 8 designs per app page to rate.",
+  "sections": [
+    {
+      "heading": "One command starts it, with an optional screen or focus",
+      "short": "Run it",
+      "blocks": [
+        {
+          "type": "code",
+          "code": "/design-inspiration:find [optional: screen or focus]",
+          "caption": "The command. The part in brackets is optional."
+        },
+        {
+          "type": "before_after",
+          "before": {
+            "label": "You type",
+            "text": "`/design-inspiration:find dashboard and settings` inside your app's repo."
+          },
+          "after": {
+            "label": "You get",
+            "text": "A private claude.ai Artifact page with 6 to 8 design screenshots for each app page, where you rate each design Love, Maybe or No and add notes."
+          },
+          "caption": "What the command turns into."
+        },
+        {
+          "type": "text",
+          "text": "It finds visual design references for the app in your repo and helps you choose between them. The optional argument names the screens or the focus, for example \"dashboard and settings\" or \"onboarding\". It counts as your answer to the Scope question. Without it, the skill asks."
+        },
+        {
+          "type": "code",
+          "title": "Examples",
+          "code": "/design-inspiration:find\n/design-inspiration:find dashboard and settings"
+        },
+        {
+          "type": "text",
+          "title": "When to use it",
+          "text": "Use it whenever you want design ideas, inspiration, references, a moodboard, \"something like Dribbble\", a redesign direction, or \"make this look better\", even if you do not say \"inspiration\"."
+        }
+      ]
+    },
+    {
+      "heading": "Have the Playwright CLI and the Artifact tool ready",
+      "short": "Before you start",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "playwright-cli",
+              "state": "done",
+              "text": "The Playwright CLI opens the design pages and takes the screenshots."
+            },
+            {
+              "title": "claude.ai Artifact tool",
+              "state": "done",
+              "text": "Publishes the shortlist. Without it, the shortlist stays a local HTML file, the skill tells you where it is, and ratings do not work there."
+            },
+            {
+              "title": "plan-tools",
+              "state": "done",
+              "text": "The design-inspiration plugin depends on plan-tools, which is installed with it."
+            }
+          ],
+          "caption": "What the skill needs."
+        },
+        {
+          "type": "text",
+          "text": "Screenshots and browser files go into a scratch folder, never into your repo."
+        }
+      ]
+    },
+    {
+      "heading": "It works out your app from the code, then asks about design",
+      "short": "The questions",
+      "blocks": [
+        {
+          "type": "chain",
+          "title": "From repo to questions",
+          "nodes": [
+            {
+              "icon": "file",
+              "label": "Reads your repo",
+              "note": "README, routes and pages, styles and design tokens, platform."
+            },
+            {
+              "icon": "question",
+              "label": "Asks design questions",
+              "arrow": "then",
+              "note": "Skips any question the repo already answers."
+            },
+            {
+              "icon": "file",
+              "label": "Writes the brief",
+              "arrow": "your answers",
+              "outcome": true,
+              "note": "The brief goes on the shortlist page."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "It never asks what the app is, because the repo already says it. It asks scope, emphasis and priorities, mood and style, constraints and references, and whether to compare pairs first or go straight to a shortlist."
+        },
+        {
+          "type": "table",
+          "title": "The five question topics",
+          "columns": [
+            "Topic",
+            "What it covers",
+            "Default if skipped"
+          ],
+          "rows": [
+            [
+              "Scope",
+              "Which app pages to find inspiration for (multi-select, built from the pages it found)",
+              "The main screen"
+            ],
+            [
+              "Emphasis and priorities",
+              "What the design must get right, for example clarity of data, speed for frequent use, trust, delight, or conversion",
+              "(none stated)"
+            ],
+            [
+              "Mood and style",
+              "For example calm and minimal, bold and colorful, dark and technical, warm and friendly",
+              "(none stated)"
+            ],
+            [
+              "Constraints and references",
+              "Multi-select: keep the brand colors or logo, a component library to stay within, accessibility needs, sites you already like",
+              "(none stated)"
+            ],
+            [
+              "Compare pairs first, or go straight to a shortlist",
+              "Always asked, because the repo cannot answer it",
+              "Compare pairs"
+            ]
+          ]
+        },
+        {
+          "type": "list",
+          "title": "How your answers land in the brief",
+          "items": [
+            "A question the repo or the argument already answers is dropped and noted as \"(from the repo)\" in the brief.",
+            "If you skip a question, the default is used and marked \"(assumed)\" in the brief.",
+            "If you type your own answer under \"Other\", it goes into the brief in your own words."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "It searches the sites that suit each kind of app page",
+      "short": "The search",
+      "blocks": [
+        {
+          "type": "flow",
+          "title": "Which sources each app page gets",
+          "nodes": [
+            {
+              "id": "page",
+              "label": "Your app page"
+            },
+            {
+              "id": "inapp",
+              "label": "Dribbble, SaaSUI, Kombai, Collect UI, Behance"
+            },
+            {
+              "id": "land",
+              "label": "Awwwards, One Page Love, Recent.design and more"
+            },
+            {
+              "id": "pool",
+              "label": "About 16 usable candidates"
+            }
+          ],
+          "edges": [
+            {
+              "from": "page",
+              "to": "inapp",
+              "label": "in-app screen"
+            },
+            {
+              "from": "page",
+              "to": "land",
+              "label": "landing page"
+            },
+            {
+              "from": "inapp",
+              "to": "pool",
+              "label": "screenshots"
+            },
+            {
+              "from": "land",
+              "to": "pool",
+              "label": "screenshots"
+            }
+          ],
+          "caption": "Landing pages search Awwwards, One Page Love, Recent.design, SaaS Landing Page, Siteinspire, Land-book, Lapa Ninja and Behance."
+        },
+        {
+          "type": "table",
+          "title": "Sources by kind of app page",
+          "columns": [
+            "Kind of app page",
+            "Sources searched"
+          ],
+          "rows": [
+            [
+              "In-app screen",
+              "Dribbble, SaaSUI, the Kombai gallery, Collect UI and Behance"
+            ],
+            [
+              "Landing page",
+              "Awwwards, One Page Love, Recent.design, SaaS Landing Page, Siteinspire, Land-book, Lapa Ninja and Behance"
+            ]
+          ]
+        },
+        {
+          "type": "list",
+          "title": "How the search works",
+          "items": [
+            "It uses several search angles per source and takes at most one design per designer.",
+            "It screenshots just the design image of each candidate, with no site header or sidebar.",
+            "It aims for about 16 usable candidates per app page, counted after looking at each screenshot.",
+            "It runs one extra round with new angles when the pool is short."
+          ]
+        },
+        {
+          "type": "cards",
+          "title": "Things you may notice",
+          "cards": [
+            {
+              "title": "A browser window opens",
+              "state": "info",
+              "text": "Behance, Land-book and Lapa Ninja refuse a headless browser, so a visible browser window opens on your screen while they are searched."
+            },
+            {
+              "title": "Bot checks are skipped",
+              "state": "warn",
+              "text": "A page that still shows a bot check is skipped, never worked around, and the final reply names it."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Comparing pairs first teaches it your taste",
+      "short": "Compare pairs",
+      "blocks": [
+        {
+          "type": "stepper",
+          "title": "One round of pairs",
+          "steps": [
+            {
+              "title": "A pairs page is published",
+              "text": "If you chose to compare pairs, it publishes a page showing two designs per app page that differ on one trait, such as density or palette."
+            },
+            {
+              "title": "Pick and write notes",
+              "text": "On the page you pick the better one (or Neither) and write what you like and dislike in each."
+            },
+            {
+              "title": "Choose Continue in the terminal",
+              "text": "It builds a taste profile per app page from your answers and shows new pairs until it has learned enough."
+            },
+            {
+              "title": "One targeted search",
+              "text": "Then it runs one targeted search per app page: aimed at your taste, or, after a Love, at designs close to the loved one, including up to 3 by its maker."
+            }
+          ]
+        },
+        {
+          "type": "stats",
+          "items": [
+            {
+              "value": "10",
+              "label": "Most pairs per app page",
+              "icon": "repeat",
+              "note": "fewer when it has learned enough"
+            },
+            {
+              "value": "3",
+              "label": "Most designs by loved maker",
+              "icon": "user",
+              "note": "by the loved design's maker, in the search after a Love"
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "title": "Ways to stop early",
+          "items": [
+            "\"Build the shortlist now\" stops the pairs early.",
+            "Pressing \"Love it, find more like this\" on a design ends the pairs for that app page."
+          ]
+        },
+        {
+          "type": "text",
+          "title": "When pairs are skipped",
+          "text": "Pairs are skipped when you choose to go straight to a shortlist, or when the claude.ai Artifact tool is unavailable."
+        }
+      ]
+    },
+    {
+      "heading": "You get 6 to 8 distinct designs per app page to rate",
+      "short": "The shortlist",
+      "blocks": [
+        {
+          "type": "stats",
+          "items": [
+            {
+              "value": "6 to 8",
+              "label": "Designs per app page",
+              "icon": "table",
+              "note": "fewer only when fewer good ones turn up"
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "title": "How the designs are picked",
+          "items": [
+            "It picks 6 to 8 distinct designs per app page, dropping near-copies and spreading across sites.",
+            "It never pads the row with off-topic or weak designs: if fewer than 6 good ones turn up, it publishes those and tells you why and what would widen the search.",
+            "After the pairs, the cards are picked by fit to your taste, and a loved design is the first card."
+          ]
+        },
+        {
+          "type": "table",
+          "title": "What each card holds",
+          "columns": [
+            "Field",
+            "What it says"
+          ],
+          "rows": [
+            [
+              "Title",
+              "The design's name as the site shows it"
+            ],
+            [
+              "Designer",
+              "The person or studio credited on the page (for galleries of shipped products that name no designer, the product or company)"
+            ],
+            [
+              "Source site and link",
+              "The design's own page"
+            ],
+            [
+              "Why it fits",
+              "One or two sentences tying it to this app and your answers"
+            ],
+            [
+              "What to take",
+              "The concrete part worth borrowing (layout, type pairing, color, a component, density)"
+            ]
+          ]
+        },
+        {
+          "type": "list",
+          "title": "The published page",
+          "items": [
+            "It publishes the shortlist as an Artifact, at the same link as the pairs page when there was one, with your taste from the pairs in the brief.",
+            "When you asked for several app pages, each one gets its own section with its own cards and its own overall note box, all in the same Artifact.",
+            "Rate the cards on the page. Ratings and notes are saved on the page and kept across reloads. Only you and editors can change them.",
+            "Artifacts are private by default."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "The final reply gives the link and names what was left out",
+      "short": "The reply",
+      "blocks": [
+        {
+          "type": "chain",
+          "title": "After the shortlist",
+          "nodes": [
+            {
+              "icon": "link",
+              "label": "Shortlist link"
+            },
+            {
+              "icon": "check",
+              "label": "Rate the cards",
+              "arrow": "then"
+            },
+            {
+              "icon": "rocket",
+              "label": "Run the plan command",
+              "arrow": "then",
+              "outcome": true
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "The reply gives the link and one line: \"Rate the cards (Love / Maybe / No, notes optional), then run `/design-inspiration:plan <url>`.\""
+        },
+        {
+          "type": "list",
+          "title": "It then names, by source and app page",
+          "items": [
+            "Every source skipped because it was blocked.",
+            "Every source not searched because a step was refused.",
+            "Every source still empty after the extra round.",
+            "Every app page whose targeted search returned nothing usable or was skipped.",
+            "For each app page with fewer than 6 cards: how many it has, why, and what would widen it, such as a broader scope or a neighbouring screen type."
+          ]
+        },
+        {
+          "type": "text",
+          "title": "Other next steps",
+          "text": "`/design-inspiration:mockup` can build a responsive mockup of your pages in the chosen look, which you comment on and have revised. `/design-inspiration:plan` reads your choices and plans how to apply them."
+        }
+      ]
+    },
+    {
+      "heading": "An invoicing app gets two sections of 7 cards",
+      "short": "Example",
+      "blocks": [
+        {
+          "type": "stepper",
+          "title": "Example run in a small invoicing web app",
+          "steps": [
+            {
+              "title": "Run it with two screens",
+              "text": "You type the command with \"dashboard and invoice editor\".",
+              "block": {
+                "type": "code",
+                "code": "> /design-inspiration:find dashboard and invoice editor"
+              }
+            },
+            {
+              "title": "It reads the repo",
+              "text": "It learns it is a FastAPI + htmx invoicing app with a Tailwind palette."
+            },
+            {
+              "title": "It asks three things",
+              "text": "It asks about emphasis (\"fast data entry\"), mood (\"calm, professional\") and constraints (\"keep the green brand color\")."
+            },
+            {
+              "title": "It searches in-app sources",
+              "text": "It searches Dribbble, SaaSUI, the Kombai gallery and Collect UI, the sources that suit in-app screens, from several angles each (\"invoicing dashboard\", \"invoice editor form\", \"billing table\", and so on)."
+            },
+            {
+              "title": "Three rounds of pairs",
+              "text": "You chose to compare pairs, so for three rounds you pick between two dashboards and two editors and say what you like in each, until you press \"Love it\" on an airy editor and the next search looks for designs close to it."
+            },
+            {
+              "title": "The shortlist",
+              "text": "It publishes one page with two sections, Dashboard and Invoice editor, each holding 7 cards."
+            },
+            {
+              "title": "You rate and plan",
+              "text": "You love two dashboards, mark one editor as Maybe with the note \"only the line-item table\", and then run `/design-inspiration:plan <url>`."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "next_action": {
+    "text": "In your app's repo, run `/design-inspiration:find` with the screens you want, such as `dashboard and settings`.",
+    "detail": "Without an argument, the skill asks which app pages to cover."
+  },
+  "sources": [
+    {
+      "label": "design-inspiration plugin on GitHub",
+      "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/design-inspiration"
+    }
+  ]
+}

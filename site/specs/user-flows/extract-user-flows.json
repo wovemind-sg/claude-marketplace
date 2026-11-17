@@ -1,0 +1,403 @@
+{
+  "title": "Extract User Flows",
+  "page_type": "how-to",
+  "gist": {
+    "kind": "chain",
+    "nodes": [
+      {
+        "icon": "code",
+        "label": "Run the command"
+      },
+      {
+        "icon": "search",
+        "label": "Claude reads your code",
+        "arrow": "then"
+      },
+      {
+        "icon": "file",
+        "label": "user-flows.md is written",
+        "arrow": "then",
+        "outcome": true
+      }
+    ]
+  },
+  "bottom_line": "Run this command in your app's project and Claude writes user-flows.md, a list of every way a person can use your app, each listed once.",
+  "sections": [
+    {
+      "heading": "Type the command, with two optional extras",
+      "short": "Run it",
+      "blocks": [
+        {
+          "type": "code",
+          "code": "/user-flows:extract-user-flows [low|medium|high] [optional area description, e.g. 'login']",
+          "caption": "Both extras are optional and can come in any order."
+        },
+        {
+          "type": "chain",
+          "title": "What happens when you run it",
+          "nodes": [
+            {
+              "icon": "code",
+              "label": "You run the command",
+              "note": "Inside your app's project folder in Claude Code."
+            },
+            {
+              "icon": "search",
+              "label": "Claude maps the app",
+              "arrow": "then",
+              "note": "Every flow is grounded in evidence from the code. It never invents features."
+            },
+            {
+              "icon": "file",
+              "label": "user-flows.md at root",
+              "arrow": "writes",
+              "note": "Plus a short note in the project's CLAUDE.md.",
+              "outcome": true
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "title": "The two optional extras",
+          "columns": [
+            "Extra",
+            "What you type",
+            "Default",
+            "What it does"
+          ],
+          "rows": [
+            [
+              "Granularity",
+              "The word `low`, `medium` or `high`",
+              "`high`",
+              "Sets how comprehensive the list is: how many flows you get, not how detailed each one is."
+            ],
+            [
+              "Area",
+              "Any other free text, such as \"login\", \"checkout and payments\" or \"the admin panel\"",
+              "The whole app",
+              "Only flows for features matching that description are extracted. On an existing file, only that section is replaced; other sections and their IDs stay stable."
+            ]
+          ]
+        },
+        {
+          "type": "code",
+          "title": "Examples",
+          "code": "/user-flows:extract-user-flows\n/user-flows:extract-user-flows medium\n/user-flows:extract-user-flows low checkout and payments\n/user-flows:extract-user-flows login"
+        },
+        {
+          "type": "list",
+          "title": "Before you start",
+          "items": [
+            "Nothing beyond Claude Code is needed. The skill reads the code and writes `user-flows.md`.",
+            "The plugin has no environment variables and no plugin settings.",
+            "Run it in the application's project folder, because it extracts flows from the app in the current working directory.",
+            "Typical reasons to use it: you want to extract, list, map or inventory the user flows, user journeys, usage scenarios or interaction paths of your app, especially before writing automated (E2E) tests."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "A user flow is one complete thing a person does",
+      "short": "One flow",
+      "blocks": [
+        {
+          "type": "chain",
+          "title": "Example: one user flow",
+          "nodes": [
+            {
+              "icon": "link",
+              "label": "Open /login"
+            },
+            {
+              "icon": "key",
+              "label": "Enter email and password",
+              "arrow": "then"
+            },
+            {
+              "icon": "check",
+              "label": "Submit",
+              "arrow": "then"
+            },
+            {
+              "icon": "flag",
+              "label": "Land on dashboard",
+              "arrow": "then",
+              "outcome": true
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "A **user flow** is one complete, goal-directed interaction a client can have with the app, from where it starts to an outcome you can see. Another example: login, then search, then add to cart, then checkout."
+        },
+        {
+          "type": "text",
+          "text": "Flows are the unit a later model turns into automated tests. So each flow must be testable on its own: concrete steps, a clear starting state and an outcome that can be checked."
+        },
+        {
+          "type": "glossary",
+          "terms": [
+            {
+              "term": "User flow",
+              "definition": "One complete interaction a person has with the app, from entry point to an outcome you can observe."
+            },
+            {
+              "term": "Granularity",
+              "definition": "How comprehensive the list is: low, medium or high."
+            },
+            {
+              "term": "Area",
+              "definition": "A part of the app, such as Authentication. Flows are grouped under one heading per area."
+            },
+            {
+              "term": "Flow ID",
+              "definition": "A stable number such as UF-001 that tests use to point back at a flow."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Granularity decides how many flows you get",
+      "short": "Granularity",
+      "blocks": [
+        {
+          "type": "table",
+          "columns": [
+            "Level",
+            "What it covers"
+          ],
+          "rows": [
+            [
+              "`low`",
+              "Only the critical happy paths: one flow per major feature, the paths the business would notice breaking within an hour."
+            ],
+            [
+              "`medium`",
+              "All happy paths plus the important variations: validation failures the user will commonly hit, alternate entry points, and cancel or back-out paths on destructive or paid actions."
+            ],
+            [
+              "`high` (default)",
+              "Everything in medium plus edge cases, error and permission-denied paths, empty states and boundary behaviors such as an expired session, a double submit, or opening a protected page without logging in."
+            ]
+          ],
+          "highlight_column": 1,
+          "caption": "Steps stay concrete at every level. Only the number of flows changes."
+        },
+        {
+          "type": "text",
+          "text": "At `high`, the aim is the full set of flows a thorough QA engineer would list."
+        }
+      ]
+    },
+    {
+      "heading": "Each flow appears only once",
+      "short": "No duplicates",
+      "blocks": [
+        {
+          "type": "before_after",
+          "before": {
+            "label": "Duplicates",
+            "text": "One flow per search term: each one has the same steps and the same outcome, and only the data value is different."
+          },
+          "after": {
+            "label": "Merged",
+            "text": "One flow: \"search for any term\", with the changing input noted."
+          },
+          "caption": "Flows that differ only in data values are merged into one."
+        },
+        {
+          "type": "text",
+          "text": "A flow that is just the start of a longer flow only counts as its own flow if it ends in a different outcome that can be checked."
+        }
+      ]
+    },
+    {
+      "heading": "You get user-flows.md, with every flow in the same shape",
+      "short": "The file",
+      "blocks": [
+        {
+          "type": "cards",
+          "title": "The five lines of every flow",
+          "cards": [
+            {
+              "title": "Actor",
+              "state": "info",
+              "text": "Who performs it, for example an anonymous user or an admin."
+            },
+            {
+              "title": "Precondition",
+              "state": "info",
+              "text": "The state needed before the flow starts, for example \"registered account exists\"."
+            },
+            {
+              "title": "Steps",
+              "state": "info",
+              "text": "The actions, joined by arrows. Each step is one user action or visible change, concrete enough to automate, such as \"click Purchase on the item page\"."
+            },
+            {
+              "title": "Expected",
+              "state": "info",
+              "text": "An outcome a test could check: a URL, visible text, a record created, an email queued. Never vague, like \"it works\"."
+            },
+            {
+              "title": "Source",
+              "state": "info",
+              "text": "The key files or routes in the code that implement the flow."
+            }
+          ]
+        },
+        {
+          "type": "code",
+          "title": "The file's layout",
+          "code": "# User Flows\n\n> granularity: <low|medium|high> | area: <filter or \"all\"> | generated: <YYYY-MM-DD>\n\n## <Area name, e.g. Authentication>\n\n### UF-001: <Short flow name>\n- **Actor:** <who performs it, e.g. anonymous user, admin>\n- **Precondition:** <required state before the flow, e.g. \"registered account exists\">\n- **Steps:** <step 1> → <step 2> → <step 3>\n- **Expected:** <observable, assertable outcome>\n- **Source:** <key file(s)/route(s) implementing this flow>"
+        },
+        {
+          "type": "list",
+          "title": "Rules the file follows",
+          "items": [
+            "IDs are numbered in order (`UF-001`, `UF-002`, and so on) across the whole file, and an ID is never reused for a different flow.",
+            "Flows are grouped under one heading per area, so a run limited to one area can replace that section cleanly.",
+            "Each step is a single user action or visible change, without implementation detail a test does not need.",
+            "The Expected line is always something a test can check."
+          ]
+        },
+        {
+          "type": "text",
+          "title": "Where the flows come from",
+          "text": "Every flow is based on evidence in the code, never on features that do not exist. If the repository has a graphify knowledge graph (a `graphify-out/` folder) and the `/graphify` skill is available, Claude checks that first."
+        }
+      ]
+    },
+    {
+      "heading": "Running it again replaces the whole file or one area",
+      "short": "Running again",
+      "blocks": [
+        {
+          "type": "flow",
+          "title": "When user-flows.md already exists",
+          "nodes": [
+            {
+              "id": "run",
+              "label": "You run the command again"
+            },
+            {
+              "id": "all",
+              "label": "Whole file regenerated"
+            },
+            {
+              "id": "one",
+              "label": "Only matching area sections replaced"
+            },
+            {
+              "id": "ids",
+              "label": "Other sections untouched, IDs continue"
+            }
+          ],
+          "edges": [
+            {
+              "from": "run",
+              "to": "all",
+              "label": "no area given"
+            },
+            {
+              "from": "run",
+              "to": "one",
+              "label": "area given"
+            },
+            {
+              "from": "one",
+              "to": "ids",
+              "label": "then"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "With an area, numbering continues from the highest existing ID. That keeps the IDs your tests already refer to stable."
+        }
+      ]
+    },
+    {
+      "heading": "It also leaves a short note in your project's CLAUDE.md",
+      "short": "CLAUDE.md note",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Where the list lives",
+              "state": "info",
+              "text": "`user-flows.md` at the project root is the list of user flows, with stable `UF-NNN` IDs grouped by area, made by `/user-flows:extract-user-flows`."
+            },
+            {
+              "title": "How to keep it current",
+              "state": "info",
+              "text": "After behavior changes, use `/user-flows:update-user-flows`. Do not edit flow entries by hand, and never renumber IDs, because tests refer to them."
+            },
+            {
+              "title": "How to get tests",
+              "state": "info",
+              "text": "Playwright end-to-end (E2E) tests can be made and kept in sync from it with `/user-flows:test-user-flow`."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "If `CLAUDE.md` does not exist, it is created with just this section. If the section is already there, it is refreshed rather than added a second time. It stays a few lines long."
+        }
+      ]
+    },
+    {
+      "heading": "This is the first step toward automated tests",
+      "short": "What comes next",
+      "blocks": [
+        {
+          "type": "chain",
+          "title": "The pipeline this plugin is built for",
+          "nodes": [
+            {
+              "icon": "search",
+              "label": "Extract user flows"
+            },
+            {
+              "icon": "code",
+              "label": "Generate tests for them",
+              "arrow": "then"
+            },
+            {
+              "icon": "repeat",
+              "label": "Run tests after changes",
+              "arrow": "then",
+              "outcome": true,
+              "note": "Run the tests after big changes."
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "title": "What it reports when it finishes",
+          "items": [
+            "The total number of flows.",
+            "The number of flows per area.",
+            "The granularity used.",
+            "The path of the file.",
+            "Whether CLAUDE.md was created or updated.",
+            "It does not paste the whole file back into the conversation."
+          ]
+        }
+      ]
+    }
+  ],
+  "next_action": {
+    "text": "Open your app's project in Claude Code and run `/user-flows:extract-user-flows`.",
+    "detail": "With no extras it covers the whole app at the default granularity, high."
+  },
+  "sources": [
+    {
+      "label": "user-flows plugin on GitHub",
+      "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/user-flows"
+    }
+  ]
+}

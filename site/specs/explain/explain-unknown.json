@@ -1,0 +1,81 @@
+{
+  "title": "Mark Topics Unknown",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "question", "label": "Run explain-unknown"},
+    {"icon": "file", "label": "Profile marks them learning", "arrow": "topics or code"},
+    {"icon": "lightbulb", "label": "Explained from the start", "arrow": "next explanation", "outcome": true}
+  ]},
+  "bottom_line": "Run /explain:explain-unknown with topic names, or with nothing to use your IDE selection or project, so explanations stop assuming them and start logging them.",
+  "sections": [
+    {"heading": "You need only Claude Code, plus an optional IDE", "short": "Before you start", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Claude Code", "state": "done", "text": "Nothing else is required."},
+        {"title": "git (optional)", "state": "info", "text": "Used, when present, to name the current project after its repository."},
+        {"title": "A connected IDE (optional)", "state": "info", "text": "Without an argument, the skills use the code highlighted in the IDE, or the opened file. With no IDE connected, they fall back to the current project."}
+      ]},
+      {"type": "text", "title": "First use", "text": "If your profile at `~/.explain_skill/profile.md` does not exist yet, Claude first asks the two first-use questions of the explain skill: which topics you want to learn, and which you already know well. It writes the profile, then continues."},
+      {"type": "text", "title": "Settings", "text": "None. The plugin has no environment variables and no plugin settings. It runs only when you type it; Claude never starts it on its own."},
+      {"type": "glossary", "terms": [
+        {"term": "IDE", "definition": "The code editor connected to Claude Code, which tells Claude which lines you selected and which file you opened."},
+        {"term": "Topic", "definition": "A language, framework, tool or project, such as Go, .NET or your codebase."},
+        {"term": "Known list", "definition": "The topics you know well. Explanations may assume them."},
+        {"term": "Learning list", "definition": "The topics you are learning. Explanations define their concepts before using them."},
+        {"term": "Learning log", "definition": "Plain Markdown notes in `~/.explain_skill/` recording which concepts you have covered."}
+      ]}
+    ]},
+    {"heading": "What you type decides what gets marked unknown", "short": "Run it", "blocks": [
+      {"type": "code", "title": "The command", "code": "/explain:explain-unknown [topic, topic, ...]  (empty = IDE selection, then opened file, then current project)"},
+      {"type": "flow", "title": "Three ways to use it", "nodes": [
+        {"id": "run", "label": "/explain:explain-unknown"},
+        {"id": "topics", "label": "Whole topics move to learning"},
+        {"id": "code", "label": "Concepts in that code removed from log"},
+        {"id": "project", "label": "Current project added to learning"}
+      ], "edges": [
+        {"from": "run", "to": "topics", "label": "topic names"},
+        {"from": "run", "to": "code", "label": "empty, IDE connected"},
+        {"from": "run", "to": "project", "label": "empty, no IDE"}
+      ], "caption": "With an IDE, the highlighted code is used first, then the opened file if nothing is highlighted."},
+      {"type": "code", "title": "Example", "code": "/explain:explain-unknown .NET, C#, Go"}
+    ]},
+    {"heading": "Topic names move whole topics to your learning list", "short": "With topics", "blocks": [
+      {"type": "stepper", "steps": [
+        {"title": "Your list is split on commas", "text": "For example `.NET, C#, Go` becomes three topics."},
+        {"title": "Each topic leaves the known list", "text": "If it is listed there. Matching ignores case and treats aliases as the same topic."},
+        {"title": "Each topic joins the learning list", "text": "Unless it is already listed."},
+        {"title": "No notes are created yet", "text": "`/explain:explain` creates them when it logs the first concept."}
+      ]}
+    ]},
+    {"heading": "With no argument, the concepts in that code are explained again", "short": "With your IDE", "blocks": [
+      {"type": "before_after", "before": {"label": "What you mean", "text": "\"I don't really understand this code\": the highlighted lines, or the whole opened file if nothing is highlighted."}, "after": {"label": "What changes", "text": "The concepts in that code are removed from the log, so the next explanation covers them from the start."}},
+      {"type": "list", "title": "What happens", "ordered": true, "items": [
+        "Claude reads the target: the selected lines, or the whole opened file if nothing is selected.",
+        "It lists the concepts the target uses, grouped by topic. For an opened file, it includes the file's role in the project.",
+        "If one of those topics is on your known list, it is not moved, because you may know most of the topic but not this part. The concept is mentioned in the reply instead.",
+        "Each concept logged under a topic on your learning list has its notes deleted. The next explanation then explains it again from the start.",
+        "If a concept's topic is on neither list, the topic is added to the learning list."
+      ]}
+    ]},
+    {"heading": "With no argument and no IDE, your project joins the learning list", "short": "Your project", "blocks": [
+      {"type": "chain", "nodes": [
+        {"icon": "code", "label": "Current project name", "note": "The git repository name, or the folder name."},
+        {"icon": "plus", "label": "Added to learning list", "arrow": "same steps", "outcome": true, "note": "With a \" (project)\" suffix."}
+      ], "caption": "The same steps as for topic names are applied to the project's name."},
+      {"type": "text", "title": "Defaults", "text": "Explanations go only as deep as your known topics and the log allow; change that with `/explain:explain-known` and `/explain:explain-unknown`. The learning log lives in `~/.explain_skill/`, shared by every project on the machine. That is not configurable; edit or delete the files by hand."}
+    ]},
+    {"heading": "A short reply tells you what changed", "short": "Check it worked", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "The target it used", "state": "info", "text": "A topic, a selection, a file, or the project."},
+        {"title": "What it changed", "state": "done", "text": "What it added, moved, or removed."},
+        {"title": "An offer to explain", "state": "open", "text": "After a selection or file target, it offers to explain it now with `/explain:explain`."}
+      ], "caption": "Claude replies in one short message."}
+    ]}
+  ],
+  "next_action": {
+    "text": "Run `/explain:explain-unknown` followed by the topics you want to learn, such as `.NET, C#, Go`.",
+    "detail": "Explanations will then define those topics' concepts before using them."
+  },
+  "sources": [
+    {"label": "explain plugin on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/explain"}
+  ]
+}

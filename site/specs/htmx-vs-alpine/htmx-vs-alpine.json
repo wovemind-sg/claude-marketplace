@@ -1,0 +1,126 @@
+{
+  "title": "HTMX or Alpine.js",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "user", "label": "You ask for interactivity"},
+    {"icon": "question", "label": "Who owns the state?", "arrow": "Claude asks"},
+    {"icon": "check-circle", "label": "Right tool, with reasons", "arrow": "picks", "outcome": true}
+  ]},
+  "bottom_line": "When Claude adds interactivity to a server-rendered app, it uses HTMX for anything the server owns and Alpine.js for short-lived browser-only behaviour.",
+  "sections": [
+    {"heading": "It runs on its own, or you can call it", "short": "Using it", "blocks": [
+      {"type": "code", "code": "/htmx-vs-alpine:htmx-vs-alpine", "caption": "The command takes no arguments. You rarely need it: the skill activates automatically."},
+      {"type": "cards", "cards": [
+        {"title": "Automatic", "state": "good", "text": "The skill activates on its own when Claude writes frontend code in a server-rendered context. No explicit invocation needed."},
+        {"title": "Direct", "state": "info", "text": "Type `/htmx-vs-alpine:htmx-vs-alpine` to call it yourself."}
+      ]},
+      {"type": "glossary", "terms": [
+        {"term": "Server-rendered app", "definition": "An app whose server builds the HTML pages and sends them to the browser."},
+        {"term": "HTMX", "definition": "A library where the server fetches and swaps in HTML."},
+        {"term": "Alpine.js", "definition": "A library for local browser state, such as whether a menu is open."},
+        {"term": "State", "definition": "Information the page depends on, such as search results or whether a dropdown is open."},
+        {"term": "SPA", "definition": "Single-page application: an app that runs mostly in the browser, built with a framework such as React or Vue."}
+      ]},
+      {"type": "list", "title": "When it activates", "items": [
+        "Form submission, CRUD operations, search, filtering, pagination",
+        "Modals, dropdowns, tabs, accordions, toggles",
+        "Infinite scroll, lazy loading, polling",
+        "Any scenario where you'd otherwise reach for custom JavaScript"
+      ]},
+      {"type": "text", "text": "It applies even if you never mention HTMX or Alpine.js, and Claude applies it before reaching for custom JavaScript in a server-rendered context."},
+      {"type": "text", "title": "Requirements", "text": "None. The skill is guidance only, and needs no environment variables. It applies to projects that render HTML on the server and load HTMX and Alpine.js in the page."}
+    ]},
+    {"heading": "Two questions decide which tool Claude uses", "short": "Two questions", "blocks": [
+      {"type": "flow", "title": "How Claude picks", "nodes": [
+        {"id": "f", "label": "A feature needs interactivity"},
+        {"id": "q1", "label": "Who owns this state?"},
+        {"id": "q2", "label": "Should it survive a page refresh?"},
+        {"id": "h", "label": "HTMX"},
+        {"id": "a", "label": "Alpine.js"}
+      ], "edges": [
+        {"from": "f", "to": "q1", "label": "first"},
+        {"from": "q1", "to": "h", "label": "the server"},
+        {"from": "q1", "to": "q2", "label": "the browser"},
+        {"from": "q2", "to": "h", "label": "yes"},
+        {"from": "q2", "to": "a", "label": "no"}
+      ], "caption": "Server-owned or lasting state goes to HTMX. Temporary browser state goes to Alpine.js."},
+      {"type": "table", "columns": ["Question", "HTMX", "Alpine.js"], "rows": [
+        ["1. Who owns this state?", "The server", "The browser, temporarily"],
+        ["2. Should this survive a page refresh?", "Yes (the server must persist it)", "No"]
+      ]},
+      {"type": "list", "title": "The idea behind each tool", "items": [
+        "HTMX: the server drives state and renders HTML. The browser is a dumb terminal.",
+        "Alpine.js: the browser drives ephemeral UI state. No server round-trip needed.",
+        "Use both together: HTMX fetches server-rendered fragments, and Alpine.js enhances interactivity inside those fragments.",
+        "If still unsure, Claude defaults to HTMX for data and state, and Alpine.js for presentation and interactivity."
+      ]},
+      {"type": "text", "text": "When you build a server-rendered app and need to add interactivity, Claude often has to decide whether a feature should be driven by HTMX (the server fetches and swaps HTML) or Alpine.js (local browser state)."},
+      {"type": "text", "text": "This decision framework is there so Claude consistently picks the right tool, and explains why."}
+    ]},
+    {"heading": "Example: a live search box and a row menu", "short": "Example", "blocks": [
+      {"type": "text", "text": "You ask Claude: \"Add a search box above the orders table that filters as I type, and a dropdown menu on each row.\" Claude splits the work by who owns the state."},
+      {"type": "cards", "cards": [
+        {"title": "Search box: HTMX", "state": "info", "text": "The search results come from the database, so the search box uses HTMX to ask the server for the filtered table and swap it in."},
+        {"title": "Row menu: Alpine.js", "state": "info", "text": "Whether a row's dropdown is open matters only in the browser, so the menu uses Alpine.js and makes no request."}
+      ]},
+      {"type": "code", "title": "The search box (HTMX)", "code": "<input type=\"search\" name=\"q\"\n       hx-get=\"/orders\" hx-trigger=\"input changed delay:300ms\"\n       hx-target=\"#orders-table\">"},
+      {"type": "code", "title": "The row menu (Alpine.js)", "code": "<div x-data=\"{ open: false }\">\n  <button @click=\"open = !open\">Actions</button>\n  <ul x-show=\"open\" @click.outside=\"open = false\">...</ul>\n</div>"}
+    ]},
+    {"heading": "HTMX is for anything the server should own or render", "short": "HTMX cases", "blocks": [
+      {"type": "table", "columns": ["Scenario", "Why HTMX"], "rows": [
+        ["Form submission / CRUD", "Server validates and persists"],
+        ["Search / filter / sort", "Server queries the database"],
+        ["Pagination / infinite scroll", "Server returns the next page"],
+        ["Lazy loading content", "Server renders the fragment"],
+        ["Multi-step workflows", "Server tracks step state"],
+        ["Notifications from backend", "Server owns notification data"],
+        ["Authentication-gated UI", "Server checks auth"],
+        ["Polling for updates", "Server is the source of truth"]
+      ]},
+      {"type": "text", "text": "In short: form submissions, database queries, authenticated UI, multi-step workflows and real-time updates from the backend."}
+    ]},
+    {"heading": "Alpine.js is for local, visual, short-lived behaviour", "short": "Alpine.js cases", "blocks": [
+      {"type": "table", "columns": ["Scenario", "Why Alpine.js"], "rows": [
+        ["Dropdown open/close", "Pure browser state"],
+        ["Modal show/hide", "Triggered locally"],
+        ["Tabs / accordions", "No persistence needed"],
+        ["Toggle buttons", "Local boolean"],
+        ["Copy-to-clipboard", "Browser API call"],
+        ["Client-side input formatting", "Cosmetic, pre-submission"],
+        ["Loading / skeleton states", "Transient UI polish"],
+        ["Simple animations", "CSS-driven"],
+        ["Keyboard shortcuts", "Browser event listeners"]
+      ]},
+      {"type": "text", "text": "In short: open/close dropdowns, show/hide modals, tabs, copy-to-clipboard and transient UI polish."}
+    ]},
+    {"heading": "The two work together inside one feature", "short": "Both together", "blocks": [
+      {"type": "chain", "title": "Example: a notifications panel", "nodes": [
+        {"icon": "server", "label": "HTMX loads the panel", "note": "The server owns which notifications exist."},
+        {"icon": "bolt", "label": "Alpine.js expands one", "arrow": "inside the fragment", "outcome": true, "note": "The browser owns whether a notification is expanded."}
+      ]},
+      {"type": "text", "text": "HTMX fetches and swaps server-rendered HTML fragments. Alpine.js adds interactivity inside those fragments."}
+    ]},
+    {"heading": "HTMX comes first; custom JavaScript is the exception", "short": "Defaults", "blocks": [
+      {"type": "stepper", "steps": [
+        {"title": "HTMX is the primary model", "text": "For standard apps (dashboards, admin tools, internal tools, forms, business apps), HTMX is the primary interaction model."},
+        {"title": "Alpine.js complements it", "text": "Alpine.js is a lightweight complement for UI behavior only."},
+        {"title": "Custom JavaScript is rare", "text": "Custom JavaScript should be the exception, not the rule."}
+      ]},
+      {"type": "list", "title": "What Claude also follows", "items": [
+        "Prefers server-rendered HTML over JSON APIs, and returns HTML fragments from the server, not JSON.",
+        "Makes failed requests visible to the user, never console-only.",
+        "Keeps Alpine.js scopes small and local, avoids global stores unless genuinely needed, and does not duplicate server business logic in Alpine.js.",
+        "Does not use Alpine.js for client-side routing or SPA patterns, and avoids SPA patterns unless you explicitly need them.",
+        "If the requirement calls for complex client-side state, Claude recommends a proper SPA framework rather than fighting against the server-rendered model."
+      ]},
+      {"type": "text", "text": "The skill actively discourages recreating SPA patterns manually and avoids unnecessary client-side complexity."}
+    ]}
+  ],
+  "next_action": {
+    "text": "In a server-rendered project, ask Claude for an interactive feature, such as the search box and row menu in the example.",
+    "detail": "The skill runs on its own; type `/htmx-vs-alpine:htmx-vs-alpine` if you want to call it directly."
+  },
+  "sources": [
+    {"label": "htmx-vs-alpine plugin on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/htmx-vs-alpine"}
+  ]
+}

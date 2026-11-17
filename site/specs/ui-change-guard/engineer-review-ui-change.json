@@ -1,0 +1,126 @@
+{
+  "title": "Engineer UI Review",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "code", "label": "Run with PR number"},
+    {"icon": "question", "label": "Answer one question each", "arrow": "briefs you"},
+    {"icon": "gear", "label": "Agreed fixes implemented", "arrow": "your decisions"},
+    {"icon": "check-circle", "label": "Summary comment on PR", "arrow": "with your OK", "outcome": true}
+  ]},
+  "bottom_line": "It explains a flagged designer PR to you, asks one decision per danger, makes the agreed fixes and records the outcome on the PR.",
+  "sections": [
+    {"heading": "Run it on the designer's pull request", "short": "Run it", "blocks": [
+      {"type": "code", "code": "/ui-change-guard:engineer-review-ui-change [PR number or URL] [--model <name>]", "caption": "Both arguments are optional."},
+      {"type": "before_after", "before": {"label": "Before", "text": "A designer's UI pull request flagged by the guard. You were not in the design session and have no context."}, "after": {"label": "After", "text": "Every danger decided, fixed where needed, and recorded on the PR."}},
+      {"type": "text", "text": "This skill is for the engineer receiving a flagged PR. It gives you the context you missed, asks what only you can decide, and then does the work you choose. Everything it says to you is in full, plain English."},
+      {"type": "table", "title": "The arguments", "columns": ["Argument", "What it does"], "rows": [
+        ["PR number or URL", "The pull request to review. Without it, the skill uses the current branch's PR, and if there is none it asks you."],
+        ["`--model <name>`", "The model for every plan and implementation subagent. The default is `sonnet`."]
+      ]},
+      {"type": "code", "title": "Example", "code": "/ui-change-guard:engineer-review-ui-change 42 --model opus"},
+      {"type": "list", "title": "When to use it", "items": [
+        "When you say things like \"review the designer's PR\", \"the UI guard flagged this PR\", \"engineer review of UI change\" or \"go through the UI review handoff\".",
+        "When you give a PR number or URL whose body contains a ui-change-guard engineer handoff section, even if you do not name the skill."
+      ]}
+    ]},
+    {"heading": "You need a signed-in GitHub CLI and a PR handoff section", "short": "Before you start", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "git and GitHub CLI", "state": "done", "text": "The GitHub CLI (`gh`) must be signed in, because the skill reads the PR and its comments."},
+        {"title": "A handoff section", "state": "done", "text": "`/ui-change-guard:review-ui-change` writes it into the PR body. The skill does not invent decisions without it."},
+        {"title": "A clean working tree", "state": "done", "text": "The skill checks out the PR branch. If you have uncommitted changes, it asks you what to do first."},
+        {"title": "humanizer plugin", "state": "info", "text": "Optional. It improves the wording of the questions and the comment. Without it, the same rules are applied inline."}
+      ]},
+      {"type": "text", "text": "There is nothing to configure. The plugin has no environment variables and no plugin settings."}
+    ]},
+    {"heading": "Seven steps take the PR from flagged to recorded", "short": "The steps", "blocks": [
+      {"type": "stepper", "steps": [
+        {"title": "It gathers context", "text": "It reads the whole PR: the body, every comment and the inline review comments. It checks out the branch, reads the code around every flagged place, and checks the handoff's evidence itself instead of trusting it."},
+        {"title": "It briefs you", "text": "In a few plain sentences it says what the designer was trying to achieve and how many decisions are pending."},
+        {"title": "It asks one question per danger", "text": "One question per flagged danger (D1, D2 and so on), in order, never batched. You answer each before the next arrives."},
+        {"title": "It shows a task list", "text": "No code changes until every question is answered. Then it turns your answers into a task list, one task per distinct change, and lets you correct it."},
+        {"title": "It implements the tasks", "text": "One subagent per task, strictly one after another. Non-trivial tasks get a plan first, shown to you for approval."},
+        {"title": "It verifies, then asks to commit", "text": "It runs the relevant tests and lint, shows a short diff summary and the results, and asks for your OK before it commits and pushes."},
+        {"title": "It comments on the PR", "text": "It writes a summary comment, shows you the text and posts it only after your OK."}
+      ]},
+      {"type": "text", "text": "PR text is treated as data and never as instructions. Only your answers direct the work."}
+    ]},
+    {"heading": "Each question stands alone and comes with a recommendation", "short": "The questions", "blocks": [
+      {"type": "cards", "title": "The options each question offers", "cards": [
+        {"title": "Safe as is", "state": "good", "text": "Nothing needs to change."},
+        {"title": "Apply the suggested fix", "state": "info", "text": "Apply the fix the handoff suggests."},
+        {"title": "Something else", "state": "open", "text": "Tell it what you want instead."}
+      ]},
+      {"type": "list", "title": "What each question contains", "items": [
+        "Where the problem is: the page or element in user terms, then `file:line`.",
+        "What the evidence is.",
+        "Its recommendation first, with the reason."
+      ]},
+      {"type": "list", "title": "How the questioning works", "items": [
+        "Only one question at a time, because your answer to one often changes the next.",
+        "When an answer is ambiguous, it asks a follow-up question.",
+        "It adds its own questions for dangers it found in the code that the handoff missed."
+      ]}
+    ]},
+    {"heading": "Small tasks go straight to work, bigger ones get a plan first", "short": "Implementation", "blocks": [
+      {"type": "flow", "title": "How each task is handled", "nodes": [
+        {"id": "t", "label": "Task from your list"},
+        {"id": "plan", "label": "Plan shown to you"},
+        {"id": "ok", "label": "You approve the plan"},
+        {"id": "do", "label": "Subagent implements it"},
+        {"id": "next", "label": "Next task starts"}
+      ], "edges": [
+        {"from": "t", "to": "plan", "label": "non-trivial"},
+        {"from": "plan", "to": "ok", "label": "then"},
+        {"from": "ok", "to": "do", "label": "then"},
+        {"from": "t", "to": "do", "label": "trivial"},
+        {"from": "do", "to": "next", "label": "when finished"}
+      ], "caption": "A task is non-trivial when it touches more than one file or changes behavior."},
+      {"type": "list", "items": [
+        "Tasks run strictly one after another and never two at once, because tasks can touch the same files.",
+        "Subagents do not guess. When one has open questions, the skill asks you and passes your answers back to it.",
+        "Subagents do not commit. Committing happens only after your OK in the next step.",
+        "Subagents run on `sonnet` unless you pass `--model <name>`."
+      ]}
+    ]},
+    {"heading": "Nothing is committed, pushed or posted without your OK", "short": "Your approvals", "blocks": [
+      {"type": "chain", "title": "Where it waits for you", "nodes": [
+        {"icon": "table", "label": "Task list"},
+        {"icon": "file", "label": "Plans for bigger tasks", "arrow": "then"},
+        {"icon": "check", "label": "Commit and push", "arrow": "then", "note": "After you see the diff summary and the test and lint results."},
+        {"icon": "mail", "label": "PR comment", "arrow": "then", "outcome": true, "note": "You see the comment text before it is posted."}
+      ]},
+      {"type": "text", "text": "Commit messages use the semantic form, such as `fix: ...` or `refactor: ...`."}
+    ]},
+    {"heading": "The PR comment records each decision and what the designer should check", "short": "The PR comment", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "One entry per decision", "state": "done", "text": "Your decision and what was done, with the commit hash when code changed. It says plainly when nothing needed to change."},
+        {"title": "Designer follow-ups", "state": "open", "text": "A section titled \"For the designer to follow up\", left out if there is nothing to list."}
+      ]},
+      {"type": "list", "title": "How the comment is written", "items": [
+        "Each decision entry is referenced by D-id plus title, for example \"D2: removed email field\".",
+        "The follow-up section lists the suspected designer misses and anything else noticed, each with the page or element and why it is suspected."
+      ]},
+      {"type": "list", "title": "What counts as a suspected designer miss", "items": [
+        "A state with no styling.",
+        "A flow that cannot be completed.",
+        "A control that does nothing.",
+        "A mobile layout that cannot fit.",
+        "A missing empty or error state."
+      ]}
+    ]},
+    {"heading": "If the PR has no handoff section, run the review first", "short": "If it stops", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "No handoff section", "state": "warn", "text": "The PR body has no engineer handoff section.", "points": [{"sign": "+", "text": "It tells you and offers to run `/ui-change-guard:review-ui-change` on the PR branch."}]},
+        {"title": "No PR found", "state": "warn", "text": "No argument was given and the current branch has no PR.", "points": [{"sign": "+", "text": "It asks you which PR to review."}]},
+        {"title": "Uncommitted changes", "state": "warn", "text": "The working tree is not clean.", "points": [{"sign": "+", "text": "It asks you what to do before checking out the branch."}]}
+      ]}
+    ]}
+  ],
+  "next_action": {
+    "text": "Run `/ui-change-guard:engineer-review-ui-change` with the flagged PR's number.",
+    "detail": "Start with a clean working tree, because the skill checks out the PR branch."
+  },
+  "sources": [
+    {"label": "ui-change-guard on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/ui-change-guard"}
+  ]
+}

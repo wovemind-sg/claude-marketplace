@@ -1,0 +1,299 @@
+{
+  "title": "Update User Flows",
+  "page_type": "how-to",
+  "gist": {
+    "kind": "chain",
+    "nodes": [
+      {
+        "icon": "code",
+        "label": "You change the app"
+      },
+      {
+        "icon": "repeat",
+        "label": "Run the update",
+        "arrow": "then"
+      },
+      {
+        "icon": "check-circle",
+        "label": "user-flows.md stays accurate",
+        "arrow": "then",
+        "outcome": true
+      }
+    ]
+  },
+  "bottom_line": "After changing your app in a session, run this command. It adds, revises and removes only the flows your changes touched, and never renumbers IDs.",
+  "sections": [
+    {
+      "heading": "Run it after you add, change or remove a feature",
+      "short": "Run it",
+      "blocks": [
+        {
+          "type": "code",
+          "code": "/user-flows:update-user-flows",
+          "caption": "The command takes no arguments."
+        },
+        {
+          "type": "cards",
+          "title": "Before you start",
+          "cards": [
+            {
+              "title": "An existing user-flows.md",
+              "state": "done",
+              "text": "It needs a `user-flows.md` at the project root, made by `/user-flows:extract-user-flows`. If there is none, it stops and tells you to run that first."
+            },
+            {
+              "title": "Changes in this session",
+              "state": "done",
+              "text": "It looks at what was built, changed or removed in the current Claude Code session."
+            },
+            {
+              "title": "Nothing else to install",
+              "state": "done",
+              "text": "It needs nothing beyond Claude Code: it reads the code and writes `user-flows.md`. The plugin has no environment variables and no plugin settings."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "Use it when you want to update, refresh or sync the user flows after implementing, changing or removing functionality. It is not for making flows from scratch."
+        },
+        {
+          "type": "text",
+          "title": "Why it updates instead of starting over",
+          "text": "The file feeds automated test generation, so outdated flows mean wrong tests. A full regeneration would change IDs that existing tests refer to, so this command changes only what it must."
+        }
+      ]
+    },
+    {
+      "heading": "It works out what changed from the chat and from git",
+      "short": "What changed",
+      "blocks": [
+        {
+          "type": "flow",
+          "nodes": [
+            {
+              "id": "chat",
+              "label": "The conversation: what was built or removed"
+            },
+            {
+              "id": "git",
+              "label": "Git: the diff and this session's commits"
+            },
+            {
+              "id": "list",
+              "label": "List of changed files"
+            },
+            {
+              "id": "none",
+              "label": "No behavior change: file left untouched"
+            },
+            {
+              "id": "map",
+              "label": "Changes matched to flows"
+            }
+          ],
+          "edges": [
+            {
+              "from": "chat",
+              "to": "list",
+              "label": "combined"
+            },
+            {
+              "from": "git",
+              "to": "list",
+              "label": "combined"
+            },
+            {
+              "from": "list",
+              "to": "none",
+              "label": "nothing relevant"
+            },
+            {
+              "from": "list",
+              "to": "map",
+              "label": "behavior changed"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "From git it reads `git diff` (unstaged and staged changes) plus any commits made during this session."
+        },
+        {
+          "type": "text",
+          "text": "Nothing relevant means changes such as documentation only, or refactors where the behavior stays the same. It says so and leaves the file untouched, because a rewrite with no change in behavior only creates noise in the diff."
+        }
+      ]
+    },
+    {
+      "heading": "Each changed file is matched to flows through their Source line",
+      "short": "Matching",
+      "blocks": [
+        {
+          "type": "table",
+          "columns": [
+            "What changed",
+            "What happens"
+          ],
+          "rows": [
+            [
+              "A file that appears in a flow's Source line",
+              "Claude checks that the flow's steps, precondition and expected outcome still match the code, and looks for new paths through the feature (see below)."
+            ],
+            [
+              "A file that appears in no flow",
+              "It may be a new feature. Its flows are listed at the same granularity recorded in the file's header line."
+            ],
+            [
+              "A feature that was removed",
+              "Its flows are removed."
+            ]
+          ]
+        },
+        {
+          "type": "text",
+          "title": "New paths through an existing feature",
+          "text": "A change can add a new path, such as a new validation branch, a new option, or a new error or permission case. Each one becomes a new flow if the file's granularity calls for it."
+        },
+        {
+          "type": "text",
+          "text": "Every judgment is based on the code as it is now, not on what the diff appears to imply."
+        },
+        {
+          "type": "text",
+          "text": "Each flow's Source line links that flow to the code that implements it, which is how changed files are matched to flows."
+        }
+      ]
+    },
+    {
+      "heading": "Only the touched flows change, and IDs never move",
+      "short": "Applying changes",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Revised flow",
+              "state": "done",
+              "text": "Keeps its ID. Only the fields that changed are updated: steps, precondition, expected or source."
+            },
+            {
+              "title": "New flow",
+              "state": "done",
+              "text": "Gets the next ID after the highest one, under the matching area heading. The heading is created if the area is new."
+            },
+            {
+              "title": "Removed flow",
+              "state": "done",
+              "text": "Its entry is deleted. Nothing else is renumbered, and its ID is never reused."
+            },
+            {
+              "title": "Duplicate of an existing flow",
+              "state": "info",
+              "text": "A new flow with the same steps and outcome as an existing one, differing only in data values, is merged into the existing entry instead of added."
+            },
+            {
+              "title": "Untouched flows",
+              "state": "info",
+              "text": "Stay exactly as they were, with no reformatting, reordering or rewording, so the file's diff shows only what changed in behavior."
+            },
+            {
+              "title": "Header line",
+              "state": "info",
+              "text": "The `generated:` date is updated. Granularity and area stay as they were."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "Every flow it writes follows the same definitions as `/user-flows:extract-user-flows`: what a user flow is, the granularity levels, the rules against duplicates and the exact entry format."
+        }
+      ]
+    },
+    {
+      "heading": "When any flow changed, the tests are synced too",
+      "short": "Tests",
+      "blocks": [
+        {
+          "type": "flow",
+          "nodes": [
+            {
+              "id": "w",
+              "label": "Flows added, revised or removed"
+            },
+            {
+              "id": "t",
+              "label": "test-user-flow updates only those tests"
+            },
+            {
+              "id": "n",
+              "label": "No test sync"
+            }
+          ],
+          "edges": [
+            {
+              "from": "w",
+              "to": "t",
+              "label": "tests exist"
+            },
+            {
+              "from": "w",
+              "to": "n",
+              "label": "no tests, none asked"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "After writing the file, Claude runs `/user-flows:test-user-flow`. The test sync acts only on the flows this update touched and leaves the rest of the test suite alone. It is skipped when the file was left untouched."
+        },
+        {
+          "type": "text",
+          "text": "If the project has no user-flow tests yet and you have not asked for them, Claude mentions that `/user-flows:test-user-flow` can generate them."
+        }
+      ]
+    },
+    {
+      "heading": "The report lists every added, revised and removed flow",
+      "short": "The report",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Added",
+              "state": "done",
+              "text": "The IDs and names of new flows."
+            },
+            {
+              "title": "Revised",
+              "state": "done",
+              "text": "The IDs of changed flows and what changed in each."
+            },
+            {
+              "title": "Removed",
+              "state": "warn",
+              "text": "The IDs and names of removed flows. Removed IDs are listed explicitly, because tests that refer to them need to be deleted or updated."
+            },
+            {
+              "title": "Test sync",
+              "state": "info",
+              "text": "The outcome of the test sync, if it ran."
+            }
+          ],
+          "caption": "It does not paste the whole file back into the conversation."
+        }
+      ]
+    }
+  ],
+  "next_action": {
+    "text": "After you implement, change or remove functionality in a session, run `/user-flows:update-user-flows`.",
+    "detail": "If it says there is no user-flows.md, run `/user-flows:extract-user-flows` first."
+  },
+  "sources": [
+    {
+      "label": "user-flows plugin on GitHub",
+      "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/user-flows"
+    }
+  ]
+}

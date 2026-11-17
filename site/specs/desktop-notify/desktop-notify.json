@@ -1,0 +1,74 @@
+{
+  "title": "Desktop Notifications",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "user", "label": "Ask to be notified"},
+    {"icon": "gear", "label": "Task finishes or blocks", "arrow": "Claude works"},
+    {"icon": "bolt", "label": "macOS notification appears", "arrow": "runs claude-notifier", "outcome": true}
+  ]},
+  "bottom_line": "Ask Claude to let you know, and it sends a macOS desktop notification through claude-notifier when your task finishes or it needs your input.",
+  "sections": [
+    {"heading": "Ask in plain words, or type the skill's command", "short": "How to ask", "blocks": [
+      {"type": "code", "title": "What to type", "code": "/desktop-notify:desktop-notify", "caption": "The skill lists no arguments. You can also just ask, as in the examples below."},
+      {"type": "cards", "title": "Things you can say", "cards": [
+        {"title": "Let me know when done", "state": "info", "text": "\"Let me know when this finishes\" or \"let me know when done\"."},
+        {"title": "Ping me if stuck", "state": "info", "text": "\"Ping me if you get stuck\" or \"notify me if you get stuck\"."},
+        {"title": "Ping me", "state": "info", "text": "\"Ping me\". Claude uses the skill whenever you ask to be notified, pinged or alerted, even if you don't say claude-notifier."}
+      ]},
+      {"type": "text", "text": "The skill teaches Claude to call the `claude-notifier` command-line tool when a task finishes or Claude is blocked and needs your attention. It uses the tool's title, subtitle, sound, terminal and session-id flags."},
+      {"type": "text", "text": "No extra setup is needed beyond `claude-notifier` being installed, which the next stop covers."}
+    ]},
+    {"heading": "You need a Mac with claude-notifier installed", "short": "Before you start", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "macOS", "state": "done", "text": "The plugin is macOS-only. It sends a native macOS desktop notification."},
+        {"title": "claude-notifier on your PATH", "state": "done", "text": "The `claude-notifier` command-line tool must be installed and on `PATH`. The plugin does not install it."}
+      ]},
+      {"type": "code", "title": "How Claude checks for it", "code": "command -v claude-notifier", "caption": "Claude runs this before the first notification. If it prints nothing, Claude says claude-notifier is not installed and stops."},
+      {"type": "list", "title": "Nothing to configure", "items": [
+        "No environment variables and no plugin settings.",
+        "By default, no extra setup is needed beyond `claude-notifier` being installed."
+      ]}
+    ]},
+    {"heading": "By default it notifies when the task is done or blocked", "short": "When it notifies", "blocks": [
+      {"type": "table", "title": "The two default notifications", "columns": ["When", "Title", "Sound", "Message"], "rows": [
+        ["The task you asked for finishes", "Task done", "The default sound", "A one-line summary of what happened"],
+        ["Claude is blocked and needs your input: a decision, missing information, or a permission prompt with no response", "Claude needs input", "An attention sound such as `Basso` or `Ping`", "A one-line summary of what is needed"]
+      ]},
+      {"type": "code", "title": "Example: task finished", "code": "claude-notifier -t \"Task done\" -m \"Build finished, all tests pass\" -S default"},
+      {"type": "code", "title": "Example: blocked on you", "code": "claude-notifier -t \"Claude needs input\" -m \"Which auth provider should I use?\" -S Ping"},
+      {"type": "text", "text": "These triggers apply unless you say otherwise."}
+    ]},
+    {"heading": "Say when, or with what title or sound, you want it", "short": "Changing defaults", "blocks": [
+      {"type": "table", "title": "Opinionated defaults", "columns": ["Default", "Change it with"], "rows": [
+        ["Notify when the task finishes and when Claude is blocked on you", "say when you want to be notified, e.g. \"only ping me if the tests fail\""],
+        ["Title \"Task done\" or \"Claude needs input\"; default sound when done, an alert sound such as `Ping` when blocked", "ask for a different title or sound"]
+      ]}
+    ]},
+    {"heading": "These are the options a notification can carry", "short": "Options", "blocks": [
+      {"type": "code", "title": "The command Claude runs", "code": "claude-notifier -m \"<message>\" [options]"},
+      {"type": "table", "title": "Every flag", "columns": ["Flag", "Meaning"], "rows": [
+        ["`-m, --message \"text\"`", "Notification body (required)"],
+        ["`-t, --title \"text\"`", "Title. The tool's own default is \"Claude\"; the skill sets \"Task done\" or \"Claude needs input\"."],
+        ["`-s, --subtitle \"text\"`", "Subtitle"],
+        ["`-i, --session-id \"id\"`", "Session ID for focus-on-click"],
+        ["`-T, --terminal \"type\"`", "iterm2, terminal, vscode, vscodium, cursor, windsurf, zed, ghostty, warp, webstorm, intellij"],
+        ["`-S, --sound \"sound\"`", "\"default\", \"none\", or a named sound (Glass, Basso, Blow, Ping, Pop, Funk, Submarine)"],
+        ["`-c, --claude-session-id \"id\"`", "Claude session ID, for resolving session context"]
+      ]}
+    ]},
+    {"heading": "If no notification shows up, run claude-notifier doctor", "short": "Troubleshooting", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "claude-notifier is not installed", "state": "warn", "text": "`command -v claude-notifier` prints nothing, so Claude says it is not installed and stops. The plugin does not install it."},
+        {"title": "Installed, but nothing appears", "state": "warn", "text": "Notifications do not appear, or `claude-notifier` errors.", "points": [{"sign": "+", "text": "Run claude-notifier doctor to diagnose installation and permission problems."}]}
+      ]},
+      {"type": "code", "title": "The diagnosis command", "code": "claude-notifier doctor"}
+    ]}
+  ],
+  "next_action": {
+    "text": "On your next task, ask Claude: \"Let me know when this finishes\".",
+    "detail": "This needs `claude-notifier` installed and on your PATH; if it is missing, Claude says so and stops."
+  },
+  "sources": [
+    {"label": "desktop-notify plugin on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/desktop-notify"}
+  ]
+}

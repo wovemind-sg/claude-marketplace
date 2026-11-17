@@ -1,0 +1,56 @@
+{
+  "title": "Convert Residual Files",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "file", "label": "Old residual files"},
+    {"icon": "flag", "label": "One issue per file", "arrow": "opens issues"},
+    {"icon": "trash", "label": "Files deleted", "arrow": "then"},
+    {"icon": "check-circle", "label": "Report with issue links", "arrow": "reports", "outcome": true}
+  ]},
+  "bottom_line": "A one-off move: each old `.planning/residual/*.md` file becomes a GitHub issue labeled `ai`, then the file is deleted.",
+  "sections": [
+    {"heading": "Use it once to move old residual files into GitHub issues", "short": "When to use", "blocks": [
+      {"type": "before_after",
+        "before": {"label": "Old format", "text": "Leftover work sits in files named `.planning/residual/<N>_*.md` inside the repository."},
+        "after": {"label": "New format", "text": "Each item is a GitHub issue labeled `ai`, the format `/plan-tools:write-issue` and `/plan-tools:impl-issue` use."},
+        "caption": "This is a one-off migration for repositories that used the older file-based residual format."},
+      {"type": "table", "title": "The same `ai` label is shared across the plugin", "columns": ["Default", "Used by", "Change it with"], "rows": [["Deferred work goes into GitHub issues labeled `ai`", "`write-issue`, `impl-issue`, `impl-issue-lite`, `drain-issues`, `finalize-pr`, `convert-residual`", "`--label <name>`"]]}
+    ]},
+    {"heading": "Run it with no arguments, or name a different label", "short": "Run it", "blocks": [
+      {"type": "code", "code": "/plan-tools:convert-residual [--label <name>]", "caption": "With no arguments the label is `ai`."},
+      {"type": "table", "title": "What you can pass", "columns": ["Part", "Required?", "What it does"], "rows": [
+        ["`--label <name>`", "No", "Uses `<name>` wherever the command would use `ai` as a label: the label check, the label creation and the label on each issue. Without it, the label is `ai`."]
+      ]},
+      {"type": "cards", "title": "Before you start", "cards": [
+        {"title": "git installed", "state": "done", "text": "The plugin needs `git` alongside the GitHub CLI."},
+        {"title": "GitHub CLI signed in", "state": "done", "text": "Install `gh` and sign in with `gh auth login`, with push access to the repository. Every issue, PR and status command goes through `gh`."}
+      ]}
+    ]},
+    {"heading": "Each file becomes one issue, oldest first, then it is deleted", "short": "What happens", "blocks": [
+      {"type": "stepper", "steps": [
+        {"title": "Finds the old files", "text": "It lists `.planning/residual/*.md`. If there are none, it tells you and stops."},
+        {"title": "Makes sure the label exists", "text": "If the `ai` label (or your `--label` name) is missing, it creates it, with the description \"Queued for autonomous implementation\"."},
+        {"title": "Reads each file, oldest first", "text": "It works through the files in order of their number `<N>`, starting with the oldest, and reads each one in full."},
+        {"title": "Writes a title", "text": "It takes the title from the file name or the file's first line.", "block": {"type": "before_after", "before": {"label": "File name", "text": "`fix-null-check-auth-middleware`"}, "after": {"label": "Issue title", "text": "Fix null check in auth middleware"}}},
+        {"title": "Opens the issue", "text": "The file's full contents become the issue body, with the label attached."},
+        {"title": "Deletes the file", "text": "A file is deleted only once its issue was created successfully."}
+      ]}
+    ]},
+    {"heading": "You get a count, the issue links and an empty folder", "short": "How to tell", "blocks": [
+      {"type": "stats", "items": [
+        {"value": "1 issue", "label": "per residual file", "icon": "flag", "note": "each listed with its URL in the report"}
+      ]},
+      {"type": "list", "title": "The final report tells you", "items": [
+        "How many issues were created, with their URLs.",
+        "That `.planning/residual/` is now empty. If it is empty, the folder itself is removed."
+      ]}
+    ]}
+  ],
+  "next_action": {
+    "text": "Run `/plan-tools:convert-residual` in a repository that still has files under `.planning/residual/`.",
+    "detail": "If there are no such files, the command tells you so and stops."
+  },
+  "sources": [
+    {"label": "plan-tools on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/plan-tools"}
+  ]
+}

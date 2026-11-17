@@ -1,0 +1,577 @@
+{
+  "title": "Android Launch Video",
+  "page_type": "how-to",
+  "gist": {
+    "kind": "chain",
+    "nodes": [
+      {
+        "icon": "rocket",
+        "label": "Run the command"
+      },
+      {
+        "icon": "file",
+        "label": "Approve the script",
+        "arrow": "records, you review"
+      },
+      {
+        "icon": "user",
+        "label": "Make presenter clips",
+        "arrow": "voice-over made"
+      },
+      {
+        "icon": "check-circle",
+        "label": "launch.mp4 is ready",
+        "arrow": "Claude assembles",
+        "outcome": true
+      }
+    ]
+  },
+  "bottom_line": "Run the command in your Android repo. Claude records the app, makes the voice-over and edits the video. You review, make presenter clips and watch.",
+  "sections": [
+    {
+      "heading": "Type one command inside your Android app's repo",
+      "short": "Start",
+      "blocks": [
+        {
+          "type": "text",
+          "text": "In Claude Code, open your Android app's repo and type the command below. It takes no arguments. Claude asks you to do exactly one thing at a time and waits."
+        },
+        {
+          "type": "code",
+          "code": "/launch-video:launch-video-app",
+          "caption": "Full launch video, Android app."
+        },
+        {
+          "type": "cards",
+          "title": "Who does what",
+          "cards": [
+            {
+              "title": "Claude does",
+              "state": "done",
+              "text": "Everything that can be done from the terminal: building the app, starting the emulator, writing the recording steps, generating audio, assembling."
+            },
+            {
+              "title": "You do",
+              "state": "open",
+              "text": "Only what needs a human: reviewing the script, downloading the presenter (avatar) clips, watching the result."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "title": "What you get",
+          "text": "A launch or promo video: an AI presenter introduces the app, then the app is shown on a phone with voice-over and captions. Claude reads the repo first, so it already knows what the app does and what the screens are called. You may be non-technical."
+        },
+        {
+          "type": "text",
+          "title": "When to use it",
+          "text": "Ask for a launch video, promo video, demo video, app trailer, explainer, or \"video for the Play Store / social media\" for an Android app, even without saying \"AI\" or \"avatar\". For web apps, use `launch-video-webapp` instead."
+        },
+        {
+          "type": "glossary",
+          "terms": [
+            {
+              "term": "Beat",
+              "definition": "One section of the video: an avatar beat with the presenter, or a demo beat showing the app."
+            },
+            {
+              "term": "Avatar",
+              "definition": "The AI presenter on camera, made in HeyGen or Synthesia."
+            },
+            {
+              "term": "Take",
+              "definition": "The single screen recording of the whole demo, later cut into one clip per beat."
+            },
+            {
+              "term": "Emulator",
+              "definition": "A pretend Android phone on your computer. A real phone also works."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Run the setup skill first if a tool is missing",
+      "short": "Before you start",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Video tools",
+              "state": "info",
+              "text": "ffmpeg built with libass (for captions), Python 3.9+ and pillow."
+            },
+            {
+              "title": "Voice-over account",
+              "state": "info",
+              "text": "A free ElevenLabs account."
+            },
+            {
+              "title": "Android tools",
+              "state": "info",
+              "text": "Java, Android command-line tools and emulator (or a real phone), and Maestro. The screen recordings use the emulator and Maestro."
+            },
+            {
+              "title": "Presenter account",
+              "state": "info",
+              "text": "A free HeyGen or Synthesia account for the presenter clips. This part is manual and guided."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "The first thing Claude does is check the tools. If anything is MISSING, it stops and gives you one action: run `/launch-video:launch-video-setup`. It does not continue until the check passes. The setup skill installs or checks everything above."
+        },
+        {
+          "type": "text",
+          "title": "Your ElevenLabs key",
+          "text": "The key is read from the `ELEVENLABS_API_KEY` environment variable, or from `~/.launch-video/env` as a line `ELEVENLABS_API_KEY=<key>`. Configuration always lives in `~/.launch-video/`, never inside the plugin folder, so plugin updates keep it. All five skills ship in the one plugin, and this skill calls the setup skill's checker. The plugin has no plugin settings, no dependencies and no userConfig."
+        },
+        {
+          "type": "text",
+          "title": "Your computer",
+          "text": "The scripts are bash and run on macOS and Linux. On Windows, use WSL (Ubuntu); Git Bash is not enough for the Android emulator."
+        }
+      ]
+    },
+    {
+      "heading": "Claude works through nine steps and tells you when it needs you",
+      "short": "The steps",
+      "blocks": [
+        {
+          "type": "stepper",
+          "steps": [
+            {
+              "title": "Check the tools",
+              "text": "If anything is MISSING, your one action is to run `/launch-video:launch-video-setup`."
+            },
+            {
+              "title": "Plan the beats",
+              "text": "Claude picks the 2–4 things a first-time viewer must see and drafts `video/script.md`: an avatar intro (the problem and what the app is, 25 words or fewer), 2–4 demo beats (each one thing the viewer can watch happen) and an avatar outro (call to action)."
+            },
+            {
+              "title": "Record the demo",
+              "text": "Claude builds a debug version of the app, starts the emulator or uses your connected phone, and records the whole demo in one take. If it needs a login it cannot find, it asks you once (see below)."
+            },
+            {
+              "title": "Review the take in your browser",
+              "text": "A page opens with the recording on a timeline. Mark anything too long, leave notes where you want something changed, then send it back or mark it ready. Claude fixes it and shows you again until you mark it ready, then cuts one clip per beat."
+            },
+            {
+              "title": "Approve the script",
+              "text": "Claude rewrites each demo beat's words to almost fill its recording. Open `video/script.md`, read it out loud once, and change anything that doesn't sound like you. Tell Claude when you're happy, or paste your changes."
+            },
+            {
+              "title": "Voice-over",
+              "text": "Claude generates the voice for every beat. Optional: play `video/voice/beat-01.mp3` and say if it's fine. For a different voice, Claude lists 3–4 names to pick from."
+            },
+            {
+              "title": "Make the avatar clips",
+              "text": "You make one short presenter clip per avatar beat in HeyGen or Synthesia, guided one step per message. Stop 4 walks through it."
+            },
+            {
+              "title": "Watch the video",
+              "text": "Claude assembles `video/out/launch.mp4`. Watch it once all the way through and tell Claude the first thing you'd change, or that it's good."
+            },
+            {
+              "title": "Fix one thing at a time",
+              "text": "After each fix Claude re-assembles and asks you to watch again. When it's good, Claude tells you where the file is and explains the watermark trade-off."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "title": "The one question while recording",
+          "text": "If it needs a test login and none is in the repo, it asks you once: \"I need a test account to sign in with during the recording. What phone number / email and password should I use? (Nothing real, please.)\""
+        },
+        {
+          "type": "text",
+          "title": "What the script draft looks like",
+          "text": "Claude sets `Format: vertical` unless the app is landscape-only, picks a voice from your ElevenLabs account (you can change it), and sets `Background:` to three colors from the app's own design, so the space behind the phone matches the app."
+        },
+        {
+          "type": "text",
+          "title": "What assembling does",
+          "text": "Claude puts the recordings on a phone frame against a gradient in the `Background:` colors, adds captions in the bottom band where they cannot cover the app, and crossfades between scenes."
+        },
+        {
+          "type": "text",
+          "title": "The one-step rule",
+          "text": "You are never asked to do more than one thing in a single message. Each message ends with exactly one action, then \"Tell me when that's done\". Claude checks your step, for example that a file exists or a clip has audio, before moving on."
+        },
+        {
+          "type": "text",
+          "text": "There are no to-do lists: five manual steps are five messages. Claude does not show commands or code unless you ask."
+        }
+      ]
+    },
+    {
+      "heading": "Make the presenter clips in HeyGen (recommended), one step at a time",
+      "short": "Avatar clips",
+      "blocks": [
+        {
+          "type": "stepper",
+          "steps": [
+            {
+              "title": "Sign in to HeyGen",
+              "text": "Go to app.heygen.com and sign in, or create a free account."
+            },
+            {
+              "title": "Start an avatar video",
+              "text": "Click Create video, then Avatar video (sometimes labelled \"Start with an avatar\")."
+            },
+            {
+              "title": "Pick a presenter",
+              "text": "Pick any presenter you like. A plain, simple background is best."
+            },
+            {
+              "title": "Set the video size",
+              "text": "Choose 9:16 portrait, or 16:9 landscape if your script says `Format: landscape`."
+            },
+            {
+              "title": "Upload the voice file",
+              "text": "In the script area, switch from \"Text\" to Upload audio and upload the voice file Claude names."
+            },
+            {
+              "title": "Generate",
+              "text": "Click Submit or Generate. It takes a few minutes."
+            },
+            {
+              "title": "Download",
+              "text": "Click Download, choose the highest quality, and save the file where Claude says."
+            },
+            {
+              "title": "Repeat for the next beat",
+              "text": "Claude checks the file has both video and audio. Then repeat from the upload step for the next avatar beat, with the same presenter and settings."
+            }
+          ]
+        },
+        {
+          "type": "stats",
+          "title": "HeyGen free plan",
+          "items": [
+            {
+              "value": "3",
+              "label": "Videos per month",
+              "icon": "calendar",
+              "note": "watermarked"
+            },
+            {
+              "value": "1 min",
+              "label": "Longest video",
+              "icon": "clock",
+              "note": "per video on the free plan"
+            },
+            {
+              "value": "55 s",
+              "label": "Speech per avatar beat",
+              "icon": "user",
+              "note": "keep each beat under about this"
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "title": "What Claude tells you before you start",
+          "items": [
+            "Free plans put a small watermark in the corner.",
+            "Keep each avatar beat under about 55 seconds of speech; the free-plan limit is 1 minute.",
+            "Use the same avatar, background and orientation for every clip, or the cuts look wrong."
+          ]
+        },
+        {
+          "type": "text",
+          "title": "Why upload the voice",
+          "text": "The avatar tool lip-syncs to Claude's voice-over file, so the whole video has one consistent voice."
+        },
+        {
+          "type": "text",
+          "title": "If audio upload is hidden",
+          "text": "If HeyGen's free plan hides audio upload, paste the text Claude wrote into the script box and pick the tool's own voice. Note the voice's name so every clip uses the same one. The demo voice-over will then be a different voice."
+        },
+        {
+          "type": "text",
+          "title": "Synthesia instead",
+          "text": "Synthesia (free plan, no card) is an equivalent alternative if HeyGen is not working."
+        }
+      ]
+    },
+    {
+      "heading": "Change the video by editing video/script.md",
+      "short": "Settings",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "Lines you can change",
+          "columns": [
+            "Line",
+            "What it does"
+          ],
+          "rows": [
+            [
+              "`Voice:`",
+              "The ElevenLabs voice, for example Rachel"
+            ],
+            [
+              "`Format:`",
+              "`vertical` or `landscape`"
+            ],
+            [
+              "`Language:`",
+              "For example `en`"
+            ],
+            [
+              "`Background:`",
+              "Three hex colors (dark, darker, glow accent) for the space behind the phone; leave the line out for a neutral dark-indigo look"
+            ],
+            [
+              "`Zoom:` (per demo beat)",
+              "Always `none`; anything else crops the recording so it stops filling the phone frame"
+            ],
+            [
+              "`Hold:` (per demo beat)",
+              "Seconds to keep the screen after the voice ends, for example 1.5"
+            ]
+          ]
+        },
+        {
+          "type": "text",
+          "text": "Each section is `## N. Title (avatar)`, spoken by the on-camera presenter, or `## N. Title (demo)`, voice-over while the app is shown on a phone. Aim for 60–90 seconds total, about 150–220 words. Short sentences sound best."
+        },
+        {
+          "type": "table",
+          "title": "Defaults and how to change them",
+          "columns": [
+            "Default",
+            "Change it with"
+          ],
+          "rows": [
+            [
+              "Vertical 9:16 video",
+              "`Format: landscape` in `video/script.md`"
+            ],
+            [
+              "Voice-over in English, in a voice Claude picks from your ElevenLabs account",
+              "`Voice:` and `Language:` in `video/script.md`"
+            ],
+            [
+              "ElevenLabs model `eleven_multilingual_v2`",
+              "Not configurable"
+            ],
+            [
+              "AI presenter intro and outro, demo beats in between",
+              "Use `demo-video-app` for the demo beats alone"
+            ],
+            [
+              "Android only for native apps (no iOS recording)",
+              "Not configurable"
+            ]
+          ],
+          "caption": "Each run writes video/script.md first; edit it and re-run to change any of these."
+        },
+        {
+          "type": "list",
+          "title": "Files in your repo",
+          "items": [
+            "`video/script.md`: your script (edit freely, then re-run)",
+            "`video/avatar/`: the avatar clips you download, `beat-NN.mp4`",
+            "`video/voice/`: the voice-over",
+            "`video/out/launch.mp4`: the video",
+            "`video/progress.md`: Claude's checklist, updated after every completed step"
+          ]
+        },
+        {
+          "type": "text",
+          "text": "Everything lives in `video/` inside the repo. Claude adds it to `.gitignore` except `script.md` and `flows/`."
+        }
+      ]
+    },
+    {
+      "heading": "Tell Claude what looks wrong and it changes that one thing",
+      "short": "Feedback",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Words don't fit footage",
+              "state": "warn",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Claude trims or expands that beat's sentence and regenerates its voice."
+                }
+              ]
+            },
+            {
+              "title": "Can't see what's tapped",
+              "state": "warn",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Claude pauses longer on the tap or slows the gesture, then re-records."
+                }
+              ]
+            },
+            {
+              "title": "Screen leaves too early",
+              "state": "warn",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Claude raises `Hold:` on that beat."
+                }
+              ]
+            },
+            {
+              "title": "Captions wrong",
+              "state": "warn",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Claude regenerates that beat's audio."
+                }
+              ]
+            },
+            {
+              "title": "Background feels generic",
+              "state": "warn",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Claude adjusts the three `Background:` colors."
+                }
+              ]
+            },
+            {
+              "title": "Ugly cut",
+              "state": "warn",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Claude makes the beat end on a settled screen and re-records."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "title": "Feedback and the fix, in full",
+          "columns": [
+            "You say",
+            "What Claude changes"
+          ],
+          "rows": [
+            [
+              "Wording too long or short for the footage",
+              "Trims or expands that beat's sentence and regenerates its voice; re-records only if the pacing of the demo itself is the problem"
+            ],
+            [
+              "Can't see what's tapped",
+              "Adjusts that beat to pause longer on the tap or slow the gesture, then re-records; never uses `Zoom:`"
+            ],
+            [
+              "Screen disappears too early",
+              "Raises `Hold:` on that beat"
+            ],
+            [
+              "Captions wrong",
+              "Regenerates that beat's audio (captions come from the voice timings)"
+            ],
+            [
+              "Background feels generic or clashes",
+              "Adjusts the three `Background:` colors, no re-record"
+            ],
+            [
+              "Ugly cut",
+              "Makes the beat end on a settled screen and re-records the whole take"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Bad avatar clips each have a known cause",
+      "short": "Avatar snags",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Robotic or rushed",
+              "state": "warn",
+              "text": "The text has long sentences.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Shorten them in `script.md`, regenerate that beat's voice, and remake the clip."
+                }
+              ]
+            },
+            {
+              "title": "Silent file",
+              "state": "warn",
+              "text": "The avatar talks but the file is silent: it was downloaded without audio.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Redo the download."
+                }
+              ]
+            },
+            {
+              "title": "Wrong orientation",
+              "state": "warn",
+              "text": "The clip gets letterboxed on dark bars.",
+              "points": [
+                {
+                  "sign": "+",
+                  "text": "Regenerate with the right aspect ratio."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "You are done when you say the video is good",
+      "short": "Done",
+      "blocks": [
+        {
+          "type": "before_after",
+          "before": {
+            "label": "You start with",
+            "text": "An Android app repo and no video."
+          },
+          "after": {
+            "label": "You end with",
+            "text": "`video/out/launch.mp4`: presenter intro and outro, the app demonstrated on a phone, one voice-over, captions that never cover the app. Your script stays in `video/script.md`."
+          }
+        },
+        {
+          "type": "text",
+          "title": "The watermark",
+          "text": "Free avatar plans watermark the clips. Paying for one month and re-downloading the same clips removes it."
+        },
+        {
+          "type": "text",
+          "title": "Coming back later",
+          "text": "If `video/progress.md` exists, Claude continues from the first unchecked item and does not re-ask things already answered."
+        }
+      ]
+    }
+  ],
+  "next_action": {
+    "text": "Open your Android app's repo in Claude Code and run `/launch-video:launch-video-app`.",
+    "detail": "If a tool is missing, Claude asks you to run `/launch-video:launch-video-setup` first."
+  },
+  "sources": [
+    {
+      "label": "launch-video plugin on GitHub",
+      "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/launch-video"
+    }
+  ]
+}

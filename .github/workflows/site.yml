@@ -1,0 +1,34 @@
+name: Site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      # Fails if a skill or command has no how-to spec, a spec does not render, or a link is broken.
+      - name: Build site
+        run: python site/build.py
+
+      - name: Deploy to webbie
+        run: |
+          (cd _site && zip -qr "$RUNNER_TEMP/site.zip" .)
+          curl -sS --fail-with-body -X PUT --data-binary @"$RUNNER_TEMP/site.zip" \
+            -H "Authorization: Bearer ${{ secrets.WEBBIE_DEPLOY_TOKEN }}" \
+            "https://webbie.wovemind.com/deploy/marketplace?message=${{ github.sha }}"

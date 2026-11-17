@@ -3,7 +3,7 @@
   "page_type": "how-to",
   "gist": {"kind": "chain", "nodes": [
     {"icon": "link", "label": "Run with mockup link"},
-    {"icon": "question", "label": "Pick the model", "arrow": "reads your choices"},
+    {"icon": "question", "label": "Pick model and level", "arrow": "reads your choices"},
     {"icon": "user", "label": "Planner reads your code", "arrow": "then"},
     {"icon": "file", "label": "Plan printed in chat", "arrow": "writes", "outcome": true}
   ]},
@@ -27,6 +27,7 @@
         ["`--model <name>`", "Asked, with Opus first", "Model of the planning subagent"]
       ]},
       {"type": "text", "title": "The model question", "text": "Unless you pass `--model`, it asks \"Which model should write the plan?\" The options are Opus (first, the default: planning a redesign takes judgment across many files) and Sonnet (cheaper and faster)."},
+      {"type": "text", "title": "The question level", "text": "In the same question, always, it asks which design and implementation choices the planner should ask you about, using the `/plan-tools:plan-helper` levels: Everything (every open choice), Balanced (anything you will see or that is costly to undo) or Material only (only choices that change the direction of the work or cannot be cheaply undone)."},
       {"type": "text", "title": "When to use it", "text": "Use it when you have rated a shortlist or finished a mockup and want to apply it: \"plan the redesign\", \"use the designs I picked\", \"I rated the cards, go\", \"build the mockup\", or when you pass a shortlist or mockup Artifact link, even if you do not say \"plan\"."}
     ]},
     {"heading": "You need a rated shortlist or a mockup, and your repo", "short": "Before you start", "blocks": [
@@ -42,7 +43,7 @@
         {"title": "Reads the page", "text": "It reads the brief, every app-page section, and your ratings and notes from the page."},
         {"title": "Checks for a Love card", "text": "If no design is rated Love, it stops and asks you to rate first. An app page with no Love card is left out of the plan, and the reply names it. A note that plainly ends mid-sentence is not guessed at: it asks you for the full note."},
         {"title": "Fetches the screenshots", "text": "It fetches the screenshots of the Love cards and of the Maybe cards you wrote a note on."},
-        {"title": "A planner writes the plan", "text": "It spawns one planning subagent with the model you chose. The subagent studies the designs (palette, type, spacing, layout, components), reads your app's UI code, and writes one implementation plan for all the rated pages, following `/plan-tools:plan-helper`."}
+        {"title": "A planner writes the plan", "text": "It spawns one planning subagent with the model and question level you chose. The subagent studies the designs (palette, type, spacing, layout, components), reads your app's UI code, and writes one implementation plan for all the rated pages, following `/plan-tools:plan-helper`."}
       ]},
       {"type": "list", "title": "How the plan uses your ratings", "items": [
         "Love cards lead; a Maybe card contributes only what its note asks for.",
@@ -54,7 +55,7 @@
       {"type": "stepper", "title": "What happens on a mockup", "steps": [
         {"title": "Checks for open comments", "text": "Running `plan` on a mockup means you accept it. If a comment thread on the mockup is still open, it stops, lists the open threads with their app page, and asks whether to revise the mockup first or plan anyway."},
         {"title": "Reads each app page", "text": "It reads each app page's mockup, its mode (shallow, deep or full redesign) and its listed deliberate changes, and follows the mockup's link back to the shortlist for the brief and the credits of your Love designs. If the shortlist cannot be read, it goes on without it and says so."},
-        {"title": "A planner writes the plan", "text": "It spawns one planning subagent with the model you chose. The subagent treats the mockup as the target, reads your app's UI code, and plans to build each page in your own code."}
+        {"title": "A planner writes the plan", "text": "It spawns one planning subagent with the model and question level you chose. The subagent treats the mockup as the target, reads your app's UI code, and plans to build each page in your own code."}
       ]},
       {"type": "cards", "title": "If comments are still open", "cards": [
         {"title": "Revise the mockup first", "state": "info", "text": "The first option. It stops: run `/design-inspiration:mockup <mockup url>`, then run `/design-inspiration:plan` again."},
@@ -67,13 +68,14 @@
         "It says plainly where the real result will differ from the mockup."
       ]}
     ]},
-    {"heading": "Design choices it cannot settle come back to you", "short": "Your questions", "blocks": [
+    {"heading": "The choices your question level calls for come back to you", "short": "Your questions", "blocks": [
       {"type": "chain", "title": "How a design choice is handled", "nodes": [
         {"icon": "question", "label": "Planner meets a choice"},
         {"icon": "check", "label": "Dictated: goes in plan", "arrow": "notes, designs, code"},
-        {"icon": "user", "label": "Otherwise: you decide", "arrow": "else", "outcome": true}
+        {"icon": "user", "label": "Your level: you decide", "arrow": "if level asks"},
+        {"icon": "file", "label": "Else: listed as assumed", "arrow": "otherwise", "outcome": true}
       ]},
-      {"type": "text", "text": "A choice goes into the plan only when your notes, brief or answers, the chosen designs, the mockup, or the repo's existing code dictate it. Every other choice is yours."},
+      {"type": "text", "text": "A choice goes into the plan's Decisions only when your notes, brief or answers, the chosen designs, the mockup, or the repo's existing code dictate it. Every other choice is asked if your question level calls for it; the planner makes the rest and lists them under Assumed decisions, never as your decision."},
       {"type": "text", "text": "The planner collects those questions and you are asked them together, once, with 2 to 4 options each and a recommendation first."}
     ]},
     {"heading": "The plan appears in chat and nothing is built", "short": "The output", "blocks": [

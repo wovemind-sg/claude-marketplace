@@ -167,6 +167,10 @@
               "Default `sonnet`."
             ],
             [
+              "Question level",
+              "Asked with the planning model: Everything (every open decision), Balanced (what you will see, or costly to undo) or Material only (choices that change direction or are hard to undo). The planner lists the rest as Assumed decisions."
+            ],
+            [
               "Implementing model",
               "Default `sonnet`. Options: `sonnet`, `opus`, `haiku`, `fable`."
             ]
@@ -426,7 +430,7 @@
             {
               "icon": "file",
               "label": "Planner drafts plan",
-              "note": "follows plan-helper, on your planning model"
+              "note": "follows plan-helper at your question level, on your planning model"
             },
             {
               "icon": "question",
@@ -457,7 +461,7 @@
         },
         {
           "type": "text",
-          "text": "The plan is saved to `.planning/SPEC.md`. Claude asks the planner's questions in plain English and passes your answers back until the plan is finished."
+          "text": "The plan is saved to `.planning/SPEC.md`. Claude asks the planner's questions in plain English and passes your answers back until the plan is finished. The planner asks only what your question level calls for and lists the rest in the plan under Assumed decisions."
         },
         {
           "type": "before_after",

@@ -10,8 +10,8 @@
       },
       {
         "icon": "question",
-        "label": "Claude asks every decision",
-        "arrow": "no guessing"
+        "label": "Claude asks or lists",
+        "arrow": "per your level"
       },
       {
         "icon": "search",
@@ -26,7 +26,7 @@
       }
     ]
   },
-  "bottom_line": "plan-helper makes Claude ask you every open decision, cut unrequested changes, keep each change small, and prove its plan covers everything you asked.",
+  "bottom_line": "plan-helper asks the open decisions your chosen level calls for, lists the rest, cuts unrequested changes, keeps changes small, and proves full coverage.",
   "sections": [
     {
       "heading": "It runs on its own whenever Claude writes a plan",
@@ -34,8 +34,8 @@
       "blocks": [
         {
           "type": "code",
-          "code": "/plan-tools:plan-helper",
-          "caption": "It runs automatically whenever Claude writes an implementation plan, and you can also invoke it directly."
+          "code": "/plan-tools:plan-helper\n/plan-tools:plan-helper material",
+          "caption": "It runs automatically whenever Claude writes an implementation plan. You can also invoke it directly, optionally naming the question level: everything, balanced or material."
         },
         {
           "type": "before_after",
@@ -76,7 +76,59 @@
             {
               "term": "Implementer",
               "definition": "Whoever builds the plan afterwards, which may be a Claude subagent."
+            },
+            {
+              "term": "Question level",
+              "definition": "How many open decisions come back to you as questions: everything, balanced or material."
+            },
+            {
+              "term": "Assumed decisions",
+              "definition": "The plan's list of decisions Claude made itself because your level did not ask them, each with its reason."
             }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "You pick how many decisions come back to you",
+      "short": "Levels",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "The three question levels",
+          "columns": [
+            "Level",
+            "Claude asks you",
+            "Claude decides and lists"
+          ],
+          "rows": [
+            [
+              "`everything`",
+              "Every decision neither your request nor the code settles.",
+              "Nothing."
+            ],
+            [
+              "`balanced`",
+              "Anything you will see or experience (layout, wording, placement, interactions, behaviour, user-facing edge cases), and anything costly to undo (data shape, migration, new dependency, public API, security, size of the change).",
+              "Internal details: naming, file structure, internal error handling, test layout."
+            ],
+            [
+              "`material`",
+              "Only choices that send the work in a different direction or cannot be cheaply undone: architecture, data model and migration, scope, public API, security, billing.",
+              "Everything else, including small UX details."
+            ]
+          ]
+        },
+        {
+          "type": "list",
+          "title": "How the level works",
+          "items": [
+            "The level is the first question, unless you pass it as an argument (`/plan-tools:plan-helper material`) or a calling skill such as create-webapp already asked it.",
+            "When Claude decides, it takes the answer the existing code points to, or else the option it would have recommended.",
+            "Every decision Claude makes is listed in the plan under Assumed decisions, so you can veto it at review, and the list is copied into the PR body.",
+            "A vague ask, and whether to include something that serves no ask, are asked at every level.",
+            "Implementers use the plan's level for decisions that come up while they work: below its bar they decide and add to Assumed decisions, above it they stop and ask.",
+            "A subagent given no level uses `everything`."
           ]
         }
       ]
@@ -95,7 +147,7 @@
               "points": [
                 {
                   "sign": "+",
-                  "text": "Every decision your request or the code does not already settle becomes a question."
+                  "text": "Each open decision is asked, or listed under Assumed decisions, as your level says."
                 }
               ]
             },
@@ -150,12 +202,16 @@
       ]
     },
     {
-      "heading": "Claude works through five steps before you see the plan",
+      "heading": "Claude works through six steps before you see the plan",
       "short": "The steps",
       "blocks": [
         {
           "type": "stepper",
           "steps": [
+            {
+              "title": "Pick the question level",
+              "text": "From your argument or the calling skill, or else asked as the first question: everything, balanced or material."
+            },
             {
               "title": "Capture the asks",
               "text": "Claude splits your request into atomic asks, quoting your words exactly (A1, A2, …). A vague ask such as \"make it nicer\" becomes a question in itself."
@@ -165,12 +221,12 @@
               "text": "Everything the asks touch: callers, tests, fixtures, config, and existing helpers and patterns."
             },
             {
-              "title": "Ask every open decision",
-              "text": "A decision is open when neither your request nor the existing code settles it. When Claude is unsure whether something is a decision, it treats it as one."
+              "title": "Ask the open decisions your level calls for",
+              "text": "A decision is open when neither your request nor the existing code settles it. When Claude is unsure whether something is a decision, it treats it as one. Your level decides which are asked; Claude decides the rest and lists them."
             },
             {
               "title": "Write the plan",
-              "text": "With a requirement map, a decisions list, the steps, how to verify, and the implementation rules."
+              "text": "With its question level, a requirement map, a decisions list, an assumed decisions list, the steps, how to verify, and the implementation rules."
             },
             {
               "title": "Audit, then present",
@@ -226,7 +282,7 @@
             "Concrete options, with Claude's recommendation first, marked \"(Recommended)\".",
             "Where there is a real smaller-or-larger choice, such as reusing an existing component or making a new one, or patching one screen or all of them, you get both options and what each covers.",
             "No placeholder answer with \"we can change it later\". Claude waits for your answer.",
-            "Decisions that come up later, while writing or auditing, come back to you the same way."
+            "Decisions that come up later, while writing or auditing, follow the same level: the ones it asks come back to you the same way, and Claude decides and lists the rest."
           ]
         }
       ]
@@ -244,12 +300,20 @@
           ],
           "rows": [
             [
+              "Question level",
+              "A `Question level:` line naming the level. Implementers use the same bar for decisions that come up while they work."
+            ],
+            [
               "Requirement map",
               "One row per ask, with columns Ask (verbatim), Delivered by (step), Verified by, and Status. Status starts as `[ ]`; implementers tick it to `[x]` once the ask is delivered and verified."
             ],
             [
               "Decisions",
               "Every answer you gave, as `question → user's answer`. Implementers follow these and never decide them again."
+            ],
+            [
+              "Assumed decisions",
+              "Every decision Claude made itself because your level did not ask it, as `decision → choice — one-line reason`. Empty at `everything`. It is copied into the PR body."
             ],
             [
               "Steps",
@@ -275,11 +339,11 @@
         },
         {
           "type": "details",
-          "summary": "The implementation rules block, all 5 rules",
+          "summary": "The implementation rules block, all 6 rules",
           "blocks": [
             {
               "type": "code",
-              "code": "## Implementation rules\n\n- Change only what a step in this plan lists. Every changed line must trace to an ask in the requirement map. No drive-by refactors, renames, reformatting, dependency bumps, or \"while I'm here\" fixes — note them in the final report instead.\n- Follow the Decisions section exactly. If you hit a decision this plan doesn't answer, stop and ask the user (AskUserQuestion) — don't pick one yourself. If you are a subagent and can't ask the user directly, end your run with the question as your final report (plain English, 2–4 options, your recommendation first); the parent will ask the user and send you the answer so you can continue.\n- Tick each requirement map row's Status once it is delivered and verified. In a split plan, tick your session's rows in `.planning/SPEC.md`.\n- Keep each change as small as it can be while still complete. Reuse existing code and patterns before writing new ones.\n- Done means every requirement map row assigned to your work (the whole plan, or your session's rows) is delivered and verified — including running the real app/command per the Verification section, not only tests.",
+              "code": "## Implementation rules\n\n- Change only what a step in this plan lists. Every changed line must trace to an ask in the requirement map. No drive-by refactors, renames, reformatting, dependency bumps, or \"while I'm here\" fixes — note them in the final report instead.\n- Follow the Decisions section exactly. If you hit a decision this plan doesn't answer, use the plan's question level. If the level would not ask it, pick the answer the existing code points to (else the one you would recommend) and add it to the plan's Assumed decisions (in a split plan, in `.planning/SPEC.md`). If the level would ask it, stop and ask the user (AskUserQuestion) — don't pick one yourself. If you are a subagent and can't ask the user directly, end your run with the question as your final report (plain English, 2–4 options, your recommendation first); the parent will ask the user and send you the answer so you can continue.\n- When you raise the PR, copy the plan's Assumed decisions into the PR body under an \"Assumed decisions\" heading, so reviewers see every choice the user did not make.\n- Tick each requirement map row's Status once it is delivered and verified. In a split plan, tick your session's rows in `.planning/SPEC.md`.\n- Keep each change as small as it can be while still complete. Reuse existing code and patterns before writing new ones.\n- Done means every requirement map row assigned to your work (the whole plan, or your session's rows) is delivered and verified — including running the real app/command per the Verification section, not only tests.",
               "caption": "split-plan copies this block into every session file."
             }
           ]
@@ -309,9 +373,9 @@
               "text": "Could less code, fewer files or reuse do the same job? Claude shrinks it, or asks you if it is a real trade-off."
             },
             {
-              "title": "No assumed decisions",
+              "title": "No unlisted decisions",
               "state": "done",
-              "text": "Any choice not in Decisions and not settled by the code becomes a question."
+              "text": "Every choice is in Decisions, settled by the code, or in Assumed decisions and below your level's bar. Anything else becomes a question."
             },
             {
               "title": "Rules block present",
@@ -343,7 +407,7 @@
   ],
   "next_action": {
     "text": "Ask Claude to \"make a plan\" for your next change, or run /plan-tools:plan-helper directly.",
-    "detail": "Any decision your request and the code leave open comes back to you as a question before you see the plan."
+    "detail": "The open decisions your question level calls for come back to you as questions before you see the plan; the rest are listed in it under Assumed decisions."
   },
   "sources": [
     {

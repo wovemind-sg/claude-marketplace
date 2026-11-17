@@ -19,9 +19,10 @@ Repo = Claude Code **plugin marketplace** — catalog for users to discover + in
 Contributor guide: `CONTRIBUTING.md` (short version of this file). Security reports: `SECURITY.md`.
 
 **Website**: https://wovemind-sg.github.io/claude-marketplace/ — built by `site/build.py` from the manifests, skill/command frontmatter and one how-to spec per skill, command or mod in `site/specs/<plugin>/<item>.json`. `.github/workflows/pages.yml` rebuilds and deploys on every push to `main`. Keep it in sync in the same PR as the change:
-- New skill, command or mod: add its spec (write it with `/help-me-understand:help-me-understand`, page type `how-to`, usage only — what it does and how to use it, not how it works). The build fails without it.
+- New skill or command: add its spec (write it with `/help-me-understand:help-me-understand`, page type `how-to`, usage only — what it does and how to use it, not how it works). The build fails without it.
+- New mod command (no SKILL.md/command file): add its spec too and mention `/<name>` in the plugin's `README.md`, or the build rejects the spec. Nothing fails if you forget the spec, so check yourself.
 - Changed usage (arguments, options, requirements, output) of an existing one: update its spec.
-- Removed or renamed one: delete or rename its spec. The build fails on an orphan spec.
+- Removed or renamed one: delete or rename its spec. The build fails on an orphan spec, unless the plugin README still mentions `/<name>` (then it passes as a mod page), so also fix the README.
 - New plugin: nothing extra for its card and plugin page; specs for its skills as above.
 
 **Reserved marketplace names** — reserved by Anthropic, unusable: `claude-code-marketplace`, `claude-code-plugins`, `claude-plugins-official`, `anthropic-marketplace`, `anthropic-plugins`, `agent-skills`, `knowledge-work-plugins`, `life-sciences`. Names impersonating official marketplaces (e.g. `official-claude-plugins`, `anthropic-tools-v2`) also blocked.

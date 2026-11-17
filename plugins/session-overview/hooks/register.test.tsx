@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { GOAL_TTL_MS, activeToday, clean, toTitle, groupSessions, makeGoalLookup, projectOf, stateOf, tmuxPane, transcriptPath, validEntry } from './register'
+import { GOAL_TTL_MS, activeToday, clean, toTitle, groupSessions, makeGoalLookup, projectOf, registryDirs, loadEntries, stateOf, tmuxPane, transcriptPath, validEntry } from './register'
 
 test('stateOf maps the four states', () => {
   expect(stateOf({ status: 'busy' }, true)).toBe('running')
@@ -188,4 +188,38 @@ test('activeToday edges: future time, exact midnight, negative, now itself', () 
   expect(activeToday(now, now)).toBe(true)
   expect(activeToday(-5, now)).toBe(false)
   expect(activeToday(NaN, now)).toBe(false)
+})
+
+test('registryDirs adds CLAUDE_CONFIG_DIR and swap profiles, deduped', () => {
+  expect(registryDirs('/H', undefined, [])).toEqual(['/H/.claude/sessions'])
+  const swap = '/H/.claude-swap-backup/sessions/2-a'
+  expect(registryDirs('/H', `${swap}/`, ['2-a', '3-b'])).toEqual([
+    '/H/.claude/sessions',
+    `${swap}/sessions`,
+    '/H/.claude-swap-backup/sessions/3-b/sessions',
+  ])
+})
+
+test('loadEntries merges registries and keeps the newest copy of a duplicated id', async () => {
+  const swap = '/H/.claude-swap-backup/sessions'
+  const e = (sessionId: string, updatedAt: number) => JSON.stringify({ pid: 1, sessionId, cwd: '/p', status: 'idle', updatedAt })
+  const files: Record<string, string> = {
+    '/H/.claude/sessions/a.json': e('same', 1),
+    [`${swap}/2-a/sessions/b.json`]: e('same', 5),
+    [`${swap}/2-a/sessions/c.json`]: e('other', 2),
+  }
+  const $ = {
+    env: { get: async () => undefined },
+    fs: {
+      list: async (d: string) => {
+        if (d === swap) return [{ name: '2-a', kind: 'dir' }, { name: 'x', kind: 'file' }]
+        const pre = `${d}/`
+        return Object.keys(files).filter(k => k.startsWith(pre)).map(k => ({ name: k.slice(pre.length), kind: 'file' }))
+      },
+      read: async (p: string) => files[p],
+    },
+  }
+  const got = await loadEntries($, '/H')
+  expect(got.map(x => x.sessionId).sort()).toEqual(['other', 'same'])
+  expect(got.find(x => x.sessionId === 'same')?.updatedAt).toBe(5)
 })

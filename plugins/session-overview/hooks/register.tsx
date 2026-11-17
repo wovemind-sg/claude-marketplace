@@ -149,6 +149,32 @@ export const makeGoalLookup = (d: GoalDeps) => {
   return { goalOf, prune, size: () => goals.size + found.size }
 }
 
+// Where session registries live: default dir, CLAUDE_CONFIG_DIR, and each claude-swap (cswap) profile.
+export const registryDirs = (home: string, configDir: string | undefined, swapProfiles: string[]) =>
+  [...new Set([
+    `${home}/.claude/sessions`,
+    ...(configDir ? [`${configDir.replace(/\/+$/, '')}/sessions`] : []),
+    ...swapProfiles.map(p => `${home}/.claude-swap-backup/sessions/${p}/sessions`),
+  ])]
+
+export const loadEntries = async ($: any, home: string) => {
+  const configDir = await $.env.get('CLAUDE_CONFIG_DIR').catch(() => undefined)
+  const swap = await $.fs.list(`${home}/.claude-swap-backup/sessions`).catch(() => [])
+  const dirs = registryDirs(home, configDir, swap.filter((d: { kind?: string }) => d.kind === 'dir').map((d: { name: string }) => d.name))
+  const byId = new Map<string, Entry>()
+  for (const dir of dirs) {
+    const files = (await $.fs.list(dir).catch(() => [])).filter((f: { name: string }) => f.name.endsWith('.json'))
+    for (const f of files) {
+      try {
+        const e = JSON.parse(await $.fs.read(`${dir}/${f.name}`) as string)
+        const old = byId.get(e?.sessionId)
+        if (validEntry(e) && (!old || (e.updatedAt ?? 0) > (old.updatedAt ?? 0))) byId.set(e.sessionId, e)
+      } catch { /* half-written file */ }
+    }
+  }
+  return [...byId.values()]
+}
+
 let timer: { cancel: () => void } | undefined
 const stop = () => {
   timer?.cancel()
@@ -171,11 +197,7 @@ const openPane = async ($: any, focus: boolean) => {
     busy = true
     try {
       await loadSaved($)
-      const files = (await $.fs.list(`${home}/.claude/sessions`)).filter((f: { name: string }) => f.name.endsWith('.json'))
-      const entries: Entry[] = []
-      for (const f of files) {
-        try { const e = JSON.parse(await $.fs.read(`${home}/.claude/sessions/${f.name}`) as string); if (validEntry(e)) entries.push(e) } catch { /* half-written file */ }
-      }
+      const entries = await loadEntries($, home)
       prune(entries.map(e => e.sessionId))
       const ps = entries.length
         ? await $.process.run(['ps', '-p', entries.map(e => e.pid).join(','), '-o', 'pid=']).catch(() => none)

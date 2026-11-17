@@ -16,7 +16,9 @@ build_page.py and wrapped in the site shell. Writes:
 
 Every link is relative, so the site works under any sub-path. The build fails
 (exit 1) when a skill or command has no spec, a spec belongs to no plugin, a
-spec does not render, or an internal link does not resolve. It still writes
+spec does not render, an internal link does not resolve, a name is not
+path-safe, or a manifest URL is not http(s). A plugin hosted outside this repo
+gets a card and plugin page only. It still writes
 everything it could, then lists every problem at once.
 
 Standard library only; runs on Python 3.8+.
@@ -123,8 +125,13 @@ def discover(root, errors):
     plugins = []
     for entry in market.get("plugins", []):
         name, source = entry.get("name", "?"), entry.get("source")
+        if not valid_name(name):
+            errors.append("marketplace.json: plugin name %r must match %s" % (name, NAME_RE.pattern))
+            continue
         if not isinstance(source, str) or not source.startswith("./"):
-            errors.append("marketplace.json: plugin %s has a non-local source; the site builds local plugins only" % name)
+            # Hosted outside this repo (github, git URL, npm...): a card and plugin page from the entry, no how-to pages.
+            check_urls(name, "marketplace.json", entry, errors)
+            plugins.append({"name": name, "dir": None, "entry": entry, "manifest": {}, "items": [], "external": True})
             continue
         pdir = os.path.normpath(os.path.join(root, source))
         try:
@@ -132,18 +139,44 @@ def discover(root, errors):
         except (OSError, ValueError) as exc:
             errors.append("%s: cannot read plugin.json: %s" % (source, exc))
             continue
+        check_urls(name, "marketplace.json", entry, errors)
+        check_urls(name, "plugin.json", manifest, errors)
         items = []
         skills = os.path.join(pdir, "skills")
         for sub in sorted(os.listdir(skills)) if os.path.isdir(skills) else []:
             md = os.path.join(skills, sub, "SKILL.md")
-            if os.path.isfile(md):
+            if os.path.isfile(md) and named_ok("%s/skills/%s" % (source, sub), sub, errors):
                 items.append(make_item("skill", sub, parse_frontmatter(read_text(md))))
         commands = os.path.join(pdir, "commands")
         for fn in sorted(os.listdir(commands)) if os.path.isdir(commands) else []:
-            if fn.endswith(".md"):
+            if fn.endswith(".md") and named_ok("%s/commands/%s" % (source, fn), fn[:-3], errors):
                 items.append(make_item("command", fn[:-3], parse_frontmatter(read_text(os.path.join(commands, fn)))))
         plugins.append({"name": name, "dir": pdir, "entry": entry, "manifest": manifest, "items": items})
     return market, plugins
+
+
+# Names become output path segments; every plugin, skill, command and spec name in the repo fits this.
+NAME_RE = re.compile(r"[a-z0-9][a-z0-9-]*")
+
+
+def valid_name(name):
+    return isinstance(name, str) and NAME_RE.fullmatch(name) is not None
+
+
+def named_ok(where, name, errors):
+    if valid_name(name):
+        return True
+    errors.append("%s: name %r must match %s" % (where, name, NAME_RE.pattern))
+    return False
+
+
+def check_urls(name, where, data, errors):
+    """Manifest URLs rendered as links must be http(s); a bad one is reported and dropped so it never reaches a page."""
+    for field in ("homepage", "repository"):
+        url = data.get(field)
+        if url is not None and not (isinstance(url, str) and re.match(r"^https?://", url)):
+            errors.append("%s: plugin %s field %s must be an http:// or https:// URL, got %r" % (where, name, field, url))
+            data.pop(field)
 
 
 def make_item(kind, name, fm):
@@ -165,10 +198,15 @@ def attach_specs(root, plugins, errors):
         if plugin is None:
             errors.append("site/specs/%s/: no plugin named %s in marketplace.json" % (d, d))
             continue
+        if plugin.get("external"):
+            errors.append("site/specs/%s/: %s is hosted outside this repo, so it has no how-to pages" % (d, d))
+            continue
         for fn in sorted(os.listdir(ddir)):
             if not fn.endswith(".json"):
                 continue
             stem, rel = fn[:-5], "site/specs/%s/%s" % (d, fn)
+            if not named_ok(rel, stem, errors):
+                continue
             item = next((i for i in plugin["items"] if i["name"] == stem), None)
             if item is None:
                 readme = os.path.join(plugin["dir"], "README.md")
@@ -348,7 +386,7 @@ def plugin_card(p, rel, featured=False):
             '<p class="w-card-meta"><span>%s</span><span>v%s</span></p></a></li>'
             % (" w-card-feat" if featured else "", escape(cat), escape(words.lower()), rel, escape(p["name"]),
                glyph(cat), escape(cat), escape(category_label(cat)), escape(p["name"]), escape(entry.get("description", "")),
-               extra, counts_label(items), escape(version(p))))
+               extra, "hosted elsewhere" if p.get("external") else counts_label(items), escape(version(p))))
 
 
 def render_index(plugins, market):
@@ -465,14 +503,21 @@ def render_plugin(p, plugins):
         if its:
             groups.append('<h3 class="w-group">%s <span>%d</span></h3><ul class="w-items">%s</ul>'
                           % (KIND_GROUP[kind], len(its), "".join(item_row(p, i, "") for i in its)))
-    if not groups:
+    if p.get("external"):
+        groups = ['<p class="w-muted">Skill pages are not available here because this plugin is hosted outside this repo.</p>']
+    elif not groups:
         groups.append('<p class="w-muted">This plugin has no skills or commands; it works through hooks.</p>')
-    source = "%s/tree/main/%s" % (REPO_URL, entry["source"][2:].rstrip("/"))
     facts = [("Version", escape(version(p))), ("Category", escape(category_label(cat))),
-             ("Licence", escape(m.get("license") or entry.get("license") or "?")),
-             ("Includes", counts_label(p["items"])), ("Source", '<a href="%s">GitHub</a>' % escape(source))]
+             ("Licence", escape(m.get("license") or entry.get("license") or "?"))]
+    if p.get("external"):
+        source = entry.get("repository") or ""
+        facts.append(("Source", '<a href="%s">%s</a>' % (escape(source), escape(re.sub(r"^https?://|/$", "", source)))
+                      if source else "Hosted outside this repo"))
+    else:
+        source = "%s/tree/main/%s" % (REPO_URL, entry["source"][2:].rstrip("/"))
+        facts += [("Includes", counts_label(p["items"])), ("Source", '<a href="%s">GitHub</a>' % escape(source))]
     home = m.get("homepage") or entry.get("homepage") or ""
-    if home and not home.startswith(source):
+    if home and not (source and home.startswith(source)):
         facts.append(("Homepage", '<a href="%s">%s</a>' % (escape(home), escape(re.sub(r"^https?://|/$", "", home)))))
     facts_html = "".join("<div><dt>%s</dt><dd>%s</dd></div>" % kv for kv in facts)
     names = {x["name"] for x in plugins}
@@ -666,6 +711,32 @@ def selftest():
         assert any("pan.json" in e for e in errs) and any("ghost" in e for e in errs), errs  # `/pane` does not cover pan
         assert len(errs) == 3, errs
         assert invocation(plugins[0], plugins[0]["items"][3]) == "/pane"
+
+        # External sources, URL schemes and path-safe names.
+        fake2 = os.path.join(tmp, "repo2")
+        write(os.path.join(fake2, ".claude-plugin", "marketplace.json"), json.dumps({"plugins": [
+            {"name": "ext", "source": {"source": "github", "repo": "o/ext"}, "description": "d", "category": "media",
+             "tags": ["t"], "homepage": "https://ext.dev/", "repository": "https://github.com/o/ext"},
+            {"name": "evil", "source": "npm-pkg", "homepage": "javascript:alert(1)"},
+            {"name": "../up", "source": "./plugins/up"},
+            {"name": "loc", "source": "./plugins/loc"}]}))
+        write(os.path.join(fake2, "plugins", "loc", ".claude-plugin", "plugin.json"), json.dumps({"repository": "ftp://x"}))
+        write(os.path.join(fake2, "plugins", "loc", "skills", "Bad.Name", "SKILL.md"), "---\nname: b\n---\n")
+        write(os.path.join(fake2, "plugins", "loc", "commands", ".hidden.md"), "---\n---\n")
+        write(os.path.join(fake2, "site", "specs", "loc", "..x.json"), "{}")
+        write(os.path.join(fake2, "site", "specs", "ext", "a.json"), "{}")
+        errs = []
+        _, plugins = discover(fake2, errs)
+        attach_specs(fake2, plugins, errs)
+        assert [p["name"] for p in plugins] == ["ext", "evil", "loc"] and plugins[2]["items"] == [], plugins
+        assert sum("must match" in e for e in errs) == 4, errs  # ../up, Bad.Name, .hidden, ..x
+        assert any("evil field homepage" in e for e in errs) and any("loc field repository" in e for e in errs), errs
+        assert any("site/specs/ext/" in e and "outside this repo" in e for e in errs) and len(errs) == 7, errs
+        assert "homepage" not in plugins[1]["entry"]  # dropped, never rendered
+        html = render_plugin(plugins[0], plugins)
+        assert "hosted outside this repo" in html and 'href="https://ext.dev/"' in html and 'href="https://github.com/o/ext"' in html
+        assert "plugin install ext@wovemind" in html and "hosted elsewhere" in plugin_card(plugins[0], "")
+        assert "Hosted outside this repo" in render_plugin(plugins[1], plugins)
 
         # Link check: relative links that resolve pass; missing targets and root-absolute links fail.
         site = os.path.join(tmp, "site")

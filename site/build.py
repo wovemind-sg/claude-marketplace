@@ -29,7 +29,6 @@ import json
 import os
 import re
 import shutil
-import subprocess
 import sys
 import tempfile
 from html import escape, unescape
@@ -219,6 +218,9 @@ def attach_specs(root, plugins, errors):
             item["spec_path"] = os.path.join(ddir, fn)
             try:
                 item["spec"] = read_json(item["spec_path"])
+                if not isinstance(item["spec"], dict):
+                    del item["spec"]
+                    errors.append("%s: spec must be a JSON object" % rel)
             except (OSError, ValueError) as exc:
                 errors.append("%s: invalid JSON: %s" % (rel, exc))
     for p in plugins:
@@ -523,7 +525,7 @@ def render_plugin(p, plugins):
     facts_html = "".join("<div><dt>%s</dt><dd>%s</dd></div>" % kv for kv in facts)
     names = {x["name"] for x in plugins}
     req = []
-    deps = m.get("dependencies") or []
+    deps = [d.get("name", "?") if isinstance(d, dict) else d for d in m.get("dependencies") or []]
     if deps:
         req.append('<p class="w-side-label">Installed along with it</p><ul class="w-deps">%s</ul>' % "".join(
             '<li><a href="../%s/">%s</a></li>' % (escape(d), escape(d)) if d in names else "<li>%s</li>" % escape(d) for d in deps))
@@ -573,20 +575,13 @@ def split_fragment(html):
     return title, rest
 
 
-def render_howto(root, p, i, prev_i, next_i, errors):
+def render_howto(p, i, prev_i, next_i, errors):
     rel = "../../../"
-    fd, tmp = tempfile.mkstemp(suffix=".html")
-    os.close(fd)
     try:
-        proc = subprocess.run([sys.executable, os.path.join(root, BUILD_PAGE), i["spec_path"], tmp],
-                              stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, universal_newlines=True)
-        if proc.returncode != 0:
-            msg = (proc.stderr.strip().splitlines() or ["exit %d" % proc.returncode])[-1]
-            errors.append("site/specs/%s/%s.json: does not render: %s" % (p["name"], i["name"], msg))
-            return None
-        title_esc, fragment = split_fragment(read_text(tmp))
-    finally:
-        os.unlink(tmp)
+        title_esc, fragment = split_fragment(_build_page.build(i["spec"]))
+    except _build_page.SpecError as exc:
+        errors.append("site/specs/%s/%s.json: does not render: %s" % (p["name"], i["name"], str(exc).replace("\n", "; ")))
+        return None
     inv = invocation(p, i)
     shown = escape(inv) + ((' <span class="w-hint">%s</span>' % escape(i["hint"])) if i["hint"] else "")
     pager = []
@@ -659,7 +654,7 @@ def build(root, out):
     for p in plugins:
         with_spec = [i for i in p["items"] if "spec" in i]
         for n, i in enumerate(with_spec):
-            html = render_howto(root, p, i, with_spec[n - 1] if n else None,
+            html = render_howto(p, i, with_spec[n - 1] if n else None,
                                 with_spec[n + 1] if n + 1 < len(with_spec) else None, errors)
             if html is not None:
                 i["page"] = True

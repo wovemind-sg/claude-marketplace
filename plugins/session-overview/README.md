@@ -60,4 +60,4 @@ my-app  ~/workspace
 
 ## Environment variables and settings
 
-No environment variables and no plugin settings. It only reads `~/.claude/sessions/*.json` and `~/.claude/projects/<encoded-cwd>/<sessionId>.jsonl`.
+No environment variables and no plugin settings. It only reads `sessions/*.json` under `~/.claude`, `CLAUDE_CONFIG_DIR` and cswap profiles, and `~/.claude/projects/<encoded-cwd>/<sessionId>.jsonl`.

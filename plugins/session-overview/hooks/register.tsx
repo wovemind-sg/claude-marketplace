@@ -162,8 +162,10 @@ export const loadEntries = async ($: any, home: string) => {
   const swap = await $.fs.list(`${home}/.claude-swap-backup/sessions`).catch(() => [])
   const dirs = registryDirs(home, configDir, swap.filter((d: { kind?: string }) => d.kind === 'dir').map((d: { name: string }) => d.name))
   const byId = new Map<string, Entry>()
-  for (const dir of dirs) {
-    const files = (await $.fs.list(dir).catch(() => [])).filter((f: { name: string }) => f.name.endsWith('.json'))
+  let failed = 0
+  const lists = await Promise.all(dirs.map(dir => $.fs.list(dir).then((fs: { name: string }[]) => fs.filter(f => f.name.endsWith('.json')), () => { failed++; return [] })))
+  for (const [i, files] of lists.entries()) {
+    const dir = dirs[i]
     for (const f of files) {
       try {
         const e = JSON.parse(await $.fs.read(`${dir}/${f.name}`) as string)
@@ -172,6 +174,8 @@ export const loadEntries = async ($: any, home: string) => {
       } catch { /* half-written file */ }
     }
   }
+  // Every registry unreadable: throw so refresh keeps the last list instead of blanking the pane.
+  if (failed === dirs.length) throw new Error('no session registry readable')
   return [...byId.values()]
 }
 

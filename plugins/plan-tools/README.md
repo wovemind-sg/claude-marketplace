@@ -97,10 +97,10 @@ Runs automatically whenever Claude writes an implementation plan (or invoke it d
 
 - **Ask, not assume** — every decision your request or the code doesn't already dictate is either asked in an AskUserQuestion round (UX, behavior, naming, edge cases, libraries, structure) or listed in the plan under **Assumed decisions**, depending on the question level you pick (see below).
 - **No unrequested changes** — each step cites which of your asks it serves (`Serves: A<n>`); anything without one is cut or asked about.
-- **Smallest complete change** — each step states why nothing smaller works; real smaller-vs-larger trade-offs are put to you as questions.
+- **Smallest complete change** — each step states why nothing smaller works; real smaller-vs-larger trade-offs are put to you as questions when your level asks them, else listed under Assumed decisions.
 - **Cover everything** — a requirement map lists each ask verbatim with its delivering step and verification, and verification includes running the real app/command, not only tests.
 
-The first question is the question level, unless you pass it as an argument:
+The first question is the question level, unless you pass it as an argument, a calling skill (such as `create-webapp`) already asked it, or Claude is revising a plan that records it:
 
 | Level | Asks you | Decides and lists under Assumed decisions |
 |---|---|---|

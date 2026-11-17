@@ -37,7 +37,7 @@ Read everything the asks touch: callers, tests, fixtures, config, existing helpe
 
 ### 3. Ask the open decisions your level calls for
 
-A decision is open when neither the user's request nor the existing code dictates the answer. That covers UX (layout, copy, placement, interactions), behavior, edge cases, naming, data shape, libraries, file structure, error handling, migration — anything. The bar is deliberately low: when unsure whether something is a decision, it is. A question costs the user seconds; a wrong guess costs them a rework cycle and the trust that the plan reflects them.
+A decision is open when neither the user's request nor the existing code dictates the answer. That covers UX (layout, copy, placement, interactions), behavior, edge cases, naming, data shape, libraries, file structure, error handling, migration — anything. The bar is deliberately low: when unsure whether something is a decision, it is. An open decision is either asked or listed under Assumed decisions, per the level below, never made silently: a hidden guess costs the user a rework cycle and the trust that the plan reflects them.
 
 The level from step 0 decides which open decisions you ask and which you decide yourself:
 
@@ -55,7 +55,7 @@ Two things are asked at every level: a vague ask ("make it nicer"), and whether 
 - Write questions, options, and descriptions in full, plain English, never caveman or other compressed styles, even when one is active for the session. The user decides from this text alone, and clipped fragments hide what is being decided. If the `humanizer` plugin is available, invoke `/humanizer:humanizer` on the drafted question text before sending it; otherwise just write the questions in plain English.
 - Each question stands on its own (the user may only see the dialog): name the thing, say what you found if it matters.
 - Give 2–4 concrete options. Put your recommendation first, marked "(Recommended)", with a one-line reason.
-- **Size trade-offs:** where a piece has a real smaller-vs-larger choice (e.g. reuse the existing component vs. a new one; patch one screen vs. all of them), present it as a question with both options and what each covers.
+- **Size trade-offs:** where a piece has a real smaller-vs-larger choice (e.g. reuse the existing component vs. a new one; patch one screen vs. all of them) and your level asks it, present it as a question with both options and what each covers; otherwise take the smaller option and list it under Assumed decisions.
 - Do not proceed with a placeholder answer and "we can change it later". Get the answer.
 
 New decisions surfacing later (while writing the plan, during the audit) follow the same level: those it calls for go back to the user the same way, the rest you decide and add to Assumed decisions.
@@ -90,7 +90,7 @@ Status starts as `[ ]`; implementers tick it to `[x]` once the ask is delivered 
 ## Implementation rules
 
 - Change only what a step in this plan lists. Every changed line must trace to an ask in the requirement map. No drive-by refactors, renames, reformatting, dependency bumps, or "while I'm here" fixes — note them in the final report instead.
-- Follow the Decisions section exactly. If you hit a decision this plan doesn't answer, use the plan's question level. If the level would not ask it, pick the answer the existing code points to (else the one you would recommend) and add it to the plan's Assumed decisions (in a split plan, in `.planning/SPEC.md`). If the level would ask it, stop and ask the user (AskUserQuestion) — don't pick one yourself. If you are a subagent and can't ask the user directly, end your run with the question as your final report (plain English, 2–4 options, your recommendation first); the parent will ask the user and send you the answer so you can continue.
+- Follow the Decisions section exactly. If you hit a decision this plan doesn't answer, use the plan's question level (`everything` if it names none). If the level would not ask it, pick the answer the existing code points to (else the one you would recommend) and add it to the plan's Assumed decisions (in a split plan, in `.planning/SPEC.md`). If the level would ask it, stop and ask the user (AskUserQuestion) — don't pick one yourself. If you are a subagent and can't ask the user directly, end your run with the question as your final report (plain English, 2–4 options, your recommendation first); the parent will ask the user and send you the answer so you can continue.
 - When you raise the PR, copy the plan's Assumed decisions into the PR body under an "Assumed decisions" heading, so reviewers see every choice the user did not make.
 - Tick each requirement map row's Status once it is delivered and verified. In a split plan, tick your session's rows in `.planning/SPEC.md`.
 - Keep each change as small as it can be while still complete. Reuse existing code and patterns before writing new ones.
@@ -103,7 +103,7 @@ Re-read the plan against each rule and fix what fails:
 
 - **Coverage:** every ask has a row, a delivering step, and a real-use verification. No ask silently dropped or narrowed.
 - **No unrequested changes:** every step and every file has a `Serves:` pointing to a real ask. Cut anything that doesn't. If something seems necessary but serves no ask (e.g. a bug you found), ask the user whether to include it instead of including it.
-- **Size:** for each step, could less code, fewer files, or reuse of something existing achieve the same ask? If yes, shrink it, or ask the user if it's a real trade-off.
+- **Size:** for each step, could less code, fewer files, or reuse of something existing achieve the same ask? If yes, shrink it, or, if it's a real trade-off, ask the user when the level calls for it and otherwise list it under Assumed decisions.
 - **No unlisted decisions:** every choice in the plan is in Decisions, dictated by the code, or listed in Assumed decisions and below the level's bar. Any other choice, including an assumed one the level would have asked, becomes a question.
 - **Rules block** is present verbatim.
 

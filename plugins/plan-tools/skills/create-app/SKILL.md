@@ -21,7 +21,8 @@ Use `$ARGUMENTS` as the seed if given. Ask for everything below in as few rounds
 5. **Design reference** (optional) — a URL, a screenshot/image path, an existing app to imitate, or a few words of direction ("dark, playful, big thumbnails"). If none, the planner picks a restrained default and writes it down.
 6. **Distribution** — EAS Build + Submit to App Store Connect (TestFlight) and Play alpha track is the default. Confirm, and ask whether store submission is in scope now or just internal builds.
 7. **Planning model** — default `sonnet`.
-8. **Implementing model** — default `sonnet`. Options: `sonnet`, `opus`, `haiku`, `fable`.
+8. **Question level** — ask it alongside the planning model: which open decisions the planner brings back to the user and which it decides and lists as Assumed decisions. Options, with what each asks, as in `/plan-tools:plan-helper` step 0: Everything (every open decision), Balanced (anything the user will see or that is costly to undo), Material only (only choices that change the direction of the work or cannot be cheaply undone).
+9. **Implementing model** — default `sonnet`. Options: `sonnet`, `opus`, `haiku`, `fable`.
 
 ## 2. Decide the stack slice
 
@@ -70,7 +71,7 @@ Present failures as a numbered list, one line each, then wait for the user to fi
 
 ## 5. Plan
 
-Spawn one subagent with `subagent_type: Plan` and `model:` the planning model. The Plan agent is read-only, which is what you want here. Its prompt must carry, verbatim, everything gathered above: app name, bundle id, platforms, feature list, design reference, distribution scope, the stack-slice table, the env/credential inventory, and the blocker results. Also give it the absolute path of this skill's `references/stack.md`. Then instruct it to:
+Spawn one subagent with `subagent_type: Plan` and `model:` the planning model. The Plan agent is read-only, which is what you want here. Its prompt must carry, verbatim, everything gathered above: app name, bundle id, platforms, feature list, design reference, distribution scope, the question level, the stack-slice table, the env/credential inventory, and the blocker results. Also give it the absolute path of this skill's `references/stack.md`. Then instruct it to:
 
 1. Read `references/stack.md` in full and treat it as the source of truth for versions, scaffold commands, project layout and conventions. Only the parts in the stack slice get installed; the plan must list the exact `npx expo install …` lines per session.
 2. Load `capacitor-core:capacitor-best-practices` **only if** the user explicitly wants a WebView somewhere (if the `capacitor-core` plugin is not installed, skip it and say so in the report) — otherwise ignore Capacitor entirely; this is a React Native app.
@@ -78,7 +79,7 @@ Spawn one subagent with `subagent_type: Plan` and `model:` the planning model. T
 4. For each local native module in the slice, plan it as its own vertical slice: module skeleton via `npx create-expo-module@latest --local`, the JS API surface first with a stub implementation, then Swift, then Kotlin, each verified on a simulator/emulator before moving on. Model files, permissions (`NSPhotoLibraryUsageDescription`, `READ_MEDIA_IMAGES`, …) and `app.json` plugin config belong to that slice.
 5. Produce a complete implementation plan: scaffolding first (a runnable `npx expo run:ios` / `run:android` showing the home screen is the first milestone), then features as vertical slices, each ending in a working committable state with `jest-expo` tests for logic and stores, the `eas.json` profiles (development, preview, production) and — if in scope — the submit configuration as the final slice. Return the plan as markdown.
 
-Follow `/plan-tools:plan-helper` while planning. The Plan agent cannot ask the user anything itself, so tell it: when it has open decisions, end its run with those questions as its final report (plain English, 2–4 options each, recommendation first) instead of guessing. Ask the user with AskUserQuestion in plain English, then send the answers to that same Plan subagent with SendMessage so it continues with its context intact; repeat until it returns the finished plan.
+Follow `/plan-tools:plan-helper` while planning, at the question level the user chose (so it does not ask the level again). The Plan agent cannot ask the user anything itself, so tell it: when it has the open decisions its level calls for, end its run with those questions as its final report (plain English, 2–4 options each, recommendation first), and list the rest under Assumed decisions in the plan. Ask the user with AskUserQuestion in plain English, then send the answers to that same Plan subagent with SendMessage so it continues with its context intact; repeat until it returns the finished plan.
 
 Save the returned plan to `.planning/SPEC.md` (create `.planning/`). Show the user a one-screen summary and get a go-ahead before splitting — a wrong plan multiplied across sessions is expensive to unwind.
 

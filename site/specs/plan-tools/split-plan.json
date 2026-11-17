@@ -274,7 +274,7 @@
         },
         {
           "type": "text",
-          "text": "When the plan came from plan-helper, each session file also carries the plan's `## Implementation rules` block, the Decisions that apply to that session and the requirement-map rows it delivers. Those rows are ticked in `SPEC.md`."
+          "text": "When the plan came from plan-helper, each session file also carries the plan's `## Implementation rules` block, its question level, the Decisions and Assumed decisions that apply to that session, and the requirement-map rows it delivers. Those rows are ticked in `SPEC.md`."
         }
       ]
     },

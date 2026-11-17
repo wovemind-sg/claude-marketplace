@@ -18,6 +18,12 @@ Repo = Claude Code **plugin marketplace** — catalog for users to discover + in
 
 Contributor guide: `CONTRIBUTING.md` (short version of this file). Security reports: `SECURITY.md`.
 
+**Website**: https://wovemind-sg.github.io/claude-marketplace/ — built by `site/build.py` from the manifests, skill/command frontmatter and one how-to spec per skill, command or mod in `site/specs/<plugin>/<item>.json`. `.github/workflows/pages.yml` rebuilds and deploys on every push to `main`. Keep it in sync in the same PR as the change:
+- New skill, command or mod: add its spec (write it with `/help-me-understand:help-me-understand`, page type `how-to`, usage only — what it does and how to use it, not how it works). The build fails without it.
+- Changed usage (arguments, options, requirements, output) of an existing one: update its spec.
+- Removed or renamed one: delete or rename its spec. The build fails on an orphan spec.
+- New plugin: nothing extra for its card and plugin page; specs for its skills as above.
+
 **Reserved marketplace names** — reserved by Anthropic, unusable: `claude-code-marketplace`, `claude-code-plugins`, `claude-plugins-official`, `anthropic-marketplace`, `anthropic-plugins`, `agent-skills`, `knowledge-work-plugins`, `life-sciences`. Names impersonating official marketplaces (e.g. `official-claude-plugins`, `anthropic-tools-v2`) also blocked.
 
 **Reserved plugin names** — plugin name cannot start with `claude-`, `anthropic-`, `anthropics-`, or `cc-plugin-`, be `claude`/`anthropic`/`anthropics`/`claude-code`/`claude-mods`, or pair `official` with `claude`/`anthropic`.
@@ -99,7 +105,7 @@ Test locally (inside session):
 2. Create `.claude-plugin/plugin.json` with at minimum `name` and `description`.
 3. Add component directories (`skills/`, `agents/`, `hooks/`, etc.) at plugin root — not inside `.claude-plugin/`.
 4. Write `README.md` with purpose, usage, configuration.
-5. Add entry to `.claude-plugin/marketplace.json` with `name` and `source`.
+5. Add entry to `.claude-plugin/marketplace.json` with `name` and `source`. Add a website spec per skill/command (see **Website** above).
 6. Validate: `claude plugin validate .` (or `/plugin validate .` inside session).
 7. Test locally: `/plugin marketplace add ./` then `/plugin install <name>@<marketplace-name>`.
 8. Open pull request — CI (`.github/workflows/validate.yml`) runs `claude plugin validate .` and the scripts' `--selftest` checks.
@@ -121,6 +127,8 @@ New skills or agents, nothing removed — bump to `1.1.0`.
 Renaming or removing skill, changing argument contracts — bump to `2.0.0`. Consider keeping previous version in separate directory (e.g. `plugins/my-plugin-v1/`) so existing users not break.
 
 **Never edit published plugin's behaviour without version bump.** Installed users get updates only when version string changes (or, if no version set, when new commit pushed).
+
+Any of these that changes how a skill/command is used also updates its website spec (see **Website** above).
 
 ---
 

@@ -36,6 +36,7 @@ from html import escape, unescape
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
+BUILD_MARKER = ".site-build"  # hidden, so upload-pages-artifact leaves it out of the deploy
 BUILD_PAGE = os.path.join("plugins", "help-me-understand", "skills", "help-me-understand", "scripts", "build_page.py")
 REPO_URL = "https://github.com/wovemind-sg/claude-marketplace"
 MARKETPLACE_REPO = "wovemind-sg/claude-marketplace"
@@ -642,11 +643,14 @@ def build(root, out):
         raise SystemExit("refusing to build into %s: it contains the repository" % out)
     errors = []
     if os.path.exists(out):
-        # Only wipe an empty dir or a previous build, so a mistyped --out (site, plugins, ~) never deletes sources.
-        if os.listdir(out) and not os.path.isfile(os.path.join(out, "assets", "site.js")):
-            raise SystemExit("refusing to replace %s: it is not empty and not a previous site build" % out)
+        # Only wipe an empty dir or a previous build (it has the marker), so a mistyped --out (site, plugins, ~)
+        # never deletes sources; site/ itself holds assets/site.js, so that file is no proof.
+        if os.listdir(out) and not os.path.isfile(os.path.join(out, BUILD_MARKER)):
+            raise SystemExit("refusing to replace %s: it is not empty and has no %s from a previous build "
+                             "(delete it yourself, or pick another --out)" % (out, BUILD_MARKER))
         shutil.rmtree(out)
     os.makedirs(os.path.join(out, "assets"))
+    write(os.path.join(out, BUILD_MARKER), "built by site/build.py; safe to delete with this folder\n")
     for fn in ("site.css", "site.js"):
         shutil.copy(os.path.join(root, "site", "assets", fn), os.path.join(out, "assets", fn))
     market, plugins = discover(root, errors)
@@ -754,6 +758,16 @@ def selftest():
         except SystemExit:
             pass
         assert os.path.isfile(os.path.join(fake, "plugins", "demo", "README.md"))
+        # Nor a sources folder that looks like a build (site/ holds assets/site.js), as `--out site` would be.
+        lookalike = os.path.join(tmp, "lookalike")
+        write(os.path.join(lookalike, "assets", "site.js"), "")
+        write(os.path.join(lookalike, "build.py"), "")
+        try:
+            build(ROOT, lookalike)
+            raise AssertionError("build wiped a folder that only looks like a build")
+        except SystemExit:
+            pass
+        assert os.path.isfile(os.path.join(lookalike, "build.py"))
 
         # The real site: every skill and command has a spec, every spec renders, every link resolves.
         errors, pages = build(ROOT, os.path.join(tmp, "out"))

@@ -301,7 +301,7 @@
           "rows": [
             [
               "Question level",
-              "A `Question level:` line naming the level. Implementers use the same bar for decisions that come up while they work."
+              "A `Question level:` line naming the level: `everything`, `balanced` or `material`. Implementers use the same bar for decisions that come up while they work."
             ],
             [
               "Requirement map",

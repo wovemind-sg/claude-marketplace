@@ -61,7 +61,7 @@
         {"title": "UI audit, mark, report", "text": "Runs the UI audit if you said yes, adds a `finalize-pr` commit status (\"finalize-pr ran\") to the head commit once the PR is raised, the test plan has fully run and no fixes remain, then reports back."}
       ]},
       {"type": "text", "text": "If the branch's commits close an issue (a `Closes #<number>` line from `/plan-tools:impl-issue`), that line is carried into the PR body so GitHub closes the issue on merge."},
-      {"type": "text", "text": "If the plan the branch implements (the plan file the caller names; else `.planning/SPEC.md` or its archived copy, only when exactly one exists and it matches this branch's changes) has an Assumed decisions section from plan-helper, it is carried into the PR body under an \"Assumed decisions\" heading, so reviewers see every choice you did not make."},
+      {"type": "text", "text": "If the plan the branch implements (the plan file the caller names; else `.planning/SPEC.md` or its archived copy, only when exactly one of them matches this branch's changes) has an Assumed decisions section from plan-helper, it is carried into the PR body under an \"Assumed decisions\" heading, so reviewers see every choice you did not make."},
       {"type": "text", "text": "A finished PR gets a `finalize-pr` commit status, and a UI audit gets a `ui-audit` status. Both `finalize-pr` and `monitor-pr` use these statuses."},
       {"type": "text", "text": "The full step order is: 0 last finalized commit, 0b upfront questions, 1 code review, 1b security review, 2 test plan, 3 user flows, 3b repo steps, 4 residual work, 5 PR, 6 UI audit, 7 mark, 8 report."}
     ]},

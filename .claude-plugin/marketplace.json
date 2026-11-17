@@ -436,6 +436,24 @@
       ]
     },
     {
+      "name": "token-utilization",
+      "source": "./plugins/token-utilization",
+      "description": "Stops the agent when session or weekly usage reaches a limit named in the prompt (\"until /session-token-utilization gets to 90%\"), at once or after a short wrap-up that saves handoff notes.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "workflow",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/token-utilization#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
+      "tags": [
+        "usage-limit",
+        "stop",
+        "mod",
+        "automation"
+      ]
+    },
+    {
       "name": "help-me-understand",
       "source": "./plugins/help-me-understand",
       "description": "Reorganises a long or tangled answer, file, web page or artifact into a published page that holds the same information in a form that is easier to take in: the whole idea as a picture first, then numbered stops that each lead with a visual and keep all of their detail, in plain English.",

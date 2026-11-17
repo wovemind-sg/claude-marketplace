@@ -1,0 +1,89 @@
+{
+  "title": "Stop At Usage Limit",
+  "page_type": "how-to",
+  "gist": {"kind": "chain", "nodes": [
+    {"icon": "code", "label": "Name a limit"},
+    {"icon": "pause", "label": "Pick a stop mode", "arrow": "asked once"},
+    {"icon": "clock", "label": "Usage reaches the limit", "arrow": "later"},
+    {"icon": "check", "label": "The agent stops", "arrow": "per your choice", "outcome": true}
+  ]},
+  "bottom_line": "End a prompt with until /session-token-utilization gets to 90% and the agent stops there, at once or after a wrap-up.",
+  "sections": [
+    {"heading": "Add the limit phrase to a prompt, or type /token-utilization", "short": "The command", "blocks": [
+      {"type": "code", "title": "What to type", "code": "Do XXX until /session-token-utilization gets to 90%\nDo YYY until /weekly-token-utilization gets to 70%\n/token-utilization [off]", "caption": "The first two lines set a limit for the task the prompt starts. The third shows the current limit, or removes it with off."},
+      {"type": "table", "title": "The ways to use it", "columns": ["You write", "What it does"], "rows": [
+        ["`... until /session-token-utilization gets to 90%`", "Stop when the session (5-hour) window reaches 90%."],
+        ["`... until /weekly-token-utilization gets to 70%`", "Stop when the weekly window reaches 70%."],
+        ["both, joined by `or` / `and`", "Stop at whichever is reached first. One mode covers both."],
+        ["the phrase in a slash command's arguments", "The same, for example `/plan-tools:plan-implement-complete plan.md until /session-token-utilization gets to 80%`."],
+        ["`/token-utilization`", "Show the limit, its current reading, the mode and the state."],
+        ["`/token-utilization off`", "Remove the limit."]
+      ]},
+      {"type": "text", "text": "The phrase, from \"until\" through the percentage, is removed before the model or the command reads the prompt."},
+      {"type": "text", "text": "The limit lasts until it is reached, until a new prompt names another limit, or until `/token-utilization off`. Follow-up prompts you type keep it."}
+    ]},
+    {"heading": "You need a mod-loading Claude Code and a claude.ai subscription", "short": "Before you start", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Claude Code that loads mods", "state": "done", "text": "The plugin registers a TypeScript module through `hooks/hooks.json`, not a skill, so your Claude Code version must load plugin mods."},
+        {"title": "A claude.ai subscription", "state": "done", "text": "With it, Claude Code reports the session (5-hour) and weekly usage windows, which the mod needs."}
+      ]},
+      {"type": "list", "title": "Nothing to configure", "items": [
+        "No environment variables or settings.",
+        "State is kept in the plugin's own store and survives a reload."
+      ]}
+    ]},
+    {"heading": "Choose stop immediately or wrap up first", "short": "The two modes", "blocks": [
+      {"type": "text", "text": "When you send a prompt that names a limit, a question asks what should happen at the limit."},
+      {"type": "cards", "cards": [
+        {"title": "Stop immediately", "state": "info", "text": "The running turn is cancelled and every running subagent is stopped."},
+        {"title": "Wrap up first", "state": "info", "text": "The agent may finish a small remaining piece or record where it stands, then stops. Running subagents get the same wrap-up message.", "points": [{"sign": "+", "text": "Usage is cut off 5 points above the limit, at most 100%."}]}
+      ]},
+      {"type": "list", "title": "The prompt is not sent, with the reason shown, when", "items": [
+        "the percentage is missing or outside 1 to 100;",
+        "the window is already at or past the limit;",
+        "the mode question is closed with Esc;",
+        "the prompt comes from `claude -p`, where nobody can answer the question."
+      ]}
+    ]},
+    {"heading": "Wrap-up notes are saved to .claude/handoffs", "short": "The handoff file", "blocks": [
+      {"type": "stepper", "steps": [
+        {"title": "The limit is reached", "text": "One transcript line marks the moment and gives the handoff path."},
+        {"title": "The agent wraps up", "text": "It finishes a small remainder or stops, and ends with handoff notes: what is done, what is in progress, what is left, and the next step."},
+        {"title": "The notes are saved", "text": "The mod saves the main agent's final wrap-up message as `.claude/handoffs/HANDOFF-<first 8 characters of the session id>.md` under the project root."},
+        {"title": "You resume later", "text": "Ask the agent to read that file first."}
+      ]},
+      {"type": "list", "title": "About the file", "items": [
+        "Each session writes its own file, so parallel sessions never overwrite each other's notes.",
+        "The mod also writes `.claude/handoffs/.gitignore` containing `*`, so the folder stays out of git."
+      ]}
+    ]},
+    {"heading": "After the stop, automatic prompts ask before they run", "short": "After the stop", "blocks": [
+      {"type": "text", "text": "A prompt you type runs normally and clears the stop. Something else may try to restart the agent: a background task's notification, a scheduled task, `/loop`, or auto-resume's `continue`. Then the mod sends a notification through Claude Code's own notification channel (your `preferredNotifChannel` setting) and asks whether to run it."},
+      {"type": "table", "title": "Your answer", "columns": ["Answer", "What happens"], "rows": [
+        ["Yes, run it", "It runs, and later automatic prompts run without asking."],
+        ["No, or Esc", "It is dropped, and the next one asks again."]
+      ]}
+    ]},
+    {"heading": "Check the status line or type /token-utilization", "short": "Checking it", "blocks": [
+      {"type": "table", "title": "Two places to look", "columns": ["Where", "What you see"], "rows": [
+        ["The status line, while a limit is set", "For example `stop at session 90% (now 62%), wrap-up`"],
+        ["The reply to `/token-utilization`", "The limit, its current reading, the mode and the state"]
+      ]}
+    ]},
+    {"heading": "The stop can land a point or two above your number", "short": "Limits", "blocks": [
+      {"type": "cards", "cards": [
+        {"title": "Readings move in whole points", "state": "warn", "text": "Usage readings arrive with model responses, so the stop can land a point or two above the number you named."},
+        {"title": "First prompt of a session", "state": "warn", "text": "A new session has no reading until its first response, so a limit that is already passed is not caught when the prompt is sent.", "points": [{"sign": "+", "text": "The limit is set, and the first reading stops the agent."}]},
+        {"title": "No reading at all", "state": "warn", "text": "Without a usage reading (for example, no subscription), the status line says `no reading yet`, and a transcript line warns after the first turn that the limit cannot take effect."},
+        {"title": "The session must be open", "state": "warn", "text": "The mod can only act on an open session. Background shell commands keep running; they spend no tokens."}
+      ]}
+    ]}
+  ],
+  "next_action": {
+    "text": "End your next long prompt with `until /session-token-utilization gets to 90%`.",
+    "detail": "Pick Wrap up first to get handoff notes in `.claude/handoffs/`."
+  },
+  "sources": [
+    {"label": "token-utilization plugin on GitHub", "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/token-utilization"}
+  ]
+}

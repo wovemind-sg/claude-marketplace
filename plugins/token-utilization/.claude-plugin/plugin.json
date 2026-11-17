@@ -1,0 +1,9 @@
+{
+  "name": "token-utilization",
+  "description": "Stops the agent when session or weekly usage reaches a limit named in the prompt (\"until /session-token-utilization gets to 90%\"), at once or after a short wrap-up that saves handoff notes.",
+  "version": "0.1.0",
+  "author": {"name": "Wovemind"},
+  "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/token-utilization#readme",
+  "repository": "https://github.com/wovemind-sg/claude-marketplace",
+  "license": "MIT"
+}

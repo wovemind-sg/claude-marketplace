@@ -16,7 +16,7 @@ test('projectOf merges worktrees and shortens home', () => {
 })
 
 test('transcriptPath encodes every non-alphanumeric as dash', () => {
-  expect(transcriptPath('/H', '/home/a/ws/x/.claude/worktrees/w', 'id')).toBe(
+  expect(transcriptPath('/H/.claude', '/home/a/ws/x/.claude/worktrees/w', 'id')).toBe(
     '/H/.claude/projects/-home-a-ws-x--claude-worktrees-w/id.jsonl',
   )
 })
@@ -69,7 +69,7 @@ const fake = (files: Record<string, string>, finds: Record<string, string> = {})
   return { g, calls, tick: (ms: number) => { t += ms } }
 }
 const entry = { pid: 1, sessionId: 'abc', cwd: '/p', status: 'idle' }
-const path = transcriptPath('/H', '/p', 'abc')
+const path = transcriptPath('/H/.claude', '/p', 'abc')
 
 test('goalOf skips tag-wrapped prompts and uses the next plain one', async () => {
   const { g } = fake({
@@ -300,4 +300,14 @@ test('loadEntries: an invalid newer duplicate cannot displace a valid entry', as
   const got = await loadEntries($, '/H')
   expect(got.length).toBe(1)
   expect(got[0]?.updatedAt).toBe(1)
+})
+
+test('transcript lookup uses the entry root; a root inside the JSON is ignored', async () => {
+  const $ = fakeFs({
+    '/C/sessions/c.json': JSON.stringify({ pid: 1, sessionId: 'c', cwd: '/p', status: 'idle', root: '/evil' }),
+  }, { env: async () => '/C' })
+  const [e] = await loadEntries($, '/H')
+  expect(e!.root).toBe('/C')
+  const { g } = fake({ [transcriptPath('/C', '/p', 'c')]: jsonl({ type: 'ai-title', aiTitle: 'From C' }) })
+  expect(await g.goalOf(e!)).toBe('From C')
 })

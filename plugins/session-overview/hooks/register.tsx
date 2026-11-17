@@ -30,6 +30,7 @@ type Entry = {
   nameSource?: string
   tmux?: string
   updatedAt?: number
+  root?: string // config root the entry was read from; set by loadEntries, never from the file
 }
 
 export const stateOf = (entry: Pick<Entry, 'status'>, alive: boolean): Session['state'] =>
@@ -45,8 +46,8 @@ export const projectOf = (cwd: string, home: string) => {
   return { path, worktree: m?.[2] }
 }
 
-export const transcriptPath = (home: string, cwd: string, id: string) =>
-  `${home}/.claude/projects/${cwd.replace(/[^A-Za-z0-9]/g, '-')}/${id}.jsonl`
+export const transcriptPath = (root: string, cwd: string, id: string) =>
+  `${root}/projects/${cwd.replace(/[^A-Za-z0-9]/g, '-')}/${id}.jsonl`
 
 export const groupSessions = (list: Session[], hidden: string[], home: string, stars: string[] = []) => {
   const groups = new Map<string, Session[]>()
@@ -109,11 +110,12 @@ export const makeGoalLookup = (d: GoalDeps) => {
   const parse = (l: string) => { try { return JSON.parse(l) } catch { return undefined } }
 
   const locate = async (e: Entry) => {
-    const derived = transcriptPath(d.home, e.cwd, e.sessionId)
+    const root = e.root ?? `${d.home}/.claude`
+    const derived = transcriptPath(root, e.cwd, e.sessionId)
     if (await d.exists(derived)) return derived
     if (!found.has(e.sessionId)) {
       // sessionId is validated by validEntry, so it is safe as a -name pattern.
-      const r = await d.run(['find', `${d.home}/.claude/projects`, '-maxdepth', '2', '-name', `${e.sessionId}.jsonl`]).catch(() => none)
+      const r = await d.run(['find', `${root}/projects`, '-maxdepth', '2', '-name', `${e.sessionId}.jsonl`]).catch(() => none)
       found.set(e.sessionId, firstLine(r.stdout) || null)
     }
     return found.get(e.sessionId) ?? undefined
@@ -170,7 +172,7 @@ export const loadEntries = async ($: any, home: string) => {
       try {
         const e = JSON.parse(await $.fs.read(`${dir}/${f.name}`) as string)
         const old = byId.get(e?.sessionId)
-        if (validEntry(e) && (!old || (e.updatedAt ?? 0) > (old.updatedAt ?? 0))) byId.set(e.sessionId, e)
+        if (validEntry(e) && (!old || (e.updatedAt ?? 0) > (old.updatedAt ?? 0))) byId.set(e.sessionId, { ...e, root: dir.slice(0, -'/sessions'.length) })
       } catch { /* half-written file */ }
     }
   }

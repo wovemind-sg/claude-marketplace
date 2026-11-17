@@ -35,7 +35,8 @@ from html import escape, unescape
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-BUILD_MARKER = ".site-build"  # hidden, so upload-pages-artifact leaves it out of the deploy
+BUILD_MARKER = ".site-build"  # hidden, so webbie's deploy skips it (dot-files)
+WEBBIE_JS = "/_webbie/webbie.js"  # served by webbie on every site host, not in _site/
 BUILD_PAGE = os.path.join("plugins", "help-me-understand", "skills", "help-me-understand", "scripts", "build_page.py")
 REPO_URL = "https://github.com/wovemind-sg/claude-marketplace"
 MARKETPLACE_REPO = "wovemind-sg/claude-marketplace"
@@ -345,9 +346,10 @@ def page(rel, title, description, body, body_class="w-site"):
 %s
 <div class="w-live w-sr" aria-live="polite" id="w-live"></div>
 <script src="%sassets/site.js" defer></script>
+<script src="%s" defer></script>
 </body>
 </html>
-""" % (escape(title), escape(description), FAVICON, rel, body_class, header(rel), body, footer(rel), rel)
+""" % (escape(title), escape(description), FAVICON, rel, body_class, header(rel), body, footer(rel), rel, WEBBIE_JS)
 
 
 def header(rel):
@@ -619,7 +621,7 @@ def check_links(out):
             path = os.path.join(dirpath, fn)
             relpath = os.path.relpath(path, out)
             for url in LINK_RE.findall(read_text(path)):
-                if re.match(r"^(https?:|mailto:|data:|#)", url):
+                if url == WEBBIE_JS or re.match(r"^(https?:|mailto:|data:|#)", url):
                     continue
                 if url.startswith("/") or re.match(r"^[a-z][a-z0-9+.-]*:", url, re.I):
                     errs.append("%s: link %s must be relative" % (relpath, url))
@@ -743,14 +745,15 @@ def selftest():
         assert "plugin install ext@wovemind" in html and "hosted elsewhere" in plugin_card(plugins[0], "")
         assert "Hosted outside this repo" in render_plugin(plugins[1], plugins)
 
-        # Link check: relative links that resolve pass; missing targets and root-absolute links fail.
+        # Link check: relative links that resolve pass; missing targets and root-absolute links fail (except WEBBIE_JS).
         site = os.path.join(tmp, "site")
         write(os.path.join(site, "index.html"), '<a href="a/">x</a><a href="#top">t</a><a href="https://e.com/">e</a>'
-                                                 '<link href="assets/s.css"><a href="b/">gone</a><a href="/a/">abs</a>')
+                                                 '<link href="assets/s.css"><a href="b/">gone</a><a href="/a/">abs</a>'
+                                                 '<script src="/_webbie/webbie.js"></script><script src="/_webbie/webbe.js"></script>')
         write(os.path.join(site, "a", "index.html"), '<a href="../">up</a><a href="../index.html#x">up</a>')
         write(os.path.join(site, "assets", "s.css"), "")
         errs = check_links(site)
-        assert len(errs) == 2 and "broken link b/" in errs[0] and "/a/ must be relative" in errs[1], errs
+        assert len(errs) == 3 and "broken link b/" in errs[0] and "/a/ must be relative" in errs[1] and "webbe.js" in errs[2], errs
 
         # --out never wipes a non-empty directory that is not a previous build.
         try:

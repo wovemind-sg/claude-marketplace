@@ -1,6 +1,6 @@
 # Wovemind Claude Code plugins
 
-Browse the catalog, with a how-to page for every skill and command: **https://wovemind-sg.github.io/claude-marketplace/**
+Browse the catalog, with a how-to page for every skill and command: **https://marketplace.wovemind.com/**
 
 ```bash
 claude plugin marketplace add wovemind-sg/claude-marketplace

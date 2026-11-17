@@ -18,7 +18,7 @@ Repo = Claude Code **plugin marketplace** — catalog for users to discover + in
 
 Contributor guide: `CONTRIBUTING.md` (short version of this file). Security reports: `SECURITY.md`.
 
-**Website**: https://wovemind-sg.github.io/claude-marketplace/ — built by `site/build.py` from the manifests, skill/command frontmatter and one how-to spec per skill, command or mod in `site/specs/<plugin>/<item>.json`. `.github/workflows/pages.yml` rebuilds and deploys on every push to `main`. Keep it in sync in the same PR as the change:
+**Website**: https://marketplace.wovemind.com/ — built by `site/build.py` from the manifests, skill/command frontmatter and one how-to spec per skill, command or mod in `site/specs/<plugin>/<item>.json`. `.github/workflows/site.yml` rebuilds it and deploys it to webbie on every push to `main`. Keep it in sync in the same PR as the change:
 - New skill or command: add its spec (write it with `/help-me-understand:help-me-understand`, page type `how-to`, usage only — what it does and how to use it, not how it works). The build fails without it.
 - New mod command (no SKILL.md/command file): add its spec too and mention `/<name>` in the plugin's `README.md`, or the build rejects the spec. Nothing fails if you forget the spec, so check yourself.
 - Changed usage (arguments, options, requirements, output) of an existing one: update its spec.

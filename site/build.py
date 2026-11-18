@@ -337,7 +337,7 @@ def page(rel, title, description, body, body_class="w-site"):
 <meta name="description" content="%s">
 <link rel="icon" href="%s">
 <link rel="stylesheet" href="%sassets/site.css">
-<script>document.documentElement.classList.add("w-js")</script>
+<script>document.documentElement.classList.add("w-js");try{var t=localStorage.getItem("w-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
 </head>
 <body class="w %s">
 <a class="w-skip" href="#content">Skip to content</a>
@@ -357,7 +357,8 @@ def header(rel):
     return ('<header class="w-head"><div class="w-wrap w-head-in">'
             '<a class="w-brand" href="%s">%s<span>wovemind</span><span class="w-brand-sub">plugins</span></a>'
             '<nav class="w-nav" aria-label="Site"><a href="%s#plugins">Plugins</a><a href="%s#how">How it works</a>'
-            '<a href="%s">GitHub</a></nav></div></header>' % (home, BRAND_SVG, home, home, REPO_URL))
+            '<a href="%s">GitHub</a>'
+            '<button type="button" class="w-theme" data-theme-toggle aria-label="Theme: system"><svg class="w-ti w-ti-system" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><svg class="w-ti w-ti-light" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="w-ti w-ti-dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg></button></nav></div></header>' % (home, BRAND_SVG, home, home, REPO_URL))
 
 
 def footer(rel):

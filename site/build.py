@@ -62,9 +62,7 @@ GLYPHS = {
 DEFAULT_GLYPH = '<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M9 12h6M12 9v6"/>'
 BRAND_SVG = ('<svg class="w-brand-mark" viewBox="0 0 28 28" aria-hidden="true"><rect x="1" y="1" width="26" height="26" rx="8"/>'
              '<path d="M7 9.5c2.5 0 3.5 9 7 9s4.5-9 7-9"/><path d="M7 18.5c2.5 0 3.5-9 7-9s4.5 9 7 9" opacity=".55"/></svg>')
-FAVICON = ("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='8' "
-           "fill='%2317684f'/%3E%3Cpath d='M7 9.5c2.5 0 3.5 9 7 9s4.5-9 7-9' fill='none' stroke='white' stroke-width='2.4' "
-           "stroke-linecap='round'/%3E%3C/svg%3E")
+FAVICON = "assets/wovemind-icon.png"
 
 
 # ---------------------------------------------------------------- reading the repo
@@ -335,7 +333,7 @@ def page(rel, title, description, body, body_class="w-site"):
 <meta name="color-scheme" content="light dark">
 <title>%s</title>
 <meta name="description" content="%s">
-<link rel="icon" href="%s">
+<link rel="icon" type="image/png" href="%s%s">
 <link rel="stylesheet" href="%sassets/site.css">
 <script>document.documentElement.classList.add("w-js");try{var t=localStorage.getItem("w-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
 </head>
@@ -346,10 +344,10 @@ def page(rel, title, description, body, body_class="w-site"):
 %s
 <div class="w-live w-sr" aria-live="polite" id="w-live"></div>
 <script src="%sassets/site.js" defer></script>
-<script src="%s" defer></script>
+<script src="%s" data-pill="off" defer></script>
 </body>
 </html>
-""" % (escape(title), escape(description), FAVICON, rel, body_class, header(rel), body, footer(rel), rel, WEBBIE_JS)
+""" % (escape(title), escape(description), rel, FAVICON, rel, body_class, header(rel), body, footer(rel), rel, WEBBIE_JS)
 
 
 def header(rel):
@@ -364,7 +362,7 @@ def header(rel):
 def footer(rel):
     return ('<footer class="w-foot"><div class="w-wrap w-foot-in"><p>%s Open-source Claude Code plugins by Wovemind.</p>'
             '<nav aria-label="Footer"><a href="%s">Source on GitHub</a><a href="%s/blob/main/CONTRIBUTING.md">Contributing</a>'
-            '<a href="%s/blob/main/LICENSE">MIT licence</a></nav></div></footer>'
+            '<a href="%s/blob/main/LICENSE">MIT licence</a><a href="#" data-webbie-cookie-preferences>Cookie preferences</a></nav></div></footer>'
             % (BRAND_SVG, REPO_URL, REPO_URL, REPO_URL))
 
 
@@ -481,6 +479,16 @@ def render_index(plugins, market):
 <section class="w-section" aria-labelledby="faq-h"><div class="w-wrap w-faq">
   <div class="w-section-head"><p class="w-eyebrow">Questions</p><h2 id="faq-h">FAQ</h2></div>
   <div>%s</div>
+</div></section>
+<section class="w-section" id="suggestion" aria-labelledby="suggest-h"><div class="w-wrap w-suggest">
+  <div class="w-section-head"><p class="w-eyebrow">Ideas</p><h2 id="suggest-h">Suggest a plugin</h2>
+    <p>Missing a skill or plugin? Tell us what it should do.</p></div>
+  <form id="suggest" method="post" data-webbie-form action="/_webbie/forms/suggest" data-success="Thanks, idea received.">
+    <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+    <label>Your idea<textarea name="idea" rows="4" required maxlength="2000" placeholder="A skill that..."></textarea></label>
+    <label>Email (optional, if you want a reply)<input type="email" name="email" autocomplete="email"></label>
+    <button class="w-btn" type="submit">Send suggestion</button>
+  </form>
 </div></section>
 </main>""" % (escape(market.get("description", "")), len(plugins), total, cmd_line(add_cmd), term, featured,
               "".join(chips), len(plugins), cards, how, faq_html)
@@ -651,7 +659,7 @@ def build(root, out):
         shutil.rmtree(out)
     os.makedirs(os.path.join(out, "assets"))
     write(os.path.join(out, BUILD_MARKER), "built by site/build.py; safe to delete with this folder\n")
-    for fn in ("site.css", "site.js"):
+    for fn in ("site.css", "site.js", "wovemind-icon.png", "wovemind-logo.png", "wovemind-logo-dark.png"):
         shutil.copy(os.path.join(root, "site", "assets", fn), os.path.join(out, "assets", fn))
     market, plugins = discover(root, errors)
     attach_specs(root, plugins, errors)
@@ -782,6 +790,9 @@ def selftest():
                 print("  " + e)
             return 1
         assert os.path.isfile(os.path.join(tmp, "out", "index.html")) and pages > 20
+        with open(os.path.join(tmp, "out", "index.html"), encoding="utf-8") as f:
+            home = f.read()
+        assert 'action="/_webbie/forms/suggest"' in home and 'name="_gotcha"' in home and 'id="suggest"' in home
     finally:
         shutil.rmtree(tmp)
     print("site/build.py selftest: OK")

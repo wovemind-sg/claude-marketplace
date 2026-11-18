@@ -25,6 +25,13 @@ Contributor guide: `CONTRIBUTING.md` (short version of this file). Security repo
 - Removed or renamed one: delete or rename its spec. The build fails on an orphan spec, unless the plugin README still mentions `/<name>` (then it passes as a mod page), so also fix the README.
 - New plugin: nothing extra for its card and plugin page; specs for its skills as above.
 
+**Change the site**: edit `site/build.py` (Python string templates), `site/assets/site.css`, `site/assets/site.js`. Build: `python3 site/build.py --out <dir>`. Check: `python3 site/build.py --selftest` (build also fails on broken or absolute links).
+
+**Upload a preview** (staging only; live site untouched until a push to `main`):
+1. Build and zip: `python3 site/build.py --out <dir> && (cd <dir> && zip -qr <zip> .)`
+2. Get a one-time upload URL. The webbie MCP is configured only in `~/workspace/webbie`: `cd ~/workspace/webbie && claude -p 'Use the webbie MCP import_zip tool for site slug "marketplace" and return ONLY the one-time upload URL.'`
+3. Upload: `curl -sS --fail-with-body -X PUT --data-binary @<zip> <upload-url>`. The reply is the staging preview URL. Form submissions on staging are test-only, not emailed.
+
 **Reserved marketplace names** — reserved by Anthropic, unusable: `claude-code-marketplace`, `claude-code-plugins`, `claude-plugins-official`, `anthropic-marketplace`, `anthropic-plugins`, `agent-skills`, `knowledge-work-plugins`, `life-sciences`. Names impersonating official marketplaces (e.g. `official-claude-plugins`, `anthropic-tools-v2`) also blocked.
 
 **Reserved plugin names** — plugin name cannot start with `claude-`, `anthropic-`, `anthropics-`, or `cc-plugin-`, be `claude`/`anthropic`/`anthropics`/`claude-code`/`claude-mods`, or pair `official` with `claude`/`anthropic`.

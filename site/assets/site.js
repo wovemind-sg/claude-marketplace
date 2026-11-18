@@ -11,6 +11,26 @@
     setTimeout(function () { live.textContent = msg; }, 30);
   }
 
+  // Theme toggle: system -> light -> dark. System = no data-theme, so the CSS follows prefers-color-scheme.
+  var themeBtn = doc.querySelector("[data-theme-toggle]");
+  if (themeBtn) {
+    var modes = ["system", "light", "dark"], mode = "system";
+    try { var saved = localStorage.getItem("w-theme"); if (saved === "light" || saved === "dark") mode = saved; } catch (e) {}
+    var paint = function () {
+      themeBtn.dataset.mode = mode;
+      themeBtn.setAttribute("aria-label", "Theme: " + mode);
+      themeBtn.title = "Theme: " + mode;
+    };
+    paint();
+    themeBtn.addEventListener("click", function () {
+      mode = modes[(modes.indexOf(mode) + 1) % 3];
+      if (mode === "system") root.removeAttribute("data-theme"); else root.dataset.theme = mode;
+      try { if (mode === "system") localStorage.removeItem("w-theme"); else localStorage.setItem("w-theme", mode); } catch (e) {}
+      paint();
+      announce("Theme: " + mode);
+    });
+  }
+
   // Copy buttons: clipboard API, with a hidden-textarea fallback; the button and a live region both say "Copied".
   function copyText(text) {
     if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);

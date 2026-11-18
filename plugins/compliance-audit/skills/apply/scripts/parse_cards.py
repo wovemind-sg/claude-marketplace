@@ -37,7 +37,7 @@ class Cards(HTMLParser):
             if tag == "div" and "f" in cls:
                 sev = next((SEV[c] for c in cls if c in SEV), "")
                 self.card = {"severity": sev, "risk": int(a.get("data-risk") or 0),
-                             "title": "", "sections": {}, "questions": []}
+                             "title": "", "sections": {}, "questions": [], "suggestions": []}
                 self.depth = 1
             return
         if tag == "div":
@@ -46,6 +46,7 @@ class Cards(HTMLParser):
             self.field, self.buf = "title", []
         elif tag == "li" and self.field == "pq":
             self.buf = []
+            self.card["suggestions"].append(clean(a.get("data-suggest") or ""))
         elif tag == "ol" and "pq" in cls:
             self.field = "pq"
         elif (tag == "p" or (tag == "div" and "says" in cls)) and self.field is None:
@@ -104,7 +105,7 @@ def selftest():
 <div class="says"><span class="k">What the rule says</span>Users can ask for <b>erasure</b>.</div>
 <p><span class="k">What to do</span>Hard-delete rows.</p>
 <p class="meta">Owner: engineer</p>
-<ol class="pq" hidden><li>Keep invoices?</li><li>Grace period?</li></ol></div>
+<ol class="pq" hidden><li>Keep invoices?</li><li data-suggest="30 days (from config/settings.py:12)">Grace period?</li></ol></div>
 <div class="f c" data-risk="2"><span class="tag">Recommended</span><h3>Add security.txt</h3></div></main>"""
     cs = parse(html)
     assert len(cs) == 2, cs
@@ -115,7 +116,8 @@ def selftest():
     assert a["sections"]["Rule"] == "GDPR Art. 17" and a["sections"]["What to do"] == "Hard-delete rows.", a
     assert a["sections"]["Owner"] == "engineer", a
     assert a["questions"] == ["Keep invoices?", "Grace period?"], a
-    assert cs[1]["id"] == 2 and cs[1]["questions"] == [], cs[1]
+    assert a["suggestions"] == ["", "30 days (from config/settings.py:12)"], a
+    assert cs[1]["id"] == 2 and cs[1]["questions"] == [] and cs[1]["suggestions"] == [], cs[1]
     print("selftest ok")
 
 

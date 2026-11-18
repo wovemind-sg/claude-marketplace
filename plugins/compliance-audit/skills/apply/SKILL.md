@@ -37,9 +37,9 @@ Two rules override the skills you call:
    ```bash
    python3 ${CLAUDE_PLUGIN_ROOT}/skills/apply/scripts/parse_cards.py <scratch>/report.html > <scratch>/cards.json
    ```
-   Each card has `id` (the #N shown on the page), `sid` (title slug, the db key), `severity`, `risk`, `title`, `sections` (Rule, What the rule says, What we found, What to do, Owner) and `questions`.
+   Each card has `id` (the #N shown on the page), `sid` (title slug, the db key), `severity`, `risk`, `title`, `sections` (Rule, What the rule says, What we found, What to do, Owner), `questions` and `suggestions` (same length as `questions`; the audit's prefilled answer for a question, with its evidence, or `""` when it had none).
 2. Read the page's shared state with `ArtifactData` (load it via ToolSearch if deferred): `list` the `status` collection (doc id = `sid`, field `s`: `prog` / `done` / `wont`) and the `answers` collection (doc id = `<sid>--<question index>`, field `t`).
-3. Keep every card whose status is not `done` or `wont`. Attach each card's answers to its questions by index; a question with no answer is **open**.
+3. Keep every card whose status is not `done` or `wont`. Attach each card's answers to its questions by index; a question with no saved answer is **open**. A suggestion the user has not confirmed is not an answer: its question stays open, but the suggestion is kept with it.
 4. Cards already `prog`: check for an existing branch or PR named `compliance/<id>-*` (`gh pr list --head …`, `git branch -a`). If a PR is open, resume that card at Step 3.7; if merged, mark it `done` and drop it; otherwise restart it from Step 3.1.
 
 ## Step 2 — Order the cards
@@ -66,11 +66,11 @@ Set the card's status to `prog` (ArtifactData `set`, collection `status`, doc `s
 
 Spawn one Agent (`model: <planner>`, general-purpose). You decide nothing about the fix yourself; the planner reads the code and writes the plan; the user's answers decide every choice. Give the planner:
 
-- the full card (all sections), the answered questions with their answers, and the open questions;
+- the full card (all sections), the answered questions with their answers, and the open questions (each with its unconfirmed suggestion, if any);
 - the repo path and base branch;
 - this instruction: *"Write a concrete implementation plan for this compliance fix in this repo: files to change, data/migration steps, UI copy, tests, and how to verify. Base every decision on the card and the user's answers. Do not decide anything the answers do not settle — product choices, legal wording, retention periods, vendor choices, UX, who is affected, anything with more than one reasonable answer. List each such decision as a question with 2–4 concrete options instead. Return: the plan (with placeholders where a question is pending) and the list of questions."*
 
-If questions come back (plus any open card questions the plan actually depends on), ask the user with AskUserQuestion — up to 4 per call, concrete options, recommended option first only when the code or answers point to it. Send the answers back to the same planner (SendMessage) and repeat until it returns a plan with no open questions. Never fill a gap with your own judgment to keep moving; waiting for the user here is expected.
+If questions come back (plus any open card questions the plan actually depends on), ask the user with AskUserQuestion — up to 4 per call, concrete options. When the question has an unconfirmed suggestion, offer it as the first option, marked recommended, and say what evidence it came from; otherwise put a recommended option first only when the code or answers point to one. Send the answers back to the same planner (SendMessage) and repeat until it returns a plan with no open questions. Never fill a gap with your own judgment to keep moving; waiting for the user here is expected.
 
 Write the final plan to `.planning/SPEC.md`. Check that `.planning/` is gitignored; if not, keep it out of commits (`git add` explicit paths only).
 

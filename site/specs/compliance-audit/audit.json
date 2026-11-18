@@ -72,7 +72,7 @@
     {"heading": "The audit runs five stages and writes nothing into your repo", "short": "What it does", "blocks": [
       {"type": "stepper", "steps": [
         {"title": "Detect", "text": "It scans the code, then reads what scripts cannot judge: legal pages, consent UI, retention jobs, logging, store manifests, the README and docs, deploy config and mobile manifests."},
-        {"title": "Ask", "text": "It asks the question rounds described above."},
+        {"title": "Ask", "text": "It first looks up what it can with read-only tools, then asks only the question rounds described above for what it could not find out. An answer it is almost sure of is prefilled on the report page and highlighted for you to confirm."},
         {"title": "Route", "text": "It loads only the rule sets that apply: privacy per jurisdiction, app stores, EU digital acts, AI, payments, minors, accessibility, licensing, security and contracts."},
         {"title": "Audit", "text": "It checks each requirement against the code and config, assigns a severity and picks an owner."},
         {"title": "Report", "text": "It publishes the report as an Artifact page. Re-running the audit republishes to the same page, so statuses and answers carry over."}

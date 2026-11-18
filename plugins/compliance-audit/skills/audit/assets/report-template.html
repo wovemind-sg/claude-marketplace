@@ -63,6 +63,10 @@ h3{font:600 16px/1.35 var(--font-body);margin:0 0 8px}
 .qs label{display:block;font-size:14px;margin-bottom:4px}
 .qs textarea{width:100%;min-height:52px;font:16px/1.45 var(--font-body);color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 9px;resize:vertical}
 .qs textarea[readonly]{opacity:.8}
+.qs li.sg{border:1px solid var(--required);background:var(--required-bg);border-radius:6px;padding:8px 10px}
+.qs .sgl{display:block;font:600 11px var(--font-mono);color:var(--required);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.qs .sgb{margin-top:6px;font:600 12px var(--font-body);padding:5px 12px;border-radius:99px;border:1px solid var(--required);background:var(--surface);color:var(--required);cursor:pointer}
+.qs .sgl[hidden],.qs .sgb[hidden]{display:none}
 .qs .sv{font:500 11px var(--font-mono);color:var(--muted);min-height:14px}
 .legend{display:grid;gap:8px;margin:0 0 8px}
 .legend div{display:flex;gap:10px;align-items:baseline}
@@ -93,7 +97,7 @@ footer{margin-top:44px;color:var(--muted);font-size:13px}
 <div><span class="count" style="background:var(--required-bg);color:var(--required)">Required</span><span>A real duty that is unmet but has lower enforcement risk or a later date.</span></div>
 <div><span class="count" style="background:var(--recommended-bg);color:var(--recommended)">Recommended</span><span>Good practice, or a rule that applies only if your situation changes.</span></div>
 <div><span class="count">Risk 1–10</span><span>How risky it is to deploy {{PRODUCT}} without this fix: store rejection, regulator action, data loss or a security incident. 8 and up is urgent.</span></div>
-<div><span class="count">Planning questions</span><span>Open cards list the questions Claude will ask when planning the fix. Answers save automatically and are shared with everyone who can see this page. “Copy for Claude” copies the card and your answers as a planning prompt.</span></div>
+<div><span class="count">Planning questions</span><span>Open cards list the questions Claude will ask when planning the fix. A question with a highlighted answer already filled in is a suggestion the audit found evidence for: check it and edit it if it is wrong; it saves when you press Confirm or edit it. Answers save automatically and are shared with everyone who can see this page. “Copy for Claude” copies the card and your answers as a planning prompt.</span></div>
 </div>
 
 <div class="sum">
@@ -119,14 +123,16 @@ footer{margin-top:44px;color:var(--muted);font-size:13px}
 <h2>Blockers <span class="count">{{N_BLOCKERS}}</span></h2>
 <!-- One .f card per finding. Class: b = Blocker, r = Required, c = Recommended. Order by risk.
      data-risk: 1-10, how risky it is to deploy without the fix. The script adds the running #ID, risk tag,
-     Copy for Claude button and answer boxes. .pq holds the planning questions (hidden source list). -->
+     Copy for Claude button and answer boxes. .pq holds the planning questions (hidden source list).
+     When the audit is almost sure of an answer, add it as <li data-suggest="answer (from evidence file:line)">question</li>;
+     the page prefills it, highlights it and asks the user to confirm. -->
 <div class="f b" data-risk="{{1-10}}"><span class="tag">Blocker</span><h3>{{finding title: the gap in plain words}}</h3>
 <p class="meta" style="margin:0 0 6px">Rule: <a href="{{source url}}">{{law or store rule, article/section}}</a></p>
 <div class="says"><span class="k">What the rule says</span>{{what the rule requires, explained in plain sentences}}</div>
 <p><span class="k">What we found</span>{{what the code does, with <code>file:line</code> evidence or "not found in ..."}}</p>
 <p><span class="k">What to do</span>{{exact code, config, document or console steps; deadline date if any}}</p>
 <p class="meta">Owner: {{engineer | founder | lawyer, split by part when shared}}</p>
-<ol class="pq" hidden><li>{{question Claude would ask before planning this fix}}</li></ol></div>
+<ol class="pq" hidden><li>{{question Claude would ask before planning this fix}}</li><li data-suggest="{{answer you are almost sure of (from evidence file:line)}}">{{question with a suggested answer}}</li></ol></div>
 
 <h2>Required <span class="count">{{N_REQUIRED}}</span></h2>
 <!-- .f.r cards, tag text "Required" -->
@@ -170,8 +176,8 @@ function txt(el){return el?el.textContent.replace(/\s+/g," ").trim():""}
 cards.forEach(function(c,i){
 var t=c.querySelector("h3").textContent.replace(/^\d+\.\s*/,"");
 c.dataset.sid=t.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,60);
-var risk=parseInt(c.dataset.risk,10)||0,src=c.querySelector(".pq"),qs=src?[].map.call(src.children,txt):[];
-c._risk=risk;c._qs=qs;c._id=i+1;
+var risk=parseInt(c.dataset.risk,10)||0,src=c.querySelector(".pq"),qs=src?[].map.call(src.children,txt):[],sg=src?[].map.call(src.children,function(li){return(li.dataset.suggest||"").trim()}):[];
+c._risk=risk;c._qs=qs;c._sg=sg;c._id=i+1;
 var sev=c.querySelector(".tag");
 var id=document.createElement("span");id.className="tag id";id.textContent="#"+(i+1);sev.before(id);
 var r=document.createElement("span");r.className="tag risk "+(risk>=7?"hi":risk>=4?"md":"lo");r.textContent="Risk "+risk+"/10";r.title="How risky it is to deploy without this fix";sev.after(r);
@@ -187,7 +193,11 @@ var li=document.createElement("li"),lb=document.createElement("label"),ta=docume
 var key=c.dataset.sid+"--"+j,tid="q-"+i+"-"+j;
 lb.textContent=q;lb.htmlFor=tid;ta.id=tid;ta.dataset.key=key;ta.readOnly=true;ta.placeholder="Your answer";sv.className="sv";
 ta.oninput=function(){if(!canWrite)return;sv.textContent="Editing…";clearTimeout(pending[key]);pending[key]=setTimeout(function(){delete pending[key];save(key,ta.value,sv)},700)};
-li.appendChild(lb);li.appendChild(ta);li.appendChild(sv);ol.appendChild(li)});
+li.appendChild(lb);li.appendChild(ta);
+if(sg[j]){var sl=document.createElement("span");sl.className="sgl";sl.textContent="Suggested \u2014 please check";sl.hidden=true;li.insertBefore(sl,lb);
+var sb=document.createElement("button");sb.type="button";sb.className="sgb";sb.textContent="Confirm";sb.hidden=true;
+sb.onclick=function(){if(!canWrite||!ta.value.trim())return;clearTimeout(pending[key]);delete pending[key];sv.textContent="Saving\u2026";save(key,ta.value,sv)};li.appendChild(sb)}
+li.appendChild(sv);ol.appendChild(li)});
 d.appendChild(ol);c.appendChild(d);c._box=d;c._qn=n;
 });
 function prompt(c){
@@ -197,7 +207,9 @@ out.push("What the rule says: "+txt(c.querySelector(".says")).replace(/^What the
 [].forEach.call(c.querySelectorAll(":scope > p"),function(p){var k=p.querySelector(".k");out.push(k?txt(k)+": "+txt(p).slice(txt(k).length).trim():txt(p))});
 var qa=c._qs.map(function(q,j){var a=(ans[c.dataset.sid+"--"+j]||"").trim();return a?"- Q: "+q+"\n  A: "+a:""}).filter(Boolean);
 if(qa.length)out.push("My answers to the planning questions:\n"+qa.join("\n"));
-var open=c._qs.filter(function(q,j){return !(ans[c.dataset.sid+"--"+j]||"").trim()});
+var sug=c._qs.map(function(q,j){return !(ans[c.dataset.sid+"--"+j]||"").trim()&&c._sg[j]?"- Q: "+q+"\n  Suggested: "+c._sg[j]:""}).filter(Boolean);
+if(sug.length)out.push("Suggested answers (not confirmed; check them with me before relying on them):\n"+sug.join("\n"));
+var open=c._qs.filter(function(q,j){return !(ans[c.dataset.sid+"--"+j]||"").trim()&&!c._sg[j]});
 if(open.length)out.push("Still unanswered (ask me only if you need them):\n"+open.map(function(q){return "- "+q}).join("\n"));
 out.push("Plan the fix for this finding in the "+repo+" repo.");
 return out.filter(Boolean).join("\n\n");
@@ -219,11 +231,13 @@ if(tag)tag.remove();
 if(v&&L[v]){var t=document.createElement("span");t.className="tag st s-"+v;t.textContent=L[v];c.querySelector(".tag.risk").after(t);if(v!=="prog")c.classList.add("is-"+v)}
 if(c._box){
 c._box.hidden=v==="prog"||v==="done";
-var done=0;[].forEach.call(c._box.querySelectorAll("textarea"),function(ta){
-var a=ans[ta.dataset.key]||"";if(a.trim())done++;
-if(document.activeElement!==ta&&!pending[ta.dataset.key]&&ta.value!==a)ta.value=a;
-ta.readOnly=!canWrite});
-c._qn.textContent=done+"/"+c._qs.length+" answered";
+var done=0,tc=0;[].forEach.call(c._box.querySelectorAll("textarea"),function(ta,j){
+var a=ans[ta.dataset.key]||"",sg=c._sg[j],un=!a.trim()&&!!sg,li=ta.parentNode;
+if(a.trim())done++;if(un)tc++;
+if(document.activeElement!==ta&&!pending[ta.dataset.key]&&ta.value!==(un?sg:a))ta.value=un?sg:a;
+ta.readOnly=!canWrite;li.classList.toggle("sg",un);
+[].forEach.call(li.querySelectorAll(".sgl,.sgb"),function(e){e.hidden=!un||(e.className==="sgb"&&!canWrite)})});
+c._qn.textContent=done+"/"+c._qs.length+" answered"+(tc?" \u00b7 "+tc+" to confirm":"");
 }
 var bar=c.querySelector(".stc");
 if(canWrite&&!bar){bar=document.createElement("div");bar.className="stc";Object.keys(L).forEach(function(k){var b=document.createElement("button");b.type="button";b.dataset.k=k;b.textContent=L[k];b.onclick=function(){set(c.dataset.sid,st[c.dataset.sid]===k?null:k)};bar.appendChild(b)});c.appendChild(bar)}

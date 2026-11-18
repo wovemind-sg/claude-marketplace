@@ -66,7 +66,7 @@ Requires the `plan-tools` and `ntfy` plugins from this marketplace, `gh` authent
 ## What a run does
 
 1. **Detect** — runs `detect_signals.py` and `license_scan.py`, then reads what scripts cannot judge (legal pages, consent UI, retention jobs, logging, store manifests).
-2. **Ask** — at most two grouped question rounds (markets, entity size, B2C/B2B, minors; then AI, payments, marketing comms, sub-processors as relevant), merged into one when the code already answers most of round 1. Anything the code already answers is not asked; unanswered questions get a default marked "(assumed)".
+2. **Ask** — at most two grouped question rounds (markets, entity size, B2C/B2B, minors; then AI, payments, marketing comms, sub-processors as relevant), merged into one when the code already answers most of round 1. The audit first investigates with read-only tools (git, `gh`, the live site, Railway and Stripe when already logged in) and asks only what it cannot find out; an answer it is almost sure of is prefilled on the report card, highlighted for you to confirm, and listed as "Assumed" in the Profile. Anything the code already answers is not asked; unanswered questions get a default marked "(assumed)".
 3. **Route** — loads only the reference modules that apply (privacy per jurisdiction, app stores, EU digital acts, AI, payments, minors, accessibility, licensing, security, contracts).
 4. **Audit** — checks each requirement against the code and config, assigns a severity, picks an owner.
 5. **Report** — fills `skills/audit/assets/report-template.html` and publishes it as an Artifact. Re-running the audit republishes to the same artifact, so statuses and answers carry over. Nothing in the audited repo is written or modified.
@@ -122,7 +122,7 @@ All Python 3 stdlib, in `skills/audit/scripts/`. Each detector has a `--selftest
 
 | Script | Usage | Output |
 |---|---|---|
-| `parse_cards.py` | `parse_cards.py <report.html>` / `--selftest` | JSON list of cards: `id`, `sid` (title slug, the db key for status and answers), `severity`, `risk`, `title`, `sections`, `questions`. |
+| `parse_cards.py` | `parse_cards.py <report.html>` / `--selftest` | JSON list of cards: `id`, `sid` (title slug, the db key for status and answers), `severity`, `risk`, `title`, `sections`, `questions`, `suggestions` (prefilled answer per question, `""` when none). |
 | `wait_pr.sh` | `wait_pr.sh <pr> [interval=60] [max-hours=6]` | Polls a PR; exit 0 merged, 10 behind/conflicting, 20 closed, 30 check failed, 40 timed out. |
 
 `detect_signals.py` skips tests, comment lines, Markdown prose, lockfiles, virtualenvs, `node_modules`, build output and `.claude/` worktrees, so evidence points at shipped code.

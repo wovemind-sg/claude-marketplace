@@ -29,6 +29,14 @@ class Cards(HTMLParser):
         super().__init__()
         self.cards, self.card, self.depth = [], None, 0
         self.field, self.buf, self.in_k, self.k = None, [], False, ""
+        self.sg = None
+
+    def flush_li(self):
+        # question and suggestion are recorded together so an unclosed <li> cannot misalign them
+        if self.sg is not None:
+            self.card["questions"].append(clean("".join(self.buf)))
+            self.card["suggestions"].append(self.sg)
+            self.sg = None
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
@@ -37,7 +45,7 @@ class Cards(HTMLParser):
             if tag == "div" and "f" in cls:
                 sev = next((SEV[c] for c in cls if c in SEV), "")
                 self.card = {"severity": sev, "risk": int(a.get("data-risk") or 0),
-                             "title": "", "sections": {}, "questions": []}
+                             "title": "", "sections": {}, "questions": [], "suggestions": []}
                 self.depth = 1
             return
         if tag == "div":
@@ -45,7 +53,8 @@ class Cards(HTMLParser):
         if tag == "h3":
             self.field, self.buf = "title", []
         elif tag == "li" and self.field == "pq":
-            self.buf = []
+            self.flush_li()
+            self.buf, self.sg = [], clean(a.get("data-suggest") or "")
         elif tag == "ol" and "pq" in cls:
             self.field = "pq"
         elif (tag == "p" or (tag == "div" and "says" in cls)) and self.field is None:
@@ -63,8 +72,9 @@ class Cards(HTMLParser):
             self.card["title"] = re.sub(r"^\d+\.\s*", "", clean("".join(self.buf)))
             self.field = None
         elif tag == "li" and self.field == "pq":
-            self.card["questions"].append(clean("".join(self.buf)))
+            self.flush_li()
         elif tag == "ol" and self.field == "pq":
+            self.flush_li()
             self.field = None
         elif self.field == "sec" and (tag == "p" or (tag == "div" and self.depth == 2)):
             text = clean("".join(self.buf))
@@ -104,10 +114,11 @@ def selftest():
 <div class="says"><span class="k">What the rule says</span>Users can ask for <b>erasure</b>.</div>
 <p><span class="k">What to do</span>Hard-delete rows.</p>
 <p class="meta">Owner: engineer</p>
-<ol class="pq" hidden><li>Keep invoices?</li><li>Grace period?</li></ol></div>
-<div class="f c" data-risk="2"><span class="tag">Recommended</span><h3>Add security.txt</h3></div></main>"""
+<ol class="pq" hidden><li>Keep invoices?</li><li data-suggest="30 days (from config/settings.py:12)">Grace period?</li></ol></div>
+<div class="f c" data-risk="2"><span class="tag">Recommended</span><h3>Add security.txt</h3></div>
+<div class="f r"><h3>Unclosed</h3><ol class="pq"><li>One?<li data-suggest="yes">Two?</ol></div></main>"""
     cs = parse(html)
-    assert len(cs) == 2, cs
+    assert len(cs) == 3, cs
     a = cs[0]
     assert a["id"] == 1 and a["severity"] == "Blocker" and a["risk"] == 9, a
     assert a["sid"] == "deleting-an-account-never-erases-data", a
@@ -115,7 +126,10 @@ def selftest():
     assert a["sections"]["Rule"] == "GDPR Art. 17" and a["sections"]["What to do"] == "Hard-delete rows.", a
     assert a["sections"]["Owner"] == "engineer", a
     assert a["questions"] == ["Keep invoices?", "Grace period?"], a
-    assert cs[1]["id"] == 2 and cs[1]["questions"] == [], cs[1]
+    assert a["suggestions"] == ["", "30 days (from config/settings.py:12)"], a
+    assert cs[1]["id"] == 2 and cs[1]["questions"] == [] and cs[1]["suggestions"] == [], cs[1]
+    u = cs[2]
+    assert u["questions"] == ["One?", "Two?"] and u["suggestions"] == ["", "yes"], u
     print("selftest ok")
 
 

@@ -211,6 +211,15 @@ html:not(.w-js) .w-tablist{display:none}
 .w-how-step code{margin-top:auto;font:13px/1.5 var(--font-mono);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 14px;overflow-wrap:anywhere;color:var(--fg)}
 @media (min-width:900px){.w-how-step+.w-how-step::before{content:"";position:absolute;left:-17px;top:44px;width:18px;height:2px;background:repeating-linear-gradient(90deg,var(--accent) 0 5px,transparent 5px 9px)}}
 
+/* Suggest form */
+.w-suggest{display:grid;gap:24px}
+.w-suggest form{max-width:40rem;width:100%;display:flex;flex-direction:column;gap:16px;align-items:flex-start;position:relative}
+.w-suggest label{display:flex;flex-direction:column;gap:6px;width:100%;font-size:14px;font-weight:600;color:var(--muted)}
+.w-suggest textarea,.w-suggest input[type=email]{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:16px var(--font-body);-webkit-appearance:none;appearance:none}
+.w-suggest textarea{resize:vertical;min-height:110px}
+.w-suggest textarea::placeholder{color:var(--muted)}
+.w-suggest textarea:focus,.w-suggest input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+
 /* FAQ */
 @media (min-width:900px){.w-faq{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:40px}}
 .w-faq-q{border-top:1px solid var(--line)}
@@ -319,3 +328,51 @@ a.w-item:hover .w-item-go{transform:translateX(3px);color:var(--accent)}
 @keyframes w-fade{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
 
 @media print{.w-head,.w-foot,.w-pager,.w-need,.w-copy{display:none}}
+
+/* Wovemind brand: tokens from the logo (blue #02abfd to mint #0bf0b8, navy #1b3047). Higher specificity than the
+   how-to fragments' own :root tokens, so every page switches together. Screen only; print keeps the fragment's. */
+@media not print{
+html:root:root{
+  --bg:#f4f9fb; --surface:#ffffff; --sheet:var(--surface); --fg:#1b3047; --muted:#54677c; --line:#d5e3ec;
+  --accent:#0b6fa4; --accent-soft:#e1f4fd; --accent-fg:#ffffff;
+  --good:#0a7f66; --info:#0b6fa4;
+  --w-weave:rgb(2 171 253 / .10); --w-term:#12233a; --w-term-fg:#d9e8f2; --w-term-dim:#7f95a9; --w-term-acc:#0bf0b8;
+  --w-raise:0 1px 2px rgb(27 48 71 / .06),0 10px 28px -12px rgb(27 48 71 / .24);
+  --c-workflow:#0a7f66; --c-workflow-soft:#dff6ee;
+  --c-notifications:#0b6fa4; --c-notifications-soft:#e1f4fd;
+  --w-grad:linear-gradient(135deg,#02abfd,#0bf0b8); --w-grad-fg:#1b3047;
+  --w-logo:url(/assets/wovemind-logo.png)}
+}
+@media not print and (prefers-color-scheme:dark){
+html:root:root:not([data-theme="light"]){
+  --bg:#0e1927; --surface:#15253a; --fg:#e6eef5; --muted:#9aaec0; --line:#26394f;
+  --accent:#3cc4ff; --accent-soft:#12324b; --accent-fg:#0e1927;
+  --good:#0bf0b8; --info:#3cc4ff;
+  --w-weave:rgb(60 196 255 / .08); --w-term:#091320;
+  --c-workflow:#0bf0b8; --c-workflow-soft:#0f3430;
+  --c-notifications:#3cc4ff; --c-notifications-soft:#12324b;
+  --w-logo:url(/assets/wovemind-logo-dark.png)}
+}
+@media not print{
+html:root[data-theme="dark"]:not(.x){
+  --bg:#0e1927; --surface:#15253a; --fg:#e6eef5; --muted:#9aaec0; --line:#26394f;
+  --accent:#3cc4ff; --accent-soft:#12324b; --accent-fg:#0e1927;
+  --good:#0bf0b8; --info:#3cc4ff;
+  --w-weave:rgb(60 196 255 / .08); --w-term:#091320;
+  --c-workflow:#0bf0b8; --c-workflow-soft:#0f3430;
+  --c-notifications:#3cc4ff; --c-notifications-soft:#12324b;
+  --w-logo:url(/assets/wovemind-logo-dark.png)}
+}
+
+/* Logo replaces the mark and wordmark in the header; the icon replaces the mark in the footer. */
+.w-brand .w-brand-mark{display:none}
+.w-brand>span:first-of-type{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.w-brand::before{content:"";display:block;width:62px;height:32px;flex:none;background:var(--w-logo,url(/assets/wovemind-logo.png)) left center/contain no-repeat}
+.w-foot .w-brand-mark{width:18px;height:22px;background:url(/assets/wovemind-icon.png) center/contain no-repeat}
+.w-foot .w-brand-mark>*{display:none}
+
+/* Primary actions wear the logo gradient with navy text (contrast 5:1 or better on both ends). */
+.w-btn,.w-stepn,.w-copy.w-copied,.w-skip{background:var(--w-grad,var(--accent));color:var(--w-grad-fg,var(--accent-fg))!important;border-color:transparent}
+.w-btn-quiet{background:transparent;color:var(--fg)!important;border-color:var(--line)}
+.w-hero{background:linear-gradient(180deg,color-mix(in srgb,#02abfd 7%,transparent),transparent 70%)}
+}

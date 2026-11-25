@@ -114,7 +114,7 @@ make dev              # start dev server at localhost:8000
 
 ## Worktrees
 
-Each `claude --worktree` checkout gets its own port, Postgres DB and Redis db (`make worktree-env` sets it up by hand, `make worktree-reap` cleans up removed ones), so several checkouts run side by side.
+Each `claude --worktree` checkout gets its own port, Postgres DB and Redis db (`make worktree-env` sets it up by hand, `make worktree-reap` cleans up removed ones), so several checkouts run side by side. Main's `ENGINE_URL` must point at a local/dev Postgres: worktree sessions create and drop `<app_name>_wtN` databases there.
 
 ## Example
 

@@ -408,6 +408,7 @@ def _setup(main_env: Path) -> None:
     ]
     # Claim the slot (.env) before creating the DB so a concurrent --reap never drops it;
     # undo the claim on failure so the next session retries instead of keeping a half-built slot.
+    env.touch(mode=0o600)  # .env holds main's copied secrets
     env.write_text("\n".join(lines) + "\n")
     try:
         with admin_engine(vals["ENGINE_URL"]).connect() as c:  # [db]

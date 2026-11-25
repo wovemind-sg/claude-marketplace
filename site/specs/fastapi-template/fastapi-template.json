@@ -107,6 +107,7 @@
     ]},
     {"heading": "Each Claude worktree gets its own port, database and Redis", "short": "Worktrees", "blocks": [
       {"type": "text", "text": "When you work in a `claude --worktree` checkout, a hook gives it its own `.env`: a port of `8000+N` (the main checkout stays on 8000), a Postgres database `<app_name>_wtN` with migrations applied, and Redis db `N`. Slots run from 1 to 9. So `make dev` can run in the main checkout and in every worktree at once."},
+      {"type": "text", "text": "Main's `ENGINE_URL` must point at a local/dev Postgres: worktree sessions create and drop `<app_name>_wtN` databases there."},
       {"type": "table", "columns": ["Command", "What it does"], "rows": [
         ["`make worktree-env`", "Set up this worktree by hand: write its `.env`, create its database and migrate it. Does nothing in the main checkout or if `.env` exists."],
         ["`make worktree-reap`", "Drop the database and flush the Redis db of worktrees that no longer exist. The hooks also run this when a session starts or ends."]

@@ -134,7 +134,7 @@ Each `claude --worktree` checkout gets its own `.env` (slot 1-9, written by `cmd
 - Postgres DB `<app_name>_wtN`, migrated with goose
 - Redis db `N` on main's Redis (main uses db 0, never touched)
 
-Removed worktrees are cleaned up by the SessionStart/SessionEnd reap, which drops their DB and flushes their Redis db. Run by hand with `make worktree-env` (set up this worktree) and `make worktree-reap`. Skip the DB or Redis parts when that feature is off (see the notes in `references/go-files.md` and `references/config-files.md`).
+Removed worktrees are cleaned up by the SessionStart/SessionEnd reap, which drops their DB and flushes their Redis db. Run by hand with `make worktree-env` (set up this worktree) and `make worktree-reap`. Skip the DB or Redis parts when that feature is off (see the notes in `references/go-files.md` and `references/config-files.md`). Main's `ENGINE_URL` must point at a local/dev Postgres: worktree sessions create and drop `<app_name>_wtN` databases there.
 
 ## Customization Checklist
 

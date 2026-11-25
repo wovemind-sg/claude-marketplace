@@ -51,7 +51,7 @@ To run the generated app:
 |---|---|
 | Deploy to Railway: a `Procfile`, and database/Redis pings retried while a sleeping Railway service wakes up | `--host generic` |
 | AI calls go to OpenRouter with the model `openai/gpt-4o-mini` | `--ai-model <openrouter model id>` |
-| Dev server on port 8000 | `PORT` in the environment or `make dev PORT=<port>` |
+| Dev server on port 8000 in the main checkout, `8000+N` in each `claude --worktree` checkout | `PORT` in `.env`, the environment, or `make dev PORT=<port>` |
 | Production server is gunicorn with 8 uvicorn workers | edit the `server` target in the generated `Makefile` |
 | Python 3.11, managed by `uv` | edit `.python-version` and `pyproject.toml` |
 | Database included; AI asked about; Redis included when AI is | the skill asks which features to include |
@@ -81,6 +81,8 @@ To run the generated app:
 ├── alembic.ini
 ├── pyproject.toml
 ├── Makefile
+├── scripts/worktree_env.py
+├── .claude/settings.json
 ├── Procfile              # only with --host railway (the default)
 ├── .env.example
 └── .gitignore
@@ -109,6 +111,10 @@ cp .env.example .env
 make alembic-upgrade  # run initial migration
 make dev              # start dev server at localhost:8000
 ```
+
+## Worktrees
+
+Each `claude --worktree` checkout gets its own port, Postgres DB and Redis db (`make worktree-env` sets it up by hand, `make worktree-reap` cleans up removed ones), so several checkouts run side by side.
 
 ## Example
 

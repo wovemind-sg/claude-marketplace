@@ -51,13 +51,13 @@ Remove groups (Database / Redis / AI) as needed when those features are not incl
 ## `Makefile`
 
 ```makefile
-PORT ?= 8000
+PORT ?= $(or $(shell sed -n 's/^PORT=//p' .env 2>/dev/null),8000)
 VENV_NAME ?= .venv
 
 $(VENV_NAME):
 	uv sync
 
-.PHONY: requirements kill_server server dev format alembic-generate alembic-upgrade alembic-downgrade
+.PHONY: requirements kill_server server dev format alembic-generate alembic-upgrade alembic-downgrade worktree-env worktree-reap
 
 requirements: $(VENV_NAME)
 	uv sync -q
@@ -83,7 +83,15 @@ alembic-upgrade: $(VENV_NAME)
 
 alembic-downgrade: $(VENV_NAME)
 	uv run alembic downgrade -1
+
+worktree-env:
+	uv run python scripts/worktree_env.py
+
+worktree-reap:
+	uv run python scripts/worktree_env.py --reap
 ```
+
+Without the database feature, drop the `worktree-reap` target (and its `.PHONY` entry). The `PORT` line reads the worktree's own `.env`, so each worktree's `make dev` uses its own port.
 
 Note: Makefile targets must use actual tab characters for indentation (not spaces). When writing the file, ensure the command lines use tabs.
 
@@ -263,6 +271,208 @@ def upgrade() -> None:
 def downgrade() -> None:
     ${downgrades if downgrades else "pass"}
 ```
+
+---
+
+## `scripts/worktree_env.py`
+
+Gives each `claude --worktree` checkout its own port, Postgres DB and Redis db. Replace `<app-name>` (kebab-case); the DB name uses it with `-` turned into `_`.
+
+Feature gating: delete every line or block tagged `# [db]` when the database feature is off, and every one tagged `# [redis]` when Redis is off. Port isolation always stays. Without the database feature there is nothing to reap, so also delete `reap` and the `--reap` branch, and use the setup-only hook command in `.claude/settings.json`.
+
+```python
+"""Per-worktree isolation: own port, Postgres DB and Redis db via a worktree-local `.env`.
+
+`python scripts/worktree_env.py`         create `.env` + DB for this linked worktree (no-op in main / if `.env` exists)
+`python scripts/worktree_env.py --reap`  drop DBs / flush Redis dbs of slots no live worktree claims
+Never touches the main DB or Redis db 0.
+"""
+
+import fcntl
+import os
+import re
+import subprocess
+import sys
+from contextlib import contextmanager
+from pathlib import Path
+from urllib.parse import urlsplit  # [redis]
+
+import redis  # [redis]
+from dotenv import dotenv_values
+from sqlalchemy import create_engine, text  # [db]
+from sqlalchemy.engine import make_url  # [db]
+
+APP = "<app-name>"
+DB_PREFIX = APP.replace("-", "_") + "_wt"  # [db]
+BASE_PORT = 8000
+SLOTS = range(1, 10)
+DEFAULT_REDIS = "redis://localhost:6379"  # [redis]
+OVERRIDDEN = {
+    "WT_SLOT",
+    "ENGINE_URL",
+    "REDIS_CONNECTION_STRING",
+    "PORT",
+    "PUBLIC_BASE_URL",
+    "TEST_PORT_OFFSET",
+}
+
+
+def git(*args: str) -> str:
+    return subprocess.check_output(["git", *args], text=True).strip()
+
+
+def main_env_path() -> Path:
+    return (
+        Path(git("rev-parse", "--path-format=absolute", "--git-common-dir")).parent
+        / ".env"
+    )
+
+
+@contextmanager
+def slot_lock():
+    """Exclusive lock so concurrent setup/reap never pick the same slot or drop a half-claimed one."""
+    common = git("rev-parse", "--path-format=absolute", "--git-common-dir")
+    with open(Path(common) / f"{APP}-worktree.lock", "w") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
+        yield
+
+
+def claimed_slots() -> set[int]:
+    slots = set()
+    for line in git("worktree", "list", "--porcelain").splitlines():
+        if line.startswith("worktree "):
+            env = Path(line[9:]) / ".env"
+            if env.is_file() and (
+                m := re.fullmatch(r"\d", dotenv_values(env).get("WT_SLOT") or "")
+            ):
+                slots.add(int(m.group()))
+    return slots
+
+
+def redis_url(base: str, slot: int) -> str:  # [redis]
+    """`base` (main's REDIS_CONNECTION_STRING: host/auth kept) with its db swapped for `slot`."""  # [redis]
+    return urlsplit(base)._replace(path=f"/{slot}").geturl()  # [redis]
+
+
+def admin_engine(main_url: str):  # [db]
+    return create_engine(  # [db]
+        make_url(main_url).set(database="postgres"), isolation_level="AUTOCOMMIT"  # [db]
+    )  # [db]
+
+
+def reap(main_url: str, redis_base: str) -> None:  # [db]
+    with slot_lock(), admin_engine(main_url).connect() as c:  # [db]
+        keep = claimed_slots()  # [db]
+        for (name,) in c.execute(  # [db]
+            text("select datname from pg_database where datname ~ :pat"),  # [db]
+            {"pat": f"^{DB_PREFIX}[0-9]$"},  # [db]
+        ).all():  # [db]
+            slot = int(name[-1])  # [db]
+            if slot not in keep:  # [db]
+                c.execute(text(f'DROP DATABASE "{name}" WITH (FORCE)'))  # [db]
+                redis.Redis.from_url(redis_url(redis_base, slot)).flushdb()  # [redis]
+                print(f"reaped slot {slot}")  # [db]
+
+
+def setup(main_env: Path) -> None:
+    with slot_lock():
+        _setup(main_env)
+
+
+def _setup(main_env: Path) -> None:
+    env = Path(".env")
+    if (
+        git("rev-parse", "--git-dir") == git("rev-parse", "--git-common-dir")
+        or env.exists()
+    ):
+        return
+    vals = dotenv_values(main_env)
+    used = claimed_slots()
+    slot = next(s for s in SLOTS if s not in used)
+    port = BASE_PORT + slot
+    url = make_url(vals["ENGINE_URL"]).set(database=f"{DB_PREFIX}{slot}")  # [db]
+    redis_base = vals.get("REDIS_CONNECTION_STRING") or DEFAULT_REDIS  # [redis]
+    lines = [
+        l
+        for l in main_env.read_text().splitlines()
+        if l.split("=", 1)[0].strip() not in OVERRIDDEN
+    ]
+    lines += [
+        f"WT_SLOT={slot}",
+        f"ENGINE_URL={url.render_as_string(hide_password=False)}",  # [db]
+        f"REDIS_CONNECTION_STRING={redis_url(redis_base, slot)}",  # [redis]
+        f"PORT={port}",
+        f"PUBLIC_BASE_URL=http://localhost:{port}",
+        f"TEST_PORT_OFFSET={1000 * slot}",
+    ]
+    # Claim the slot (.env) before creating the DB so a concurrent --reap never drops it;
+    # undo the claim on failure so the next session retries instead of keeping a half-built slot.
+    env.write_text("\n".join(lines) + "\n")
+    try:
+        with admin_engine(vals["ENGINE_URL"]).connect() as c:  # [db]
+            # No live owner claims this slot, so any existing DB / Redis db is stale: start clean.
+            c.execute(text(f'DROP DATABASE IF EXISTS "{url.database}" WITH (FORCE)'))  # [db]
+            c.execute(text(f'CREATE DATABASE "{url.database}"'))  # [db]
+        redis.Redis.from_url(redis_url(redis_base, slot)).flushdb()  # [redis]
+        # DOT_ENV_PATH pinned: migrate this slot's DB, never one inherited from the shell
+        subprocess.run(  # [db]
+            ["uv", "run", "alembic", "upgrade", "head"],  # [db]
+            check=True,  # [db]
+            env={**os.environ, "DOT_ENV_PATH": str(env.resolve())},  # [db]
+        )  # [db]
+    except BaseException:
+        env.unlink(missing_ok=True)
+        raise
+    print(f"worktree slot {slot}: port {port}")
+
+
+if __name__ == "__main__":
+    try:
+        main_env = main_env_path()
+        if "--reap" in sys.argv:
+            vals = dotenv_values(main_env)  # [db]
+            reap(  # [db]
+                vals["ENGINE_URL"],  # [db]
+                vals.get("REDIS_CONNECTION_STRING") or DEFAULT_REDIS,  # [db]
+            )  # [db]
+        else:
+            setup(main_env)
+    except Exception as e:  # hooks must never fail a session (Postgres/Redis down, no .env)
+        print(f"worktree_env: skipped ({type(e).__name__})", file=sys.stderr)
+```
+
+---
+
+## `.claude/settings.json`
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "(uv run python scripts/worktree_env.py --reap; uv run python scripts/worktree_env.py) >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run python scripts/worktree_env.py --reap >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Without the database feature: the SessionStart command is `uv run python scripts/worktree_env.py >/dev/null 2>&1 || true` and there is no `SessionEnd` entry. Commit this file; it carries no secrets.
 
 ---
 

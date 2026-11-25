@@ -38,7 +38,7 @@ The `fastapi-go-migration` skill has its own requirements, listed in its section
 |---|---|
 | Deploy to Railway: `Procfile`, `railpack.json`, the `internal/wake` package that retries a sleeping Railway database or Redis, and `./out migrate up` as Railway's pre-deploy command | `--host generic` (then run `./out migrate up` by hand or in your host's release step) |
 | AI calls go to OpenRouter with the model `openai/gpt-4o-mini` | `--ai-model <openrouter model id>` |
-| Server listens on port 8000 | `PORT` in the environment |
+| Server listens on port 8000 in the main checkout, `8000+N` in each `claude --worktree` checkout | `PORT` in `.env` or the environment, or `make dev PORT=<port>` |
 | `fastapi-go-migration` works on a branch named `go-migration` | `--branch <name>` |
 
 ## Usage
@@ -59,6 +59,8 @@ Or just describe what you want:
 ```
 <app-name>/
 ├── cmd/server/main.go       # serve, or `migrate up|down|status|create <name>`
+├── cmd/worktree-env/main.go # per-worktree port, DB and Redis
+├── .claude/settings.json    # hooks that run worktree-env
 ├── embed.go                 # embeds templates/, static/, migrations/
 ├── internal/
 │   ├── config/
@@ -113,6 +115,10 @@ With `--host generic`, run `./out migrate up` against the production `ENGINE_URL
 ```bash
 railway ssh --service "<service name>" -- ./out migrate up
 ```
+
+## Worktrees
+
+Each `claude --worktree` checkout gets its own port, Postgres DB and Redis db (`make worktree-env` sets it up by hand, `make worktree-reap` cleans up removed ones), so several checkouts run side by side. Main's `ENGINE_URL` must point at a local/dev Postgres: worktree sessions create and drop `<app_name>_wtN` databases there.
 
 ## Example
 

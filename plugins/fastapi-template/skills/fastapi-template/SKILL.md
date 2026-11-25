@@ -32,6 +32,7 @@ Two optional flags in `$ARGUMENTS`; remove them before reading the rest of the a
    - Redis caching (default: yes if AI included, otherwise ask)
 3. Ask for target directory (default: current directory)
 4. Read the three reference files below, then generate all files
+5. Copy `.env.example` to `.env` (a real `.env` is needed for the app and for worktree setup). Tell the user to fill in real values.
 
 Read these reference files before generating:
 - `references/python-files.md` — all Python source templates
@@ -73,6 +74,10 @@ Read these reference files before generating:
 ├── alembic.ini               # Timestamp filename template
 ├── pyproject.toml
 ├── Makefile
+├── scripts/
+│   └── worktree_env.py       # per-worktree port, DB, Redis (see Worktrees)
+├── .claude/
+│   └── settings.json         # SessionStart/SessionEnd hooks running worktree_env.py
 ├── Procfile                  # Railway-compatible gunicorn (only when host is `railway`)
 ├── .env.example
 ├── .env                      # local only (gitignored)
@@ -115,6 +120,17 @@ DEBUG in DEV_MODE, INFO in prod.
 **HTMX loading** — `<script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>` in `<head>`.
 
 **Alpine.js loading** — `<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>` at end of `<body>`, after `app.js`.
+
+## Worktrees
+
+Each `claude --worktree` checkout gets its own `.env` (slot 1-9, written by `scripts/worktree_env.py` from the SessionStart hook):
+- port `8000+N` (main stays on 8000), so `make dev` runs in main and every worktree at once
+- Postgres DB `<app_name>_wtN`, migrated with Alembic
+- Redis db `N` on main's Redis (main uses db 0, never touched)
+
+Removed worktrees are cleaned up by the SessionStart/SessionEnd reap, which drops their DB and flushes their Redis db. Run by hand with `make worktree-env` (set up this worktree) and `make worktree-reap`. Skip the DB or Redis parts when that feature is off (see the notes in `references/config-files.md`). Main's `ENGINE_URL` must point at a local/dev Postgres: worktree sessions create and drop `<app_name>_wtN` databases there.
+
+Tests that start servers add `int(os.getenv("TEST_PORT_OFFSET", "0"))` to their ports so worktrees don't collide. pytest doesn't load `.env` by itself, so the test setup should load it (e.g. `load_dotenv`).
 
 ## Customization Checklist
 

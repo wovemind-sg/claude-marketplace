@@ -21,7 +21,7 @@ Fixed decisions — do not re-ask:
 - `references/templates.md` — Jinja2 → html/template syntax table, the four additions to `render.go` (layout chains, FuncMap, `view()` globals, `missingkey=error`), autoescape differences, render-all-pages test.
 - `references/grown-features.md` — arq, OAuth, push, Capacitor, email, webhooks, Pillow, numpy, MCP, i18n, websockets… each with a Go equivalent or an explicit **ask**.
 - `references/pitfalls.md` — each pitfall with the check that catches it.
-- `references/cutover.md` — conftest rewrite, tests-only pyproject, `railpack.json`, Python deletion list, CI/README/CLAUDE.md, the deploy checklist for the user (including the pre-deploy command they set in Railway).
+- `references/cutover.md` — conftest rewrite, worktree isolation carry-over, tests-only pyproject, `railpack.json`, Python deletion list, CI/README/CLAUDE.md, the deploy checklist for the user (including the pre-deploy command they set in Railway).
 
 Scripts (invoke with `${CLAUDE_PLUGIN_ROOT}/skills/fastapi-go-migration/scripts/...`):
 - `inventory.py <repo> [--json|--md] [--go-routes]` — stdlib-only; everything the migration must account for, and later the Python-vs-Go route parity gate.
@@ -32,7 +32,7 @@ Scripts (invoke with `${CLAUDE_PLUGIN_ROOT}/skills/fastapi-go-migration/scripts/
 1. Confirm this is a fastapi-template project: `app/__init__.py` with `_assert_env`, `app/main.py`, `alembic/`, `pyproject.toml`. If not, say so and stop — the mapping assumes the template's shape.
 2. `git status` clean. Create/switch to `go-migration`.
 3. Toolchain: `go version` ≥ 1.22, `uv`, `psql` or a Docker Postgres you can reach (needed to prove the baseline), Redis reachable if the app uses it. Missing Go → tell the user how to install, stop.
-4. Read the root `CLAUDE.md`, `README.md`, `Procfile` / `start.sh`, `Makefile`, `.github/workflows/*`, `tests/conftest.py`, `.env.example`. These say how the app is actually run and deployed; grown projects differ from the template here.
+4. Read the root `CLAUDE.md`, `README.md`, `Procfile` / `start.sh`, `Makefile`, `.github/workflows/*`, `tests/conftest.py`, `.env.example`, `scripts/worktree_env.py` and `.claude/settings.json` (existing worktree isolation, carried over in cutover.md §1b). These say how the app is actually run and deployed; grown projects differ from the template here.
 5. Load `go-webapp-template:go-webapp-template` (Skill tool) and read `references/go-files.md`, `config-files.md`, `html-templates.md` from it. Module path = the kebab-case app name from `pyproject.toml` unless the user says otherwise.
 
 ## Phase 1 — Inventory
@@ -84,7 +84,7 @@ Resolve all **ask** items with the user in **one** AskUserQuestion, write the an
    python3 ${CLAUDE_PLUGIN_ROOT}/skills/fastapi-go-migration/scripts/inventory.py . --go-routes
    ```
    `--go-routes` prints Python routes still missing in Go; the session's own routes must not be among them. Then commit (semantic message, pre-approved for the branch only if the user said so; otherwise stop and ask once for the whole branch).
-6. Run the Python app on one port and the Go app on another while porting; `curl -i` the same URL on both when in doubt about a status code or header.
+6. Run the Python app on one port and the Go app on another while porting; both read `PORT` from the worktree `.env` (or an explicit override), so ports do not collide across worktrees; `curl -i` the same URL on both when in doubt about a status code or header.
 
 ## Gates (all must pass before cutover)
 

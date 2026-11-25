@@ -32,11 +32,11 @@ Two optional flags in `$ARGUMENTS`; remove them before reading the rest of the a
    - Redis caching (default: yes if AI included, otherwise ask)
 3. Ask for target directory (default: current directory)
 4. Read the three reference files below, then generate all files with both placeholders replaced
-5. Copy `.env.example` to `.env` (gitignored) so `make dev` works out of the box
+5. Copy `.env.example` to `.env` (gitignored) so `make dev` works out of the box (a real `.env` is also needed for worktree setup). Tell the user to fill in real values.
 
 Read these reference files before generating:
-- `references/go-files.md` — all Go source templates
-- `references/config-files.md` — go.mod, Makefile, Procfile, railpack.json, first migration, .env.example, .gitignore
+- `references/go-files.md` — all Go source templates (including `cmd/worktree-env/main.go`)
+- `references/config-files.md` — go.mod, Makefile, `.claude/settings.json`, Procfile, railpack.json, first migration, .env.example, .gitignore
 - `references/html-templates.md` — base.html, index.html, prompt template, static files
 
 After writing files, run in the target directory:
@@ -52,6 +52,8 @@ go mod tidy && gofmt -l . && go build ./... && go vet ./... && go test ./...
 ```
 <app-name>/
 ├── cmd/server/main.go        # `server` serves; `server migrate up|down|status|create <name>`
+├── cmd/worktree-env/main.go  # per-worktree port, DB, Redis (see Worktrees)
+├── .claude/settings.json     # SessionStart/SessionEnd hooks running cmd/worktree-env
 ├── embed.go                  # //go:embed templates static migrations → app.Assets, app.Migrations
 ├── internal/
 │   ├── config/config.go      # godotenv load, MustEnv (fail at startup), DevMode, Env helpers
@@ -124,6 +126,15 @@ go mod tidy && gofmt -l . && go build ./... && go vet ./... && go test ./...
 **HTMX loading** — `<script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>` in `<head>`.
 
 **Alpine.js loading** — `<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>` at end of `<body>`, after `app.js`.
+
+## Worktrees
+
+Each `claude --worktree` checkout gets its own `.env` (slot 1-9, written by `cmd/worktree-env` from the SessionStart hook):
+- port `8000+N` (main stays on 8000), so `make dev` runs in main and every worktree at once
+- Postgres DB `<app_name>_wtN`, migrated with goose
+- Redis db `N` on main's Redis (main uses db 0, never touched)
+
+Removed worktrees are cleaned up by the SessionStart/SessionEnd reap, which drops their DB and flushes their Redis db. Run by hand with `make worktree-env` (set up this worktree) and `make worktree-reap`. Skip the DB or Redis parts when that feature is off (see the notes in `references/go-files.md` and `references/config-files.md`). Main's `ENGINE_URL` must point at a local/dev Postgres: worktree sessions create and drop `<app_name>_wtN` databases there.
 
 ## Customization Checklist
 

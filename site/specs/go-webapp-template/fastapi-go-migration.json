@@ -56,7 +56,7 @@
         {"title": "plan-tools for big repos", "state": "done", "text": "The skill uses the plan-tools plugin for big repos. If it is missing, Claude asks you to install it and waits."}
       ]},
       {"type": "text", "title": "It stops if this is not a fastapi-template project", "text": "Claude first confirms the project has the fastapi-template shape: `app/__init__.py` with `_assert_env`, `app/main.py`, `alembic/` and `pyproject.toml`. If not, it says so and stops."},
-      {"type": "text", "text": "It also reads the project's `CLAUDE.md`, `README.md`, `Procfile` / `start.sh`, `Makefile`, CI workflows, `tests/conftest.py` and `.env.example`, because these say how the app is actually run and deployed."}
+      {"type": "text", "text": "It also reads the project's `CLAUDE.md`, `README.md`, `Procfile` / `start.sh`, `Makefile`, CI workflows, `tests/conftest.py`, `.env.example`, `scripts/worktree_env.py` and `.claude/settings.json`, because these say how the app is actually run and deployed."}
     ]},
     {"heading": "The migration runs in six phases", "short": "Six phases", "blocks": [
       {"type": "stepper", "steps": [
@@ -65,7 +65,7 @@
         {"title": "Plan", "text": "Writes `.planning/SPEC.md`: sessions per router group, Go functions for custom filters (a FuncMap), a cookie-signer check, and which unit tests to port or delete. Every feature with no Go counterpart is resolved with you in one question."},
         {"title": "Port", "text": "Session by session: database code (`internal/db/<table>.go`), then handlers, then templates (Jinja2 to `html/template`). After each session it runs `go build/vet/test` and a Python-vs-Go route parity check."},
         {"title": "Gates", "text": "Route parity, a cookie test (existing sessions survive), every page rendered with `missingkey=error`, the baseline applied twice, and the e2e suite green against the Go binary."},
-        {"title": "Cutover", "text": "Rewrites `tests/conftest.py` to run `./out`, makes `pyproject.toml` tests-only, adds `railpack.json`, deletes `app/` and `alembic/`, updates CI, README and CLAUDE.md, and prints the deploy checklist."}
+        {"title": "Cutover", "text": "Rewrites `tests/conftest.py` to run `./out`, carries per-worktree port/DB/Redis isolation over to Go (keeping an existing Python script's slot key, ports and DB names), makes `pyproject.toml` tests-only, adds `railpack.json`, deletes `app/` and `alembic/`, updates CI, README and CLAUDE.md, and prints the deploy checklist."}
       ]},
       {"type": "text", "title": "Files it writes for you to read", "text": "`.planning/inventory.md` (what must be ported), `.planning/SPEC.md` (the plan and your answers), `migrations/00001_baseline.sql` (the database baseline) and `.planning/progress.md` (progress and gate results)."},
       {"type": "text", "title": "Why railpack.json", "text": "It names the Go provider plus an explicit `./cmd/server` build command, so Railway neither picks Python nor builds the root `embed.go` package."},

@@ -29,7 +29,7 @@
       {"type": "table", "title": "Opinionated defaults and how to change them", "columns": ["Default", "Change it with"], "rows": [
         ["Deploy to Railway: `Procfile`, `railpack.json`, the `internal/wake` package that retries a sleeping Railway database or Redis, and `./out migrate up` as Railway's pre-deploy command", "`--host generic` (then run `./out migrate up` by hand or in your host's release step)"],
         ["AI calls go to OpenRouter with the model `openai/gpt-4o-mini`", "`--ai-model <openrouter model id>`"],
-        ["Server listens on port 8000", "`PORT` in the environment"]
+        ["Server listens on port 8000 in the main checkout, `8000+N` in each `claude --worktree` checkout", "`PORT` in `.env` or the environment, or `make dev PORT=<port>`"]
       ]}
     ]},
     {"heading": "Claude asks three questions, then writes, builds and tests the app", "short": "What happens", "blocks": [
@@ -77,7 +77,7 @@
         "Migrations are built into the server binary: `make migrate-up` locally, `make migrate-create name=add_users` for a new migration file. The deploy image has only the binary (no `make`).",
         "AI answers are cached in Redis."
       ]},
-      {"type": "code", "title": "Generated structure", "code": "<app-name>/\n├── cmd/server/main.go       # serve, or `migrate up|down|status|create <name>`\n├── embed.go                 # embeds templates/, static/, migrations/\n├── internal/\n│   ├── config/\n│   ├── wake/                # ping-with-retry for a sleeping Railway DB/Redis (railway host only)\n│   ├── auth/                # signed cookies\n│   ├── db/                  # pgxpool, goose, example queries\n│   ├── cache/\n│   ├── ai/\n│   └── server/              # routes, middleware, errors, rendering, tests\n├── migrations/\n├── templates/\n│   ├── base.html\n│   ├── index.html\n│   └── prompts/\n├── static/\n├── go.mod\n├── Makefile\n├── Procfile                 # railway host only (the default)\n├── .env.example\n└── .gitignore", "caption": "The wake folder and the Procfile only appear with the default railway host."}
+      {"type": "code", "title": "Generated structure", "code": "<app-name>/\n├── cmd/server/main.go       # serve, or `migrate up|down|status|create <name>`\n├── cmd/worktree-env/main.go # per-worktree port, DB and Redis\n├── .claude/settings.json    # hooks that run worktree-env\n├── embed.go                 # embeds templates/, static/, migrations/\n├── internal/\n│   ├── config/\n│   ├── wake/                # ping-with-retry for a sleeping Railway DB/Redis (railway host only)\n│   ├── auth/                # signed cookies\n│   ├── db/                  # pgxpool, goose, example queries\n│   ├── cache/\n│   ├── ai/\n│   └── server/              # routes, middleware, errors, rendering, tests\n├── migrations/\n├── templates/\n│   ├── base.html\n│   ├── index.html\n│   └── prompts/\n├── static/\n├── go.mod\n├── Makefile\n├── Procfile                 # railway host only (the default)\n├── .env.example\n└── .gitignore", "caption": "The wake folder and the Procfile only appear with the default railway host."}
     ]},
     {"heading": "Have these ready before you run the generated app", "short": "Before you run", "blocks": [
       {"type": "cards", "cards": [
@@ -106,6 +106,15 @@
         ["`PORT`", "Listen port (default `8000`; Railway sets it)"]
       ]},
       {"type": "code", "title": "Quick Start in one block", "code": "cd <app-name>\ncp .env.example .env\n# edit .env with real values\ngo mod tidy\nmake migrate-up   # apply migrations\nmake dev          # start dev server at localhost:8000\nmake test         # go test ./..."}
+    ]},
+    {"heading": "Each Claude worktree gets its own port, database and Redis", "short": "Worktrees", "blocks": [
+      {"type": "text", "text": "When you work in a `claude --worktree` checkout, a hook gives it its own `.env`: a port of `8000+N` (the main checkout stays on 8000), a Postgres database `<app_name>_wtN` with migrations applied, and Redis db `N`. Slots run from 1 to 9. So `make dev` can run in the main checkout and in every worktree at once."},
+      {"type": "text", "text": "Main's `ENGINE_URL` must point at a local/dev Postgres: worktree sessions create and drop `<app_name>_wtN` databases there."},
+      {"type": "table", "columns": ["Command", "What it does"], "rows": [
+        ["`make worktree-env`", "Set up this worktree by hand: write its `.env`, create its database and migrate it. Does nothing in the main checkout or if `.env` exists."],
+        ["`make worktree-reap`", "Drop the database and flush the Redis db of worktrees that no longer exist. The hooks also run this when a session starts or ends."]
+      ]},
+      {"type": "text", "text": "The main database and Redis db 0 are never touched."}
     ]},
     {"heading": "Production migrations need one setup step from you", "short": "Deploy", "blocks": [
       {"type": "cards", "cards": [

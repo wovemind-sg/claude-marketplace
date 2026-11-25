@@ -29,7 +29,7 @@
       {"type": "table", "title": "Opinionated defaults and how to change them", "columns": ["Default", "Change it with"], "rows": [
         ["Deploy to Railway: a `Procfile`, and database/Redis pings retried while a sleeping Railway service wakes up", "`--host generic`"],
         ["AI calls go to OpenRouter with the model `openai/gpt-4o-mini`", "`--ai-model <openrouter model id>`"],
-        ["Dev server on port 8000", "`PORT` in the environment or `make dev PORT=<port>`"],
+        ["Dev server on port 8000 in the main checkout, `8000+N` in each `claude --worktree` checkout", "`PORT` in `.env`, the environment, or `make dev PORT=<port>`"],
         ["Production server is gunicorn with 8 uvicorn workers", "edit the `server` target in the generated `Makefile`"],
         ["Python 3.11, managed by `uv`", "edit `.python-version` and `pyproject.toml`"],
         ["Database included; AI asked about; Redis included when AI is", "the skill asks which features to include"]
@@ -78,7 +78,7 @@
         "Every request is logged with method, path, status and duration.",
         "AI answers are cached in Redis."
       ]},
-      {"type": "code", "title": "Generated structure", "code": "<app-name>/\n├── app/\n│   ├── __init__.py\n│   ├── main.py\n│   ├── dependencies.py\n│   ├── utils.py\n│   ├── ai.py\n│   ├── db/\n│   │   ├── models.py\n│   │   └── crud.py\n│   ├── routers/\n│   │   └── home.py\n│   └── schemas/\n├── templates/\n│   ├── base.html\n│   ├── index.html\n│   └── prompts/\n├── static/\n├── alembic/\n├── alembic.ini\n├── pyproject.toml\n├── Makefile\n├── Procfile              # only with --host railway (the default)\n├── .env.example\n└── .gitignore", "caption": "The Procfile only appears with --host railway, which is the default."}
+      {"type": "code", "title": "Generated structure", "code": "<app-name>/\n├── app/\n│   ├── __init__.py\n│   ├── main.py\n│   ├── dependencies.py\n│   ├── utils.py\n│   ├── ai.py\n│   ├── db/\n│   │   ├── models.py\n│   │   └── crud.py\n│   ├── routers/\n│   │   └── home.py\n│   └── schemas/\n├── templates/\n│   ├── base.html\n│   ├── index.html\n│   └── prompts/\n├── static/\n├── alembic/\n├── alembic.ini\n├── pyproject.toml\n├── Makefile\n├── scripts/worktree_env.py\n├── .claude/settings.json\n├── Procfile              # only with --host railway (the default)\n├── .env.example\n└── .gitignore", "caption": "The Procfile only appears with --host railway, which is the default."}
     ]},
     {"heading": "Have these ready before you run the generated app", "short": "Before you run", "blocks": [
       {"type": "cards", "cards": [
@@ -104,6 +104,15 @@
         ["`DEV_MODE`", "Set to `ON` for development"]
       ]},
       {"type": "code", "title": "Quick Start in one block", "code": "cd <app-name>\ncp .env.example .env\n# edit .env with real values\nmake alembic-upgrade  # run initial migration\nmake dev              # start dev server at localhost:8000"}
+    ]},
+    {"heading": "Each Claude worktree gets its own port, database and Redis", "short": "Worktrees", "blocks": [
+      {"type": "text", "text": "When you work in a `claude --worktree` checkout, a hook gives it its own `.env`: a port of `8000+N` (the main checkout stays on 8000), a Postgres database `<app_name>_wtN` with migrations applied, and Redis db `N`. Slots run from 1 to 9. So `make dev` can run in the main checkout and in every worktree at once."},
+      {"type": "text", "text": "Main's `ENGINE_URL` must point at a local/dev Postgres: worktree sessions create and drop `<app_name>_wtN` databases there."},
+      {"type": "table", "columns": ["Command", "What it does"], "rows": [
+        ["`make worktree-env`", "Set up this worktree by hand: write its `.env`, create its database and migrate it. Does nothing in the main checkout or if `.env` exists."],
+        ["`make worktree-reap`", "Drop the database and flush the Redis db of worktrees that no longer exist. The hooks also run this when a session starts or ends."]
+      ]},
+      {"type": "text", "text": "The main database and Redis db 0 are never touched."}
     ]},
     {"heading": "Replace the example parts with your own", "short": "Make it yours", "blocks": [
       {"type": "cards", "caption": "After generating, Claude reminds you of these steps.", "cards": [

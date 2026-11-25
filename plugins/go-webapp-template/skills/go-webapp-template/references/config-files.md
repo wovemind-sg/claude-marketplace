@@ -26,9 +26,9 @@ Write only these two lines, then run `go mod tidy` in the project root: it adds 
 ## `Makefile`
 
 ```makefile
-PORT ?= 8000
+PORT ?= $(or $(shell sed -n 's/^PORT=//p' .env 2>/dev/null),8000)
 
-.PHONY: tidy kill_server dev build server format test migrate-up migrate-down migrate-status migrate-create
+.PHONY: tidy kill_server dev build server format test migrate-up migrate-down migrate-status migrate-create worktree-env worktree-reap
 
 tidy:
 	go mod tidy
@@ -62,13 +62,19 @@ migrate-status:
 
 migrate-create:
 	go run ./cmd/server migrate create $(name)
+
+worktree-env:
+	go run ./cmd/worktree-env
+
+worktree-reap:
+	go run ./cmd/worktree-env --reap
 ```
 
 Note: Makefile targets must use actual tab characters for indentation (not spaces). When writing the file, ensure the command lines use tabs.
 
 `DEV_MODE=ON` comes from `.env`, so `make dev` runs in dev mode and `./out` in Railway runs in prod mode without any Makefile branching. Usage: `make migrate-create name=add_users`.
 
-**If no database**: drop the four `migrate-*` targets.
+**If no database**: drop the four `migrate-*` targets and the `worktree-reap` target (and its `.PHONY` entry). The `PORT` line reads the worktree's own `.env`, so each worktree's `make dev` uses its own port.
 
 ---
 
@@ -125,6 +131,41 @@ DROP TABLE items;
 ```
 
 Every migration needs both markers. `make migrate-create name=<slug>` generates a timestamped `YYYYMMDDHHMMSS_<slug>.sql` with the markers in place. Use `-- +goose StatementBegin` / `-- +goose StatementEnd` around multi-statement bodies such as `CREATE FUNCTION`.
+
+---
+
+## `.claude/settings.json`
+
+Runs `cmd/worktree-env` (see `references/go-files.md`) so each `claude --worktree` checkout gets its own port, Postgres DB and Redis db.
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "(go run ./cmd/worktree-env --reap; go run ./cmd/worktree-env) >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "go run ./cmd/worktree-env --reap >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Without the database feature: the SessionStart command is `go run ./cmd/worktree-env >/dev/null 2>&1 || true` and there is no `SessionEnd` entry. Commit this file; it carries no secrets.
 
 ---
 

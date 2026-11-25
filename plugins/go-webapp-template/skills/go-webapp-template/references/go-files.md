@@ -1329,3 +1329,320 @@ func TestHome(t *testing.T) {
 	}
 }
 ```
+
+---
+
+## `cmd/worktree-env/main.go`
+
+Gives each `claude --worktree` checkout its own port, Postgres DB and Redis db. Run by the hooks in `.claude/settings.json` and by `make worktree-env` / `make worktree-reap`. Go only, using the dependencies the project already has. The DB name uses `<app-name>` with `-` turned into `_`.
+
+Feature gating: delete every line tagged `// [db]` when the database feature is off, and every line tagged `// [redis]` when Redis is off. Port isolation always stays. Without the database feature there is nothing to reap, so the `reap` function and the `--reap` branch are tagged `// [db]` too; use the setup-only hook command in `.claude/settings.json`. If both are off, `vals` in `setup` becomes unused: also delete its `godotenv.Read(mainEnv)` call and the `if err` block after it. Run `gofmt -w cmd/worktree-env` after deleting lines.
+
+```go
+// Command worktree-env gives each linked git worktree its own port, Postgres DB and Redis db
+// through a worktree-local .env. Never touches the main DB or Redis db 0.
+//
+//	go run ./cmd/worktree-env          create .env + DB for this linked worktree (no-op in main / if .env exists)
+//	go run ./cmd/worktree-env --reap   drop DBs / flush Redis dbs of slots no live worktree claims
+package main
+
+import (
+	"context"
+	"fmt"
+	"io/fs" // [db]
+	"net/url"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"regexp"
+	"strconv"
+	"strings"
+	"syscall"
+
+	"github.com/jackc/pgx/v5" // [db]
+	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9" // [redis]
+
+	app "<app-name>"         // [db]
+	"<app-name>/internal/db" // [db]
+)
+
+const (
+	appName      = "<app-name>"
+	basePort     = 8000
+	defaultRedis = "redis://localhost:6379" // [redis]
+)
+
+var dbPrefix = strings.ReplaceAll(appName, "-", "_") + "_wt" // [db]
+
+var overridden = map[string]bool{
+	"WT_SLOT":                 true,
+	"ENGINE_URL":              true,
+	"REDIS_CONNECTION_STRING": true,
+	"PORT":                    true,
+	"PUBLIC_BASE_URL":         true,
+	"TEST_PORT_OFFSET":        true,
+}
+
+func main() {
+	ctx := context.Background()
+	err := func() error {
+		mainEnv, err := mainEnvPath()
+		if err != nil {
+			return err
+		}
+		if len(os.Args) > 1 && os.Args[1] == "--reap" { // [db]
+			return reap(ctx, mainEnv) // [db]
+		} // [db]
+		return setup(ctx, mainEnv)
+	}()
+	if err != nil { // hooks must never fail a session (Postgres/Redis down, no .env)
+		fmt.Fprintf(os.Stderr, "worktree_env: skipped (%v)\n", err)
+	}
+}
+
+func git(args ...string) (string, error) {
+	out, err := exec.Command("git", args...).Output()
+	return strings.TrimSpace(string(out)), err
+}
+
+func commonDir() (string, error) {
+	return git("rev-parse", "--path-format=absolute", "--git-common-dir")
+}
+
+func mainEnvPath() (string, error) {
+	c, err := commonDir()
+	return filepath.Join(filepath.Dir(c), ".env"), err
+}
+
+// lock takes an exclusive lock so concurrent setup/reap never pick the same slot
+// or drop a half-claimed one. Call the returned func to release it.
+func lock() (func(), error) {
+	c, err := commonDir()
+	if err != nil {
+		return nil, err
+	}
+	f, err := os.OpenFile(filepath.Join(c, appName+"-worktree.lock"), os.O_CREATE|os.O_RDWR, 0o644)
+	if err != nil {
+		return nil, err
+	}
+	if err := syscall.Flock(int(f.Fd()), syscall.LOCK_EX); err != nil {
+		f.Close()
+		return nil, err
+	}
+	return func() { f.Close() }, nil
+}
+
+var slotRe = regexp.MustCompile(`^[0-9]$`)
+
+func claimedSlots() (map[int]bool, error) {
+	out, err := git("worktree", "list", "--porcelain")
+	if err != nil {
+		return nil, err
+	}
+	slots := map[int]bool{}
+	for _, line := range strings.Split(out, "\n") {
+		path, ok := strings.CutPrefix(line, "worktree ")
+		if !ok {
+			continue
+		}
+		vals, err := godotenv.Read(filepath.Join(path, ".env"))
+		if err == nil && slotRe.MatchString(vals["WT_SLOT"]) {
+			n, _ := strconv.Atoi(vals["WT_SLOT"])
+			slots[n] = true
+		}
+	}
+	return slots, nil
+}
+
+// withPath returns rawURL with its path replaced by p ("/<db name>" or "/<redis db>").
+func withPath(rawURL, p string) (string, error) {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return "", err
+	}
+	u.Path = "/" + p
+	return u.String(), nil
+}
+
+func flushRedis(ctx context.Context, base string, slot int) error { // [redis]
+	u, err := withPath(base, strconv.Itoa(slot)) // [redis]
+	if err != nil {                              // [redis]
+		return err // [redis]
+	} // [redis]
+	opts, err := redis.ParseURL(u) // [redis]
+	if err != nil {                // [redis]
+		return err // [redis]
+	} // [redis]
+	c := redis.NewClient(opts)  // [redis]
+	defer c.Close()             // [redis]
+	return c.FlushDB(ctx).Err() // [redis]
+} // [redis]
+
+func adminConn(ctx context.Context, engineURL string) (*pgx.Conn, error) { // [db]
+	u, err := withPath(engineURL, "postgres") // [db]
+	if err != nil {                           // [db]
+		return nil, err // [db]
+	} // [db]
+	return pgx.Connect(ctx, u) // [db]
+} // [db]
+
+func reap(ctx context.Context, mainEnv string) error { // [db]
+	vals, err := godotenv.Read(mainEnv) // [db]
+	if err != nil {                     // [db]
+		return err // [db]
+	} // [db]
+	unlock, err := lock() // [db]
+	if err != nil {       // [db]
+		return err // [db]
+	} // [db]
+	defer unlock()                                  // [db]
+	conn, err := adminConn(ctx, vals["ENGINE_URL"]) // [db]
+	if err != nil {                                 // [db]
+		return err // [db]
+	} // [db]
+	defer conn.Close(ctx)       // [db]
+	keep, err := claimedSlots() // [db]
+	if err != nil {             // [db]
+		return err // [db]
+	} // [db]
+	rows, err := conn.Query(ctx, "select datname from pg_database where datname ~ $1", "^"+dbPrefix+"[0-9]$") // [db]
+	if err != nil {                                                                                           // [db]
+		return err // [db]
+	} // [db]
+	names, err := pgx.CollectRows(rows, pgx.RowTo[string]) // [db]
+	if err != nil {                                        // [db]
+		return err // [db]
+	} // [db]
+	for _, name := range names { // [db]
+		slot, _ := strconv.Atoi(name[len(name)-1:]) // [db]
+		if keep[slot] {                             // [db]
+			continue // [db]
+		} // [db]
+		if _, err := conn.Exec(ctx, "DROP DATABASE "+pgx.Identifier{name}.Sanitize()+" WITH (FORCE)"); err != nil { // [db]
+			return err // [db]
+		} // [db]
+		redisBase := vals["REDIS_CONNECTION_STRING"] // [redis]
+		if redisBase == "" {                         // [redis]
+			redisBase = defaultRedis // [redis]
+		} // [redis]
+		if err := flushRedis(ctx, redisBase, slot); err != nil { // [redis]
+			return err // [redis]
+		} // [redis]
+		fmt.Println("reaped slot", slot) // [db]
+	} // [db]
+	return nil // [db]
+} // [db]
+
+func setup(ctx context.Context, mainEnv string) (err error) {
+	unlock, err := lock()
+	if err != nil {
+		return err
+	}
+	defer unlock()
+
+	gitDir, err := git("rev-parse", "--git-dir")
+	if err != nil {
+		return err
+	}
+	common, err := commonDir()
+	if err != nil {
+		return err
+	}
+	if abs, _ := filepath.Abs(gitDir); abs == common {
+		return nil // main checkout
+	}
+	if _, statErr := os.Stat(".env"); statErr == nil {
+		return nil // already set up
+	}
+
+	vals, err := godotenv.Read(mainEnv)
+	if err != nil {
+		return err
+	}
+	used, err := claimedSlots()
+	if err != nil {
+		return err
+	}
+	slot := 1
+	for used[slot] {
+		slot++
+	}
+	if slot > 9 {
+		return fmt.Errorf("no free slot (1-9)")
+	}
+	port := basePort + slot
+
+	dbName := dbPrefix + strconv.Itoa(slot)            // [db]
+	dbURL, err := withPath(vals["ENGINE_URL"], dbName) // [db]
+	if err != nil {                                    // [db]
+		return err // [db]
+	} // [db]
+	redisBase := vals["REDIS_CONNECTION_STRING"] // [redis]
+	if redisBase == "" {                         // [redis]
+		redisBase = defaultRedis // [redis]
+	} // [redis]
+	redisURL, err := withPath(redisBase, strconv.Itoa(slot)) // [redis]
+	if err != nil {                                          // [redis]
+		return err // [redis]
+	} // [redis]
+
+	raw, err := os.ReadFile(mainEnv)
+	if err != nil {
+		return err
+	}
+	var lines []string
+	for _, l := range strings.Split(strings.TrimRight(string(raw), "\n"), "\n") {
+		key, _, _ := strings.Cut(l, "=")
+		if !overridden[strings.TrimSpace(key)] {
+			lines = append(lines, l)
+		}
+	}
+	lines = append(lines,
+		fmt.Sprintf("WT_SLOT=%d", slot),
+		"ENGINE_URL="+dbURL,                 // [db]
+		"REDIS_CONNECTION_STRING="+redisURL, // [redis]
+		fmt.Sprintf("PORT=%d", port),
+		fmt.Sprintf("PUBLIC_BASE_URL=http://localhost:%d", port),
+		fmt.Sprintf("TEST_PORT_OFFSET=%d", 1000*slot),
+	)
+
+	// Claim the slot (.env) before creating the DB so a concurrent --reap never drops it;
+	// undo the claim on failure so the next session retries instead of keeping a half-built slot.
+	if err := os.WriteFile(".env", []byte(strings.Join(lines, "\n")+"\n"), 0o600); err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			os.Remove(".env")
+		}
+	}()
+
+	conn, err := adminConn(ctx, vals["ENGINE_URL"]) // [db]
+	if err != nil {                                 // [db]
+		return err // [db]
+	} // [db]
+	defer conn.Close(ctx)                  // [db]
+	q := pgx.Identifier{dbName}.Sanitize() // [db]
+	// No live owner claims this slot, so any existing DB / Redis db is stale: start clean.
+	if _, err = conn.Exec(ctx, "DROP DATABASE IF EXISTS "+q+" WITH (FORCE)"); err != nil { // [db]
+		return err // [db]
+	} // [db]
+	if _, err = conn.Exec(ctx, "CREATE DATABASE "+q); err != nil { // [db]
+		return err // [db]
+	} // [db]
+	if err = flushRedis(ctx, redisBase, slot); err != nil { // [redis]
+		return err // [redis]
+	} // [redis]
+	// Migrate with the slot's own URL, never one inherited from the shell.
+	migrations, err := fs.Sub(app.Migrations, "migrations") // [db]
+	if err != nil {                                         // [db]
+		return err // [db]
+	} // [db]
+	if err = db.Migrate(ctx, dbURL, migrations, []string{"up"}); err != nil { // [db]
+		return err // [db]
+	} // [db]
+	fmt.Printf("worktree slot %d: port %d\n", slot, port)
+	return nil
+}
+```

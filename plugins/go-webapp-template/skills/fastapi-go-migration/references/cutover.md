@@ -10,7 +10,7 @@ The Python conftest spawned uvicorn and often imported `app.` for fixtures. Repl
 import os, socket, subprocess, time
 import pytest
 
-PORT = 8765
+PORT = 8765 + int(os.getenv("TEST_PORT_OFFSET", "0"))  # worktree .env sets the offset
 
 def _wait(port, timeout=30):
     deadline = time.time() + timeout
@@ -35,6 +35,16 @@ def base_url():
 ```
 
 Keep whatever the old conftest did beyond starting the server (seeding, Playwright options), but anything that imported `app.` must become HTTP calls against the server or raw SQL through `psycopg2`. Then `uv run pytest --collect-only -q` must list the same tests as before.
+
+## 1b. Worktree isolation
+
+Add the Go isolation from go-webapp-template (read from the skill at runtime, as for the other files): `cmd/worktree-env/main.go` (`references/go-files.md`), the `.claude/settings.json` SessionStart/SessionEnd hooks, and the Makefile `PORT` line plus `worktree-env` / `worktree-reap` targets (`references/config-files.md`). Apply the template's DB/Redis gating from the project's own features.
+
+If the source project already has `scripts/worktree_env.py` or SessionStart/SessionEnd hooks calling it, replace both with the Go version and keep its values so live worktrees' `.env` files stay valid:
+- Read from the Python script: slot key (e.g. `HOPSLOT_SLOT`, replacing `WT_SLOT` in the Go file's `overridden` map and slot lookup), base port (replacing `basePort`), DB name pattern and reap regex (replacing `dbPrefix` and `appName`-derived names), lock file name, Redis handling, `TEST_PORT_OFFSET` formula.
+- Edit the Go constants to those values instead of the template defaults, and merge any hook entries not related to the script instead of overwriting `.claude/settings.json`.
+- Prove it: run `go run ./cmd/worktree-env` in a worktree that already has a `.env`; it must be a no-op and leave the slot, port and DB name unchanged.
+- Only then `git rm scripts/worktree_env.py` (and drop it from CI/docs). Never remove it before the Go one is in place.
 
 ## 2. Minimal `pyproject.toml`
 

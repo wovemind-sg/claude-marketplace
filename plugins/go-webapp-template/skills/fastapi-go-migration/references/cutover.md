@@ -10,7 +10,20 @@ The Python conftest spawned uvicorn and often imported `app.` for fixtures. Repl
 import os, socket, subprocess, time
 import pytest
 
-PORT = 8765 + int(os.getenv("TEST_PORT_OFFSET", "0"))  # worktree .env sets the offset
+def _offset():
+    # pytest does not load .env: read the worktree's TEST_PORT_OFFSET from it (env var wins)
+    if "TEST_PORT_OFFSET" in os.environ:
+        return int(os.environ["TEST_PORT_OFFSET"])
+    try:
+        for line in open(".env"):
+            k, _, v = line.partition("=")
+            if k.strip() == "TEST_PORT_OFFSET":
+                return int(v.strip())
+    except OSError:
+        pass
+    return 0
+
+PORT = 8765 + _offset()
 
 def _wait(port, timeout=30):
     deadline = time.time() + timeout
@@ -41,7 +54,7 @@ Keep whatever the old conftest did beyond starting the server (seeding, Playwrig
 Add the Go isolation from go-webapp-template (read from the skill at runtime, as for the other files): `cmd/worktree-env/main.go` (`references/go-files.md`), the `.claude/settings.json` SessionStart/SessionEnd hooks, and the Makefile `PORT` line plus `worktree-env` / `worktree-reap` targets (`references/config-files.md`). Apply the template's DB/Redis gating from the project's own features.
 
 If the source project already has `scripts/worktree_env.py` or SessionStart/SessionEnd hooks calling it, replace both with the Go version and keep its values so live worktrees' `.env` files stay valid:
-- Read from the Python script: slot key (e.g. `HOPSLOT_SLOT`, replacing `WT_SLOT` in the Go file's `overridden` map and slot lookup), base port (replacing `basePort`), DB name pattern and reap regex (replacing `dbPrefix` and `appName`-derived names), lock file name, Redis handling, `TEST_PORT_OFFSET` formula.
+- Read from the Python script: slot key (e.g. `HOPSLOT_SLOT`, replacing `WT_SLOT` everywhere in the Go file: the `overridden` map, the slot lookup in `claimedSlots` and the `WT_SLOT=%d` line written to the new `.env`; otherwise new worktrees' slots go unseen and a live worktree's DB gets reaped), base port (replacing `basePort`), DB name pattern and reap regex (replacing `dbPrefix` and `appName`-derived names), lock file name, Redis handling, `TEST_PORT_OFFSET` formula.
 - Edit the Go constants to those values instead of the template defaults, and merge any hook entries not related to the script instead of overwriting `.claude/settings.json`.
 - Prove it: run `go run ./cmd/worktree-env` in a worktree that already has a `.env`; it must be a no-op and leave the slot, port and DB name unchanged.
 - Only then `git rm scripts/worktree_env.py` (and drop it from CI/docs). Never remove it before the Go one is in place.

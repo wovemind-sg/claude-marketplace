@@ -360,8 +360,8 @@ def admin_engine(main_url: str):  # [db]
     )  # [db]
 
 
-def reap(main_url: str, redis_base: str) -> None:  # [db]
-    with slot_lock(), admin_engine(main_url).connect() as c:  # [db]
+def reap(vals: dict) -> None:  # [db]
+    with slot_lock(), admin_engine(vals["ENGINE_URL"]).connect() as c:  # [db]
         keep = claimed_slots()  # [db]
         for (name,) in c.execute(  # [db]
             text("select datname from pg_database where datname ~ :pat"),  # [db]
@@ -370,7 +370,8 @@ def reap(main_url: str, redis_base: str) -> None:  # [db]
             slot = int(name[-1])  # [db]
             if slot not in keep:  # [db]
                 c.execute(text(f'DROP DATABASE "{name}" WITH (FORCE)'))  # [db]
-                redis.Redis.from_url(redis_url(redis_base, slot)).flushdb()  # [redis]
+                base = vals.get("REDIS_CONNECTION_STRING") or DEFAULT_REDIS  # [redis]
+                redis.Redis.from_url(redis_url(base, slot)).flushdb()  # [redis]
                 print(f"reaped slot {slot}")  # [db]
 
 
@@ -414,11 +415,15 @@ def _setup(main_env: Path) -> None:
             c.execute(text(f'DROP DATABASE IF EXISTS "{url.database}" WITH (FORCE)'))  # [db]
             c.execute(text(f'CREATE DATABASE "{url.database}"'))  # [db]
         redis.Redis.from_url(redis_url(redis_base, slot)).flushdb()  # [redis]
-        # DOT_ENV_PATH pinned: migrate this slot's DB, never one inherited from the shell
+        # load_dotenv never overrides the shell, so pin ENGINE_URL too: migrate this slot's DB, never one inherited from the shell
         subprocess.run(  # [db]
             ["uv", "run", "alembic", "upgrade", "head"],  # [db]
             check=True,  # [db]
-            env={**os.environ, "DOT_ENV_PATH": str(env.resolve())},  # [db]
+            env={  # [db]
+                **os.environ,  # [db]
+                "DOT_ENV_PATH": str(env.resolve()),  # [db]
+                "ENGINE_URL": url.render_as_string(hide_password=False),  # [db]
+            },  # [db]
         )  # [db]
     except BaseException:
         env.unlink(missing_ok=True)
@@ -430,11 +435,7 @@ if __name__ == "__main__":
     try:
         main_env = main_env_path()
         if "--reap" in sys.argv:
-            vals = dotenv_values(main_env)  # [db]
-            reap(  # [db]
-                vals["ENGINE_URL"],  # [db]
-                vals.get("REDIS_CONNECTION_STRING") or DEFAULT_REDIS,  # [db]
-            )  # [db]
+            reap(dotenv_values(main_env))  # [db]
         else:
             setup(main_env)
     except Exception as e:  # hooks must never fail a session (Postgres/Redis down, no .env)

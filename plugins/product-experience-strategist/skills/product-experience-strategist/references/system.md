@@ -59,7 +59,7 @@ the authoritative record — if it isn't in a file, it isn't decided.
 | Reference pack | Approved screens/screenshots at required viewports, final copy, source files, component rules, version, approval status |
 | Implementation job | Feature + integration scope, allowed files, exclusions, acceptance criteria |
 | QA record | Tested revision/environment, findings by severity, evidence paths, tests run/not run, exceptions |
-| Run state | Work-item ID, owner, status, attempt count, timeout, remaining budget |
+| Run state | Work-item ID, owner, status, blockers, timeout, remaining budget |
 
 Create only the records a given project actually needs — this table is a menu, not a mandatory
 fixed bundle.
@@ -96,7 +96,7 @@ happened.
 ## Agent dispatch discipline
 
 Before dispatching any subagent: it must have a concrete task, a required output, and a bounded
-budget (attempt/time/token limit as applicable). No placeholder or no-op agents, and no agent
+budget (time/token limit as applicable). No placeholder or no-op agents, and no agent
 created merely to wait for something else to finish — a plain wait needs no agent at all. Pass
 only the context the task actually needs; a subagent that inherits or is handed the full
 conversation costs like the conversation, so reserve that for when the task genuinely requires it.

@@ -10,11 +10,11 @@
   "bottom_line": "Type one command, answer a few questions, and Claude writes, builds and tests a Go web app. Fill in `.env`, migrate, then run `make dev`.",
   "sections": [
     {"heading": "One command starts a new Go web app", "short": "The command", "blocks": [
-      {"type": "code", "code": "/go-webapp-template:go-webapp-template [--host railway|generic] [--ai-model <openrouter model id>]", "caption": "Both flags are optional. Without them the app targets Railway and uses the AI model openai/gpt-4o-mini."},
+      {"type": "code", "code": "/go-webapp-template:go-webapp-template [--host railway|generic] [--ai-model <openrouter model id>]", "caption": "Both flags are optional. Without them the app targets Railway and uses the AI model anthropic/claude-haiku-5.5."},
       {"type": "text", "text": "The skill scaffolds a complete Go web application skeleton. **Scaffolding** means writing the starting files and folders of a new project. It is the Go counterpart of `fastapi-template`, with the same features, env var names and frontend, and no Python anywhere."},
       {"type": "cards", "title": "Three ways to start it", "cards": [
         {"title": "Name the app", "state": "info", "text": "`/go-webapp-template:go-webapp-template create a new app called my-app`"},
-        {"title": "Add flags", "state": "info", "text": "`/go-webapp-template:go-webapp-template [--host railway|generic] [--ai-model <openrouter model id>]`. The defaults are railway and openai/gpt-4o-mini."},
+        {"title": "Add flags", "state": "info", "text": "`/go-webapp-template:go-webapp-template [--host railway|generic] [--ai-model <openrouter model id>]`. The defaults are railway and anthropic/claude-haiku-5.5."},
         {"title": "Just describe it", "state": "info", "text": "Say what you want in plain words, for example: \"Scaffold a new Go web app with HTMX for a task management tool\"."}
       ]},
       {"type": "text", "text": "Claude also uses this skill on its own when you ask for a new Go web app, to scaffold a Go project, start a Go server, Go + HTMX, a golang backend, a net/http app with templates, or anything about bootstrapping a Go web application from scratch. If you ask for Python/FastAPI, Claude uses fastapi-template instead."},
@@ -23,12 +23,12 @@
     {"heading": "Two flags change where it deploys and which AI model it uses", "short": "The flags", "blocks": [
       {"type": "table", "columns": ["Flag", "Default", "What it changes"], "rows": [
         ["`--host railway|generic`", "`railway`", "With `generic`, the skill leaves out `Procfile`, `railpack.json`, the `internal/wake` package, the Railway pre-deploy command `./out migrate up`, and the Railway deploy instructions."],
-        ["`--ai-model <openrouter model id>`", "`openai/gpt-4o-mini`", "The default AI model the app sends requests to through OpenRouter."]
+        ["`--ai-model <openrouter model id>`", "`anthropic/claude-haiku-5.5`", "The default AI model the app sends requests to through OpenRouter."]
       ]},
       {"type": "text", "text": "With `--host generic` you deploy the `./out` binary to any host. The app still reads `PORT` and its connection strings from the environment. Migrations then run by hand (`./out migrate up` against the production `ENGINE_URL`) or in the host's release step."},
       {"type": "table", "title": "Opinionated defaults and how to change them", "columns": ["Default", "Change it with"], "rows": [
         ["Deploy to Railway: `Procfile`, `railpack.json`, the `internal/wake` package that retries a sleeping Railway database or Redis, and `./out migrate up` as Railway's pre-deploy command", "`--host generic` (then run `./out migrate up` by hand or in your host's release step)"],
-        ["AI calls go to OpenRouter with the model `openai/gpt-4o-mini`", "`--ai-model <openrouter model id>`"],
+        ["AI calls go to OpenRouter with the model `anthropic/claude-haiku-5.5`", "`--ai-model <openrouter model id>`"],
         ["Server listens on port 8000 in the main checkout, `8000+N` in each `claude --worktree` checkout", "`PORT` in `.env` or the environment, or `make dev PORT=<port>`"]
       ]}
     ]},

@@ -1,6 +1,6 @@
 ---
 name: fastapi-template
-description: Scaffolds a complete FastAPI web application skeleton with server-side rendering, database, AI, and Redis. Always use this skill when the user wants to create a new web app, start a new FastAPI project, scaffold a Python web application, set up a new project structure, or bootstrap a full-stack app. Invoke whenever the user says "create a new project", "scaffold a web app", "start a FastAPI app", "set up a project skeleton", "new web app", or anything about bootstrapping a Python web application from scratch.
+description: Scaffolds a complete FastAPI web application skeleton with server-side rendering, database, AI, and Redis. Use when the user wants to scaffold a new Python/FastAPI web app, start a new FastAPI project, set up a Python project skeleton, or bootstrap a full-stack Python app from scratch, e.g. "start a FastAPI app", "scaffold a FastAPI project", "set up a project skeleton".
 argument-hint: "[--host railway|generic] [--ai-model <openrouter model id>]"
 ---
 
@@ -23,7 +23,7 @@ Drawn from production apps:
 
 Two optional flags in `$ARGUMENTS`; remove them before reading the rest of the arguments:
 - `--host railway|generic` (default `railway`). With `generic`, skip every part marked "only when host is `railway`": the `Procfile`, Railway deploy instructions, and the ping retries for sleeping serverless containers in `app/dependencies.py`. The app still reads `PORT` and its connection strings from the environment.
-- `--ai-model <openrouter model id>` (default `openai/gpt-4o-mini`) — the default `model` of `invoke_ai_model` in `app/ai.py`.
+- `--ai-model <openrouter model id>` (default `anthropic/claude-haiku-5.5`) — the default `model` of `invoke_ai_model` in `app/ai.py`.
 
 1. Ask for **app name** (kebab-case) if not provided
 2. Confirm which optional features to include:
@@ -85,7 +85,7 @@ Read these reference files before generating:
 └── .gitignore
 ```
 
-## Critical Patterns (always follow these)
+## Patterns
 
 **Env validation** — in `app/__init__.py`, call `_assert_env(name)` for every required env var. Fail at import time, not request time.
 
@@ -99,7 +99,7 @@ DEBUG in DEV_MODE, INFO in prod.
 
 **Lifespan** — connect Redis in `@asynccontextmanager async def lifespan`. Call `FastAPICache.init(RedisBackend(redis), prefix=...)`. Ping Redis and log the result. Close Redis on exit.
 
-**Request logging middleware** — always include `log_requests` that logs method, path, status, duration_ms.
+**Request logging middleware** — include `log_requests` that logs method, path, status, duration_ms.
 
 **HTTP exception handler** — redirect 401 → `/` (status 303). Log 5xx as error, 4xx as warning. Call `_default_http_handler` for all others.
 

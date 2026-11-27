@@ -39,7 +39,7 @@ Loading order matters:
 - `app.js` before Alpine (so any setup runs first)
 - Alpine with `defer` last (needs a complete DOM to scan for `x-data`)
 
-`hx-boost="true"` on `<body>` is not optional — it makes every `<a>` and `<form>` fetch via AJAX and swap `<body>` instead of doing a full-page navigation. In a Capacitor WKWebView, a normal browser navigation (a plain `<a href>` click, a server 303 redirect landed on directly) reloads the whole page — CDN scripts re-fetch, the screen flashes white, and the app stops feeling native. Boosted navigation avoids all of that. Never rely on `<a href>` full-page navigation or a bare `http.Redirect` as the primary nav path — let hx-boost intercept it. Failed boosted requests must also surface visible feedback; see "Failed htmx requests must be visible" in `SKILL.md`.
+`hx-boost="true"` on `<body>` is required; see the "hx-boost" rule in `SKILL.md` for why.
 
 ---
 

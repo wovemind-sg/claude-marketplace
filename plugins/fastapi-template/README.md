@@ -28,7 +28,7 @@ Invoke the skill by asking Claude to scaffold a new web app:
 
 ```
 /fastapi-template:fastapi-template create a new app called my-app
-/fastapi-template:fastapi-template [--host railway|generic] [--ai-model <openrouter model id>]   # defaults railway, openai/gpt-4o-mini
+/fastapi-template:fastapi-template [--host railway|generic] [--ai-model <openrouter model id>]   # defaults railway, anthropic/claude-haiku-5.5
 ```
 
 Or just describe what you want:
@@ -50,7 +50,7 @@ To run the generated app:
 | Default | Change it with |
 |---|---|
 | Deploy to Railway: a `Procfile`, and database/Redis pings retried while a sleeping Railway service wakes up | `--host generic` |
-| AI calls go to OpenRouter with the model `openai/gpt-4o-mini` | `--ai-model <openrouter model id>` |
+| AI calls go to OpenRouter with the model `anthropic/claude-haiku-5.5` | `--ai-model <openrouter model id>` |
 | Dev server on port 8000 in the main checkout, `8000+N` in each `claude --worktree` checkout | `PORT` in `.env`, the environment, or `make dev PORT=<port>` |
 | Production server is gunicorn with 8 uvicorn workers | edit the `server` target in the generated `Makefile` |
 | Python 3.11, managed by `uv` | edit `.python-version` and `pyproject.toml` |
@@ -119,7 +119,7 @@ Each `claude --worktree` checkout gets its own port, Postgres DB and Redis db (`
 ## Example
 
 ```
-/fastapi-template:fastapi-template create a new app called recipe-box --host generic --ai-model anthropic/claude-haiku-5-5
+/fastapi-template:fastapi-template create a new app called recipe-box --host generic --ai-model anthropic/claude-haiku-5.5
 ```
 
 This generates `recipe-box/` without a `Procfile`, with `invoke_ai_model` defaulting to that OpenRouter model. Then follow the Quick Start above.

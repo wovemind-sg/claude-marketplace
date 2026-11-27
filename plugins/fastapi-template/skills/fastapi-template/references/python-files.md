@@ -247,7 +247,7 @@ async def invoke_ai_model(
     *messages,
     system_prompt_name=None,
     prompt_context=None,
-    model="openai/gpt-4o-mini",
+    model="anthropic/claude-haiku-5.5",
     temperature=0,
     **extra_model_kwargs,
 ):
@@ -289,7 +289,7 @@ async def get_ai_json_response(*messages, **kwargs) -> dict:
     return json.loads(content)
 ```
 
-Write the `--ai-model` value as the `model` default in `invoke_ai_model` (`openai/gpt-4o-mini` when the flag is not given).
+Write the `--ai-model` value as the `model` default in `invoke_ai_model` (`anthropic/claude-haiku-5.5` when the flag is not given).
 
 ---
 

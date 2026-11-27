@@ -10,11 +10,11 @@
   "bottom_line": "Type one command, answer a few questions, and Claude writes a FastAPI web app. Fill in `.env`, migrate, then run `make dev`.",
   "sections": [
     {"heading": "One command starts a new web app", "short": "The command", "blocks": [
-      {"type": "code", "code": "/fastapi-template:fastapi-template [--host railway|generic] [--ai-model <openrouter model id>]", "caption": "Both flags are optional. Without them the app targets Railway and uses the AI model openai/gpt-4o-mini."},
+      {"type": "code", "code": "/fastapi-template:fastapi-template [--host railway|generic] [--ai-model <openrouter model id>]", "caption": "Both flags are optional. Without them the app targets Railway and uses the AI model anthropic/claude-haiku-5.5."},
       {"type": "text", "text": "The skill scaffolds a complete FastAPI web application skeleton, drawn from production apps. **Scaffolding** means writing the starting files and folders of a new project, so you begin from a working app instead of an empty folder."},
       {"type": "cards", "title": "Three ways to start it", "cards": [
         {"title": "Name the app", "state": "info", "text": "`/fastapi-template:fastapi-template create a new app called my-app`"},
-        {"title": "Add flags", "state": "info", "text": "`/fastapi-template:fastapi-template [--host railway|generic] [--ai-model <openrouter model id>]`. The defaults are railway and openai/gpt-4o-mini."},
+        {"title": "Add flags", "state": "info", "text": "`/fastapi-template:fastapi-template [--host railway|generic] [--ai-model <openrouter model id>]`. The defaults are railway and anthropic/claude-haiku-5.5."},
         {"title": "Just describe it", "state": "info", "text": "Say what you want in plain words, for example: \"Scaffold a new FastAPI project for a task management app\"."}
       ]},
       {"type": "text", "text": "Claude also uses this skill on its own whenever you ask to create a new project, scaffold a web app, start a FastAPI app, set up a project skeleton, start a new web app, or bootstrap a Python web application from scratch."},
@@ -23,12 +23,12 @@
     {"heading": "Two flags change where it deploys and which AI model it uses", "short": "The flags", "blocks": [
       {"type": "table", "columns": ["Flag", "Default", "What it changes"], "rows": [
         ["`--host railway|generic`", "`railway`", "With `generic`, the skill leaves out the `Procfile`, the Railway deploy instructions and the ping retries for sleeping serverless containers."],
-        ["`--ai-model <openrouter model id>`", "`openai/gpt-4o-mini`", "The default model the app's AI helper (`invoke_ai_model`) sends requests to through OpenRouter."]
+        ["`--ai-model <openrouter model id>`", "`anthropic/claude-haiku-5.5`", "The default model the app's AI helper (`invoke_ai_model`) sends requests to through OpenRouter."]
       ]},
       {"type": "text", "text": "With `--host generic` there is no Procfile and no Railway-specific code, so you deploy to any host that runs a Python web server. The app still reads `PORT` and its connection strings from the environment."},
       {"type": "table", "title": "Opinionated defaults and how to change them", "columns": ["Default", "Change it with"], "rows": [
         ["Deploy to Railway: a `Procfile`, and database/Redis pings retried while a sleeping Railway service wakes up", "`--host generic`"],
-        ["AI calls go to OpenRouter with the model `openai/gpt-4o-mini`", "`--ai-model <openrouter model id>`"],
+        ["AI calls go to OpenRouter with the model `anthropic/claude-haiku-5.5`", "`--ai-model <openrouter model id>`"],
         ["Dev server on port 8000 in the main checkout, `8000+N` in each `claude --worktree` checkout", "`PORT` in `.env`, the environment, or `make dev PORT=<port>`"],
         ["Production server is gunicorn with 8 uvicorn workers", "edit the `server` target in the generated `Makefile`"],
         ["Python 3.11, managed by `uv`", "edit `.python-version` and `pyproject.toml`"],
@@ -125,8 +125,8 @@
       ]}
     ]},
     {"heading": "Example: a recipe app for any host with a different model", "short": "Example", "blocks": [
-      {"type": "before_after", "before": {"label": "You type", "text": "`/fastapi-template:fastapi-template create a new app called recipe-box --host generic --ai-model anthropic/claude-haiku-5-5`"}, "after": {"label": "You get", "text": "A `recipe-box/` folder without a `Procfile`, with `invoke_ai_model` defaulting to that OpenRouter model."}},
-      {"type": "code", "code": "/fastapi-template:fastapi-template create a new app called recipe-box --host generic --ai-model anthropic/claude-haiku-5-5"},
+      {"type": "before_after", "before": {"label": "You type", "text": "`/fastapi-template:fastapi-template create a new app called recipe-box --host generic --ai-model anthropic/claude-haiku-5.5`"}, "after": {"label": "You get", "text": "A `recipe-box/` folder without a `Procfile`, with `invoke_ai_model` defaulting to that OpenRouter model."}},
+      {"type": "code", "code": "/fastapi-template:fastapi-template create a new app called recipe-box --host generic --ai-model anthropic/claude-haiku-5.5"},
       {"type": "text", "text": "Then follow the Quick Start steps in the stop above."}
     ]}
   ],

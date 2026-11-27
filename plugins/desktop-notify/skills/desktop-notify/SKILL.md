@@ -1,7 +1,7 @@
 ---
 name: desktop-notify
 description: >
-  Send a desktop notification via the claude-notifier CLI. By default, notify
+  Sends a desktop notification via the claude-notifier CLI. By default, notify
   when Claude finishes the given task or gets blocked and needs the user's
   attention — e.g. "let me know when done", "notify me if you get stuck",
   "ping me". Use whenever the user asks to be notified, pinged, or alerted,

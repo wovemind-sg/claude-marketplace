@@ -1,0 +1,121 @@
+{
+  "title": "Pick a Model",
+  "page_type": "how-to",
+  "gist": {
+    "kind": "chain",
+    "nodes": [
+      {
+        "icon": "file",
+        "label": "Describe the job"
+      },
+      {
+        "icon": "flag",
+        "label": "Haiku reads the guide",
+        "arrow": "reads task table"
+      },
+      {
+        "icon": "check-circle",
+        "label": "Model and effort returned",
+        "arrow": "recommends only",
+        "outcome": true
+      }
+    ]
+  },
+  "bottom_line": "Describe your job. A Haiku subagent reads Anthropic's guide and recommends a Claude model and effort level. It never runs the job.",
+  "sections": [
+    {
+      "heading": "Run it with a description of the job",
+      "short": "Run it",
+      "blocks": [
+        {
+          "type": "code",
+          "code": "/model-picker:pick-model <job description>",
+          "caption": "The description is required. Without one, it asks you for it."
+        },
+        {
+          "type": "before_after",
+          "before": {
+            "label": "You type",
+            "text": "a subagent that reads test logs and reports each failing test"
+          },
+          "after": {
+            "label": "You get",
+            "text": "Haiku 5.5, medium effort, with the guide row it matched"
+          },
+          "caption": "An example job and the kind of answer you get."
+        }
+      ]
+    },
+    {
+      "heading": "The answer has five lines",
+      "short": "The answer",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "What the reply contains",
+          "columns": [
+            "Line",
+            "Meaning"
+          ],
+          "rows": [
+            [
+              "Model",
+              "One of Haiku 5.5, Sonnet 5.5, Opus 5.5 or Fable 5.2."
+            ],
+            [
+              "Effort",
+              "The starting effort level for that model."
+            ],
+            [
+              "Matched row",
+              "The row of the guide's task table that fits your job."
+            ],
+            [
+              "Reason",
+              "One line tying your job to that row."
+            ],
+            [
+              "If it falls short",
+              "What to try next: let the model check its own work, raise effort one level, then move up a model."
+            ]
+          ]
+        },
+        {
+          "type": "text",
+          "text": "If your job fits no row clearly, you get Opus 5.5 at medium effort, the guide's own answer for \"you aren't sure yet\"."
+        }
+      ]
+    },
+    {
+      "heading": "It uses a stored copy of the guide",
+      "short": "What to know",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Recommends only",
+              "state": "good",
+              "text": "You get a recommendation. Nothing is run or changed."
+            },
+            {
+              "title": "Can be out of date",
+              "state": "bad",
+              "text": "The guide is stored in the plugin. Run `/model-picker:check-guide` to see whether the live guide changed."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "next_action": {
+    "text": "Type `/model-picker:pick-model` followed by a sentence describing your job.",
+    "detail": "Add what the job does, how big it is and whether a person waits on the reply."
+  },
+  "sources": [
+    {
+      "label": "model-picker on GitHub",
+      "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/model-picker"
+    }
+  ]
+}

@@ -9,7 +9,7 @@ claude plugin marketplace add wovemind-sg/claude-marketplace
 /plugin install plan-tools@wovemind
 ```
 
-Installing plan-tools also installs the plugins it depends on: `ntfy`, `fastapi-template` and `htmx-vs-alpine`.
+Installing plan-tools also installs the plugins it depends on: `ntfy`, `fastapi-template`, `htmx-vs-alpine` and `model-picker` (used by the Auto implementer model).
 
 ## Requirements
 
@@ -37,7 +37,7 @@ These are the team conventions the skills assume. Each one can be changed with t
 |---|---|---|
 | Deferred work goes into GitHub issues labeled `ai` | `write-issue`, `impl-issue`, `impl-issue-lite`, `drain-issues`, `finalize-pr`, `convert-residual` | `--label <name>` |
 | Plan work happens on a branch named `plan/<feature-name>` | `plan-split-implment`, `plan-implement-complete` | `--branch <name>` |
-| Sub-agents run on the `sonnet` model | `impl-issue`, `impl-issue-lite`, `drain-issues` (model word in the arguments, e.g. `opus`); `finalize-pr` (`--model <name>`); `create-webapp`, `create-app` and `plan-implement-complete` ask you up front | see each skill |
+| Sub-agents run on the `sonnet` model | `impl-issue`, `impl-issue-lite`, `drain-issues` (model word in the arguments, e.g. `opus`); `finalize-pr` (`--model <name>`); `create-webapp`, `create-app`, `plan-split-implment` and `plan-implement-complete` ask you up front (answer `Auto` to let `/model-picker:pick-model` choose per session, optionally capped); `split-plan` shapes sessions for a model word (`haiku`, `sonnet`, `opus`, `fable`) | see each skill |
 | A finished PR gets a `finalize-pr` commit status, and a UI audit gets a `ui-audit` status | `finalize-pr`, `monitor-pr` | fixed; a branch rule can require `finalize-pr` |
 | A PR whose designer review still fails gets the label `ui-risky` | `finalize-pr` | only runs when `designer_ui_review` is on |
 | New web apps use FastAPI + Jinja2 + HTMX + Alpine.js, deployed to Railway, with OpenRouter `openai/gpt-4o-mini` | `create-webapp` | `--host generic`, `--ai-model <model id>` |
@@ -126,8 +126,10 @@ Takes an existing implementation plan and splits it into isolated, context-sized
 Usage:
 
 ```
-/plan-tools:split-plan
+/plan-tools:split-plan [haiku|sonnet|opus|fable]
 ```
+
+With a model word, the sessions are sized and shaped for that model using the `model-picker` guide, not just for context, and `progress.md` records `Target model: <name>`. With none, sessions are sized for context only.
 
 Claude will ask where the existing plan lives if it doesn't already know, then produce:
 
@@ -144,10 +146,12 @@ The skill only plans — it does not implement anything. It ends by showing a on
 
 Executes a session-split plan (as produced by `split-plan`). Reads `sessions/` and `progress.md`, then spawns one subagent per incomplete session, sequentially. Each subagent reads its session file, does the work, commits, updates `progress.md`, and exits. The orchestrator only delegates and monitors — it does not implement anything itself. If a subagent hits a decision its plan does not answer and the plan's question level would ask, it ends its run with the question; the orchestrator asks you and sends the answer back to that subagent.
 
+It asks which model implements: Sonnet, Opus, Haiku or Auto (a `Target model:` recorded by `split-plan` is listed first as Recommended). Auto runs `/model-picker:pick-model` before each session and runs the session on its pick; a follow-up question sets the highest model Auto may pick, and a pick above the cap runs on the cap model with effort one level higher. Each pick is printed as `Session NN: <model> <effort>`.
+
 Usage:
 
 ```
-/plan-tools:plan-split-implment [--branch <name>]   # default branch plan/<feature-name>
+/plan-tools:plan-split-implment [--branch <name>] [--model <name|auto>] [--max-model <name>]   # default branch plan/<feature-name>
 ```
 
 ### `/plan-tools:write-issue`
@@ -227,7 +231,7 @@ Auto-commits, auto-pushes, and auto-merges without per-step confirmation by desi
 
 ### `/plan-tools:plan-implement-complete`
 
-Ships the current plan end to end. Asks up front for the implementer and finalize models (default Sonnet), advance permission for commits/push/PR, and whether to auto-merge. Implements via `plan-split-implment` for `.planning/` split plans (or one subagent for a single plan file); related problems found along the way are fixed in-plan — adding sessions if needed — never filed as issues, and pre-existing issues are left alone. Then runs `finalize-pr` once (single test-plan pass, residual items fixed instead of filed), opens the PR, and if auto-merge was chosen enables it and runs `monitor-pr` until merged.
+Ships the current plan end to end. Asks up front for the implementer model (Sonnet, Opus, Haiku or Auto, with an optional cap on Auto) and the finalize model (default Sonnet), advance permission for commits/push/PR, and whether to auto-merge. Implements via `plan-split-implment` for `.planning/` split plans (or one subagent for a single plan file); related problems found along the way are fixed in-plan — adding sessions if needed — never filed as issues, and pre-existing issues are left alone. Then runs `finalize-pr` once (single test-plan pass, residual items fixed instead of filed), opens the PR, and if auto-merge was chosen enables it and runs `monitor-pr` until merged.
 
 Usage:
 

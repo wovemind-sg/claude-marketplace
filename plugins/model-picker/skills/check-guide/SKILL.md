@@ -9,7 +9,7 @@ Checks the live guide against `${CLAUDE_SKILL_DIR}/../pick-model/references/guid
 
 ## Steps
 
-1. Run `python3 ${CLAUDE_SKILL_DIR}/scripts/guide_hash.py`. It prints JSON `{status, sha256, text_file}`.
+1. Run `python3 ${CLAUDE_SKILL_DIR}/scripts/guide_hash.py`. It prints JSON `{status, sha256}`, plus `text_file` only when `status` is `changed`.
    - Exit 2 / `status: "error"`: the guide could not be fetched. Report the error and stop.
    - `status: "unchanged"`: report "guide unchanged" and stop. This is the fast path.
 2. `status: "changed"`: read `text_file` (the live page text) and `guide.md`. Compare meaning only: recommendations, task table rows, models, effort levels, prices, defaults, escalation rules. Ignore wording, layout, navigation, dates and related-post changes.

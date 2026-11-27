@@ -18,7 +18,7 @@ claude plugin marketplace add wovemind-sg/claude-marketplace
 
 ## How check-guide works
 
-`skills/pick-model/references/guide.md` holds the guide as decision rules. `guide.lock.json` next to it holds the sha256 of the guide page's visible text and the date checked. `scripts/guide_hash.py` fetches the page and compares hashes (fast path). A hash miss can come from wording or layout, so the model then compares meaning; if only wording changed, it saves the new hash and reports no meaningful change. A meaningful change is reported and nothing is written.
+`skills/pick-model/references/guide.md` holds the guide as decision rules. `guide.lock.json` next to it holds the sha256 of the guide page's visible text and the date checked. `scripts/guide_hash.py` fetches the page and compares hashes (fast path). A hash miss can come from wording or layout, so the model then compares meaning; if only wording changed, it saves the new hash and reports no meaningful change. A meaningful change is reported; `check-guide` itself writes nothing. This repo's finalize-pr hook then updates `guide.md`, the lock and `plugin.json`.
 
 ## Requirements
 

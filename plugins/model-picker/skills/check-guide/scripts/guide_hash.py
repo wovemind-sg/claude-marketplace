@@ -4,8 +4,9 @@
 Fetches the guide, reduces it to visible text, hashes it and compares the hash
 with the lock file next to the stored copy (pick-model/references/guide.lock.json).
 
-  guide_hash.py                 print {status, sha256, text_file}; status is
-                                "unchanged" or "changed"
+  guide_hash.py                 print {status, sha256[, text_file]}; status is
+                                "unchanged" or "changed"; text_file (the live
+                                page text) only when "changed"
   guide_hash.py --write-hash    save the live hash and today's date to the lock
   guide_hash.py --selftest      run the built-in tests
 
@@ -50,7 +51,7 @@ def extract(html: str) -> str:
     """Visible page text, one item per line, whitespace-collapsed."""
     p = _Text()
     p.feed(html)
-    text = "".join(p.out).split(CUT)[0]
+    text = "".join(p.out).rsplit(CUT, 1)[0]
     lines = (re.sub(r"[ \t\xa0]+", " ", ln).strip() for ln in text.splitlines())
     return "\n".join(ln for ln in lines if ln)
 
@@ -77,6 +78,8 @@ def selftest() -> None:
     a = "<html><head><title>x</title></head><body><nav>menu</nav><h1>T</h1><p>a  b</p><script>var x=1</script><table><tr><td>m</td><td>n</td></tr></table><footer>f</footer>Related posts<p>feed</p></body></html>"
     b = a.replace("a  b", "a b").replace("menu", "other menu").replace("feed", "other feed")
     assert extract(a) == "T\na b\n| m | n", repr(extract(a))
+    c = a.replace("<p>a  b</p>", "<p>Related posts we like</p><p>a  b</p>")
+    assert "a b" in extract(c), "phrase in body must not hide later text"
     assert digest(extract(a)) == digest(extract(b)), "nav/feed/whitespace must not change the hash"
     assert digest(extract(a)) != digest(extract(a.replace("a  b", "a c"))), "content change must change the hash"
     with tempfile.TemporaryDirectory() as d:
@@ -115,10 +118,12 @@ def main() -> int:
         print(json.dumps({"status": "written", "sha256": sha}))
         return 0
     old = old_hash(a.lock)
-    f = tempfile.NamedTemporaryFile("w", suffix=".txt", prefix="model-guide-", delete=False)
-    f.write(text)
-    f.close()
-    print(json.dumps({"status": "unchanged" if sha == old else "changed", "sha256": sha, "text_file": f.name}))
+    out = {"status": "unchanged" if sha == old else "changed", "sha256": sha}
+    if out["status"] == "changed":
+        with tempfile.NamedTemporaryFile("w", suffix=".txt", prefix="model-guide-", delete=False) as f:
+            f.write(text)
+        out["text_file"] = f.name
+    print(json.dumps(out))
     return 0
 
 

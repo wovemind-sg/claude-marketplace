@@ -18,6 +18,6 @@ If `$ARGUMENTS` is empty, ask the user for the job description and stop.
    - Apply the tie-breaks: judgment-heavy or large-scope work goes to the bigger model; cheap-to-verify, high-volume work goes to the smaller model. A clear spec alone does not mean Sonnet: migrations and performance work can need Opus 5.5 or Fable 5.2.
    - If the job fits no row clearly, answer Opus 5.5 at medium (the "You aren't sure yet" row). Do not guess a more exotic choice.
    - Reply in exactly this format, nothing else:
-     `Model:` / `Effort:` / `Matched row:` / `Reason:` (one line, tied to the row) / `If it falls short:` (the guide's escalation order, applied to this job).
-3. Check the reply names a model and an effort that appear in guide.md. If not, re-ask the subagent once. If it fails again, use Opus 5.5 at medium and say the fallback was used.
+     `Model:` / `Effort:` / `Matched row:` / `Reason:` (one line, tied to the row) / `If it falls short:` (must state the guide's escalation order for this job: verify your own work, raise effort one level, then move to the next model up at lower effort; not generic advice).
+3. Check the reply quotes a `Matched row:` that exists in guide.md, that its `Model:` and `Effort:` equal the model and effort in that row, and that `If it falls short:` states the escalation order. If not, re-ask the subagent once. If it fails again, use Opus 5.5 at medium and say the fallback was used.
 4. Show the reply to the user as is.

@@ -37,7 +37,7 @@ For each incomplete session, use the Task tool to spawn one subagent on the chos
 5. Update `.planning/progress.md` (mark its session complete, next session active).
 6. Exit.
 
-**Auto only:** before each session, invoke `/model-picker:pick-model` with that session file's text as the job. If it is unavailable, stop before the first session and tell the user; do not fall back to another model. If the pick is above the cap, use the cap model with the effort one level higher (low, medium, high, xhigh, max; max stays max). Spawn the subagent with that `model` and `effort`, and print one line first: `Session NN: <model> <effort>[, capped from <model>]`. Include these lines in the final report.
+**Auto only:** before each session, invoke `/model-picker:pick-model` with that session file's text as the job. If it is unavailable, stop before the first session and tell the user; do not fall back to another model. pick-model names models like "Opus 5.5"; use the lowercase family word (haiku, sonnet, opus, fable) as the Agent `model` value. If the pick is above the cap, use the cap model with the effort one level higher (low, medium, high, xhigh, max; max stays max). Spawn the subagent with that `model` and `effort`, and print one line first: `Session NN: <model> <effort>[, capped from <model>]`. Include these lines in the final report.
 
 If a subagent ends its run with a question for the user instead of finishing (its session's implementation rules tell it to, rather than guess), ask the user with AskUserQuestion in plain English, then send the answer to that same subagent with SendMessage so it continues with its context intact.
 

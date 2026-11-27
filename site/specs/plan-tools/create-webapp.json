@@ -35,7 +35,7 @@
         {
           "type": "code",
           "code": "/plan-tools:create-webapp [--host railway|generic] [--ai-model <openrouter model id>] [optional one-line app idea]",
-          "caption": "Defaults: host railway, AI model openai/gpt-4o-mini."
+          "caption": "Defaults: host railway, AI model anthropic/claude-haiku-5.5."
         },
         {
           "type": "code",
@@ -59,7 +59,7 @@
             ],
             [
               "`--ai-model <openrouter model id>`",
-              "`openai/gpt-4o-mini`",
+              "`anthropic/claude-haiku-5.5`",
               "The OpenRouter model the app uses for its AI features."
             ]
           ]
@@ -577,7 +577,7 @@
       "items": [
         "Plugin purpose: plan-driven workflow tools that bootstrap a new web or mobile app end to end, split implementation plans into context-sized resumable sessions, and drive them to PRs.",
         "Installing plan-tools also installs the plugins it depends on: `ntfy`, `fastapi-template` and `htmx-vs-alpine`.",
-        "Default conventions: new web apps use FastAPI + Jinja2 + HTMX + Alpine.js, deployed to Railway, with OpenRouter `openai/gpt-4o-mini` (change with `--host generic` and `--ai-model <model id>`). Helpers run on `sonnet` unless you pick another model when asked.",
+        "Default conventions: new web apps use FastAPI + Jinja2 + HTMX + Alpine.js, deployed to Railway, with OpenRouter `anthropic/claude-haiku-5.5` (change with `--host generic` and `--ai-model <model id>`). Helpers run on `sonnet` unless you pick another model when asked.",
         "No environment variables are needed for the plugin itself. The one setting, `designer_ui_review` (default `false`), is changed with `/plugin configure plan-tools@wovemind`. It runs the ui-change-guard designer review (/ui-change-guard:review-ui-change) before finalize-pr raises a PR."
       ]
     }

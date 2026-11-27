@@ -277,7 +277,7 @@
           "title": "How the questions are written",
           "items": [
             "Asked through AskUserQuestion, as many rounds as needed.",
-            "Questions, options and descriptions are full, plain English, never a compressed style, even if one is active. If the humanizer plugin is available, Claude runs /humanizer:humanizer on the question text first.",
+            "Questions, options and descriptions are full, plain English, never a compressed style, even if one is active. Claude writes them following the humanizer skill's rules: no dash-heavy sentences, no stock AI phrasing, plain words.",
             "Each question stands on its own, since you may only see the dialog: it names the thing and says what Claude found if that matters.",
             "Concrete options, with Claude's recommendation first, marked \"(Recommended)\".",
             "Where there is a real smaller-or-larger choice, such as reusing an existing component or making a new one, or patching one screen or all of them, you get both options and what each covers.",

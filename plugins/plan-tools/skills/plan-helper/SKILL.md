@@ -25,7 +25,7 @@ Take the level from the first of these that gives one: the argument (`everything
 - **Balanced**: anything the user will see or experience, and anything costly to undo, is asked. Internal details are decided and listed in the plan.
 - **Material only**: only choices that change the direction of the work or cannot be cheaply undone are asked. Everything else, small UX details included, is decided and listed in the plan.
 
-A subagent that is given no level uses `everything`, which is how plan-helper worked before levels existed.
+A subagent that is given no level uses `everything`.
 
 ### 1. Capture the asks
 
@@ -52,7 +52,7 @@ When you decide, take the answer the existing code's patterns point to; if they 
 Two things are asked at every level: a vague ask ("make it nicer"), and whether to include something that serves no ask. They guard against other failure modes (missing what was asked, and unrequested changes), not the one a level relaxes.
 
 - Use AskUserQuestion, batched up to 4 questions per round, as many rounds as needed.
-- Write questions, options, and descriptions in full, plain English, never caveman or other compressed styles, even when one is active for the session. The user decides from this text alone, and clipped fragments hide what is being decided. If the `humanizer` plugin is available, invoke `/humanizer:humanizer` on the drafted question text before sending it; otherwise just write the questions in plain English.
+- Write questions, options, and descriptions in full, plain English, never caveman or other compressed styles, even when one is active for the session. The user decides from this text alone, and clipped fragments hide what is being decided. Write the questions following the humanizer skill's rules (no dash-heavy sentences, no stock AI phrasing, plain words).
 - Each question stands on its own (the user may only see the dialog): name the thing, say what you found if it matters.
 - Give 2–4 concrete options. Put your recommendation first, marked "(Recommended)", with a one-line reason.
 - **Size trade-offs:** where a piece has a real smaller-vs-larger choice (e.g. reuse the existing component vs. a new one; patch one screen vs. all of them) and your level asks it, present it as a question with both options and what each covers; otherwise take the smaller option and list it under Assumed decisions.
@@ -97,9 +97,9 @@ Status starts as `[ ]`; implementers tick it to `[x]` once the ask is delivered 
 - Done means every requirement map row assigned to your work (the whole plan, or your session's rows) is delivered and verified — including running the real app/command per the Verification section, not only tests.
 ```
 
-### 5. Self-audit before presenting
+### 5. Criteria the plan must satisfy before it is presented
 
-Re-read the plan against each rule and fix what fails:
+The plan must meet each criterion below. Fix what fails:
 
 - **Coverage:** every ask has a row, a delivering step, and a real-use verification. No ask silently dropped or narrowed.
 - **No unrequested changes:** every step and every file has a `Serves:` pointing to a real ask. Cut anything that doesn't. If something seems necessary but serves no ask (e.g. a bug you found), ask the user whether to include it instead of including it.

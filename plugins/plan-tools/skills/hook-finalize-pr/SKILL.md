@@ -4,7 +4,7 @@ description: Help the user create or edit this repo's `.claude/finalize-pr.md` â
 argument-hint: [optional description of the steps to add]
 ---
 
-Configure `.claude/finalize-pr.md` for the current repo. This file is read verbatim by a Sonnet subagent in `/plan-tools:finalize-pr` step 3b, so write it as plain instructions that agent can follow with no other context.
+Configure `.claude/finalize-pr.md` for the current repo. This file is read verbatim by a subagent in `/plan-tools:finalize-pr` step 3b, so write it as plain instructions that agent can follow with no other context.
 
 ## How the file is used
 

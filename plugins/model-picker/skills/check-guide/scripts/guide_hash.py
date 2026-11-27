@@ -65,12 +65,29 @@ def fetch(url: str) -> str:
         return r.read().decode("utf-8", "replace")
 
 
+def old_hash(lock: Path):
+    """Stored hash, or None when the lock is missing or corrupt (reads as "changed")."""
+    try:
+        return json.loads(lock.read_text()).get("sha256")
+    except (OSError, ValueError, AttributeError):
+        return None
+
+
 def selftest() -> None:
     a = "<html><head><title>x</title></head><body><nav>menu</nav><h1>T</h1><p>a  b</p><script>var x=1</script><table><tr><td>m</td><td>n</td></tr></table><footer>f</footer>Related posts<p>feed</p></body></html>"
     b = a.replace("a  b", "a b").replace("menu", "other menu").replace("feed", "other feed")
     assert extract(a) == "T\na b\n| m | n", repr(extract(a))
     assert digest(extract(a)) == digest(extract(b)), "nav/feed/whitespace must not change the hash"
     assert digest(extract(a)) != digest(extract(a.replace("a  b", "a c"))), "content change must change the hash"
+    with tempfile.TemporaryDirectory() as d:
+        lock = Path(d) / "l.json"
+        assert old_hash(lock) is None, "missing lock"
+        lock.write_text("{bad")
+        assert old_hash(lock) is None, "corrupt lock"
+        lock.write_text("[]")
+        assert old_hash(lock) is None, "non-object lock"
+        lock.write_text('{"sha256": "x"}')
+        assert old_hash(lock) == "x"
     print("selftest ok")
 
 
@@ -97,7 +114,7 @@ def main() -> int:
         a.lock.write_text(json.dumps({"url": a.url, "sha256": sha, "checked": date.today().isoformat()}, indent=2) + "\n")
         print(json.dumps({"status": "written", "sha256": sha}))
         return 0
-    old = json.loads(a.lock.read_text()).get("sha256") if a.lock.exists() else None
+    old = old_hash(a.lock)
     f = tempfile.NamedTemporaryFile("w", suffix=".txt", prefix="model-guide-", delete=False)
     f.write(text)
     f.close()

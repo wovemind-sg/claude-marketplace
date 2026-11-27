@@ -15,7 +15,7 @@ You are the orchestrator for a session-split implementation plan. NEVER implemen
 ## Model
 
 1. `--model <name>` in `$ARGUMENTS` (passed by a caller such as plan-implement-complete) is the implementer model; `auto` means Auto. Don't ask.
-2. Otherwise ask once with AskUserQuestion: Sonnet, Opus, Haiku, Auto (pick-model chooses per session). If `progress.md` has a `Target model:` line, list that model first as (Recommended); else Sonnet is.
+2. Otherwise ask once with AskUserQuestion: Sonnet, Opus, Haiku, Auto (pick-model chooses per session). If `progress.md` has a `Target model:` line, list that model first as (Recommended); if it is not among the options (Fable), it replaces Haiku as the first option. Else Sonnet is Recommended.
 3. Auto: the cap is `--max-model <name>`, or one already stated in the conversation. Else ask "Highest model auto may pick?" (No cap, Opus, Sonnet). Model order: Haiku < Sonnet < Opus < Fable; no cap means Fable is allowed.
 
 ## Blocker check

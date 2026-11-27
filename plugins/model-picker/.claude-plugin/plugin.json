@@ -1,6 +1,6 @@
 {
   "name": "model-picker",
-  "description": "Recommends which Claude model and effort level to use for a job, using a Haiku subagent fed with Anthropic's model guide, and checks whether that guide has changed.",
+  "description": "Recommends which Claude model and effort level to use for a job, from Anthropic's model guide, and checks whether that guide has changed.",
   "version": "1.0.1",
   "author": {"name": "Wovemind"},
   "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/model-picker#readme",

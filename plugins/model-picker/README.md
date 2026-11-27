@@ -13,7 +13,7 @@ claude plugin marketplace add wovemind-sg/claude-marketplace
 
 | Command | What it does |
 |---|---|
-| `/model-picker:pick-model <job description>` | A Haiku subagent reads the stored guide and your job, then returns model, effort, the matched guide row, a reason and what to try if it falls short. It recommends only; it does not run the job. |
+| `/model-picker:pick-model <job description>` | Claude reads the stored guide and your job, then returns model, effort, the matched guide row, a reason and what to try if it falls short. It recommends only; it does not run the job. |
 | `/model-picker:check-guide` | Fetches the live guide, hashes its text and compares the hash with the stored one. Unchanged: done. Changed: compares meaning against the stored copy and reports changed recommendations, prices or rules. |
 
 ## How check-guide works

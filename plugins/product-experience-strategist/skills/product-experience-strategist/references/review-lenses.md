@@ -25,6 +25,6 @@ Is the interface clear, consistent and intentional?
 **TECH**
 Is the recommendation realistically implementable?
 
-If a material problem remains, fix it within the iteration budget.
+If a material problem remains, fix it.
 
 If not, stop.

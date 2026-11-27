@@ -27,7 +27,7 @@ Before spawning any subagent, read through every remaining session file (not jus
 
 ## Execution loop
 
-Run sessions strictly sequentially — each depends on the previous. never run sessions in parallel.
+Run sessions strictly sequentially — each depends on the previous. Never run sessions in parallel.
 
 For each incomplete session, use the Task tool to spawn one subagent on the chosen model, instructed to:
 1. Read `.planning/CLAUDE.md` (plan conventions), then its session file.

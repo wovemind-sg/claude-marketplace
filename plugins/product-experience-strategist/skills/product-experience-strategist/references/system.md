@@ -113,7 +113,7 @@ run; don't turn it into a standing job on your own judgment.
 A bounded `codex exec` call is read-only by default and reaches only what's explicitly passed to
 it in that call — never assume it shares context with any other Codex conversation, and never let
 it write product files or delegate work back to Claude. If it isn't installed/authenticated, or a
-user asked for it and it didn't run, report that plainly rather than mislabeling an
+the user asked for it and it didn't run, report that plainly rather than mislabeling an
 internal review as a Codex review.
 
 ## Versioning

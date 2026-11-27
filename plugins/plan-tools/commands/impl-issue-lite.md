@@ -17,7 +17,7 @@ Labels: if `$ARGUMENTS` contains `--label <name>`, remove it from `$ARGUMENTS` b
 2. Resolve which issue to work on:
    - If an issue number was given, use it directly — skip the query below.
    - Otherwise run: `gh issue list -R "$(gh repo view --json nameWithOwner -q .nameWithOwner)" --label ai --author "@me" --state open --json number,title,body,createdAt --limit 100 -q 'sort_by(.[], .createdAt)[0]'`. Always pass `-R` explicitly — without it, `gh issue list` can silently no-op (empty result, no error) when the repo isn't auto-detected from cwd, which reads as a false "no issues" instead of a failure.
-   - stop and tell the user if no issue was found — do not fall back to picking a different issue.
+   - Stop and tell the user if no issue was found — do not fall back to picking a different issue.
 3. Before spawning, confirm push/PR permission: this pushes to a shared remote and creates a visible artifact, so confirm branch/base and get the user's go-ahead if it hasn't been established this session.
 4. Spawn one subagent (`subagent_type: general-purpose`, `model:` as resolved in step 1) with a prompt containing exactly this scope and sequence:
    - Fetch the full issue with `gh issue view <number>` and read it in full before writing any code.

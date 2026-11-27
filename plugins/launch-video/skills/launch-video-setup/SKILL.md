@@ -1,6 +1,6 @@
 ---
 name: launch-video-setup
-description: Check and install everything needed to make an AI launch video with the launch-video-app or launch-video-webapp skills (ffmpeg, Python packages, ElevenLabs key, Android emulator + Maestro, or the /playwright-cli skill for web app recording). Use this whenever the user mentions setting up, installing, or preparing for the launch video, when one of the launch-video skills reports something MISSING, or when the user asks "what do I need" for the video. Also use it when a launch-video script fails because a tool is not found.
+description: Check and install everything needed to make an AI launch video with the launch-video-app or launch-video-webapp skills (ffmpeg, Python packages, ElevenLabs key, Android emulator + Maestro, or Playwright for web app recording). Use this whenever the user mentions setting up, installing, or preparing for the launch video, when one of the launch-video skills reports something MISSING, or when the user asks "what do I need" for the video. Also use it when a launch-video script fails because a tool is not found.
 ---
 
 # Launch video — setup
@@ -11,9 +11,9 @@ doing it yourself wherever a command can do it, and asking the user only for the
 things that require a human (creating an account, clicking through an installer,
 approving a password prompt).
 
-## The one-step rule (most important)
+## One action per message
 
-The user must never be asked to do more than one thing in a single message.
+Give the user one action per message, because a non-technical user loses track of bundled steps.
 
 - Each of your messages ends with exactly one action for the user (or none, if you
   are doing the work yourself), phrased in plain language, followed by
@@ -21,8 +21,6 @@ The user must never be asked to do more than one thing in a single message.
 - When they reply, verify the step actually worked by running a command — don't
   take "done" on faith. If it didn't work, explain what you saw in one sentence
   and give the next single thing to try.
-- Never present a numbered list of things to do. Never say "then". One action per
-  message, every time. Even if three things are missing, handle them one at a time.
 - No jargon without a one-phrase explanation. "ffmpeg (the program that stitches
   video clips together)" is good; "install ffmpeg via your package manager" is not.
 - Do the work yourself whenever possible: install packages, edit PATH, create the
@@ -78,8 +76,7 @@ single suggestion, not a list.
   directory.** A plugin install is a versioned cache copy (see the marketplace's
   CLAUDE.md) — the next update replaces it wholesale, so anything written under the
   skill's own folder is gone on the next version. The user's home directory is the
-  only place that survives an update. Apply this to any future config this skill
-  gains, not just the ElevenLabs key.
+  only place that survives an update.
 - **A real phone instead of the emulator** is fine for Android and skips the
   emulator/AVD steps. If the user has an Android phone handy and the emulator install
   is proving painful, offer that as the single next action: enable USB debugging and

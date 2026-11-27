@@ -74,7 +74,7 @@
             "Python 3.9+ and the pillow package",
             "An ElevenLabs key for the voice-over (a free ElevenLabs account)",
             "For Android apps: Java, the Android command-line tools and emulator (or a real phone), and Maestro",
-            "For web apps: Playwright and Chromium, or in the skill's own words the /playwright-cli skill"
+            "For web apps: the Playwright package and Chromium"
           ]
         },
         {
@@ -239,13 +239,8 @@
             ],
             [
               "Web app recording",
-              "node",
-              "Needed to run the /playwright-cli skill"
-            ],
-            [
-              "Web app recording",
-              "playwright-cli",
-              "Installed with `npm install -g @playwright/cli@latest`"
+              "python: playwright",
+              "Installed with `python3 -m pip install playwright` and `python3 -m playwright install chromium`"
             ]
           ]
         }

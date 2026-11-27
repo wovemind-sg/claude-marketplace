@@ -72,13 +72,7 @@ fi
 if [ "$TARGET" = "webapp" ] || [ "$TARGET" = "both" ]; then
   echo
   echo "== Web app recording =="
-  if command -v node >/dev/null; then ok node "$(node --version)"; else missing node "needed to run the /playwright-cli skill"; fi
-
-  if command -v playwright-cli >/dev/null; then
-    ok playwright-cli "$(playwright-cli --version 2>/dev/null | tail -1)"
-  elif npx --no-install playwright-cli --version >/dev/null 2>&1; then
-    ok playwright-cli "available via npx"
-  else missing playwright-cli "npm install -g @playwright/cli@latest"; fi
+  if python3 -c 'import playwright' 2>/dev/null; then ok "python: playwright" "browser driver"; else missing "python: playwright" "python3 -m pip install playwright && python3 -m playwright install chromium"; fi
 fi
 
 echo

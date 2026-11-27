@@ -18,8 +18,9 @@ Labels: if `$ARGUMENTS` contains `--label <name>`, remove it from `$ARGUMENTS` b
    - If an issue number was given, use it directly — skip the query below.
    - Otherwise run: `gh issue list -R "$(gh repo view --json nameWithOwner -q .nameWithOwner)" --label ai --author "@me" --state open --json number,title,body,createdAt --limit 100 -q 'sort_by(.[], .createdAt)[0]'`. Always pass `-R` explicitly — without it, `gh issue list` can silently no-op (empty result, no error) when the repo isn't auto-detected from cwd, which reads as a false "no issues" instead of a failure.
    - Stop and tell the user if no issue was found — do not fall back to picking a different issue.
-3. Before spawning, confirm push/PR permission: this pushes to a shared remote and creates a visible artifact, so confirm branch/base and get the user's go-ahead if it hasn't been established this session.
-4. Spawn one subagent (`subagent_type: general-purpose`, `model:` as resolved in step 1) with a prompt containing exactly this scope and sequence:
+3. Fetch the issue with `gh issue view <number>` and check it's actually trivial (see Task). If not, stop and tell the user to use `/plan-tools:impl-issue` instead — do not ask for push/PR permission.
+4. Only if step 3 passed and permission wasn't already established this session, confirm push/PR permission before spawning: this pushes to a shared remote and creates a visible artifact, so confirm branch/base and get the user's go-ahead.
+5. Spawn one subagent (`subagent_type: general-purpose`, `model:` as resolved in step 1) with a prompt containing exactly this scope and sequence:
    - Fetch the full issue with `gh issue view <number>` and read it in full before writing any code.
    - Confirm it's actually trivial (small, mechanically obvious change). If not, stop and report back that this issue needs `/plan-tools:impl-issue` instead — do not implement it on the lite path.
    - Branch from the latest remote default branch: `git fetch origin`, detect the default branch (`gh repo view --json defaultBranchRef -q .defaultBranchRef.name` — do not assume `main`), then `git checkout -b <branch-name> origin/<default-branch>`.
@@ -29,4 +30,4 @@ Labels: if `$ARGUMENTS` contains `--label <name>`, remove it from `$ARGUMENTS` b
    - Push the branch and open a PR (`gh pr create`) with a title and body summarizing the change, carrying the `Closes #<number>` line into the PR body. The parent already confirmed push/PR permission.
    - Stop and report back without pushing or opening a PR if any verification step fails, or if the triviality check fails.
    - Report back: a summary of what changed, the issue number closed, and the PR link.
-5. Relay the subagent's summary to the user as-is — do not add extra commentary or next steps it didn't report.
+6. Relay the subagent's summary to the user as-is — do not add extra commentary or next steps it didn't report.

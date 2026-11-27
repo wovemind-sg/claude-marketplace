@@ -34,8 +34,12 @@
       "blocks": [
         {
           "type": "code",
-          "code": "/plan-tools:plan-split-implment [--branch <name>]",
+          "code": "/plan-tools:plan-split-implment [--branch <name>] [--model <name|auto>] [--max-model <name>]",
           "caption": "Without --branch, the work goes on a branch named plan/<feature-name>."
+        },
+        {
+          "type": "text",
+          "text": "Claude asks which model implements: Sonnet, Opus, Haiku or Auto. Auto runs `/model-picker:pick-model` before each session; a follow-up sets the highest model it may pick, and a higher pick runs on the cap with effort one level up. Each pick prints as `Session NN: <model> <effort>`. `--model` and `--max-model` skip the questions."
         },
         {
           "type": "cards",

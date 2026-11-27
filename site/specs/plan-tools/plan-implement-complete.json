@@ -195,7 +195,7 @@
           "rows": [
             [
               "Implementer model: which model builds the plan",
-              "Sonnet (Recommended), Opus, Haiku"
+              "Sonnet (Recommended), Opus, Haiku, Auto"
             ],
             [
               "Finalize model: which model runs finalize-pr's review and test-plan helpers",
@@ -236,6 +236,10 @@
               "No"
             ]
           ]
+        },
+        {
+          "type": "text",
+          "text": "Auto lets `/model-picker:pick-model` choose a model and effort for each session just before it starts, for building only, not finalize-pr. It adds a follow-up question, \"Highest model auto may pick?\" (No cap, Opus, Sonnet). A higher pick runs on the cap model with effort one level up."
         },
         {
           "type": "text",

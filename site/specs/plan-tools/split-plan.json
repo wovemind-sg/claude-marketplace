@@ -34,8 +34,12 @@
       "blocks": [
         {
           "type": "code",
-          "code": "/plan-tools:split-plan",
-          "caption": "The README shows it with nothing after the command. Claude asks where your plan lives if it does not already know."
+          "code": "/plan-tools:split-plan [haiku|sonnet|opus|fable]",
+          "caption": "Claude asks where your plan lives if it does not know. Add a model word to shape sessions for that model; with none, they are sized for context only."
+        },
+        {
+          "type": "text",
+          "text": "With a model word, Claude reads the model-picker guide and shapes the sessions to that model, not just to context. Smaller models get narrower sessions that are cheap to check; Opus and Fable can take larger, judgment-heavy ones. The model is recorded as `Target model:` at the top of `progress.md`."
         },
         {
           "type": "flow",

@@ -1,7 +1,7 @@
 ---
 name: plan-split-implment
 description: Orchestrate execution of a session-split implementation plan (produced by split-plan) by delegating each incomplete session to its own subagent, sequentially. Use when .planning/ (or sessions/ and progress.md) exists and the user wants to run through the remaining sessions.
-argument-hint: "[--branch <name>]"
+argument-hint: "[--branch <name>] [--model <name|auto>] [--max-model <name>]"
 ---
 
 You are the orchestrator for a session-split implementation plan. NEVER implement anything yourself — only delegate to subagents and monitor.
@@ -11,6 +11,12 @@ You are the orchestrator for a session-split implementation plan. NEVER implemen
 1. Read `.planning/progress.md` and `.planning/sessions/` (default location — if missing, check the project root, then ask the user).
 2. Check the current git branch. If on `main` or `master`, create an implementation branch first (e.g. `plan/<feature-name>`) and work there — every session ends with a commit, and those incremental commits belong on a branch, not on main.
    - With `--branch <name>` in `$ARGUMENTS`, use that name instead of `plan/<feature-name>`.
+
+## Model
+
+1. `--model <name>` in `$ARGUMENTS` (passed by a caller such as plan-implement-complete) is the implementer model; `auto` means Auto. Don't ask.
+2. Otherwise ask once with AskUserQuestion: Sonnet, Opus, Haiku, Auto (pick-model chooses per session). If `progress.md` has a `Target model:` line, list that model first as (Recommended); if it is not among the options (Fable), it replaces Haiku as the first option. Else Sonnet is Recommended.
+3. Auto: the cap is `--max-model <name>`, or one already stated in the conversation. Else ask "Highest model auto may pick?" (No cap, Opus, Sonnet). Model order: Haiku < Sonnet < Opus < Fable; no cap means Fable is allowed.
 
 ## Blocker check
 
@@ -23,13 +29,15 @@ Before spawning any subagent, read through every remaining session file (not jus
 
 Run sessions strictly sequentially — each depends on the previous. NEVER run sessions in parallel.
 
-For each incomplete session, use the Task tool to spawn one subagent instructed to:
+For each incomplete session, use the Task tool to spawn one subagent on the chosen model, instructed to:
 1. Read `.planning/CLAUDE.md` (plan conventions), then its session file.
 2. Execute the session's tasks exactly.
 3. Update the project's root CLAUDE.md with what changed this session (conventions, stack, structure introduced/changed). If it doesn't exist yet (new project), create it from scratch.
 4. Commit the work (including the CLAUDE.md update).
 5. Update `.planning/progress.md` (mark its session complete, next session active).
 6. Exit.
+
+**Auto only:** before each session, invoke `/model-picker:pick-model` with that session file's text as the job. If it is unavailable, stop before the first session and tell the user; do not fall back to another model. pick-model names models like "Opus 5.5"; use the lowercase family word (haiku, sonnet, opus, fable) as the Agent `model` value. If the pick is above the cap, use the cap model with the effort one level higher (low, medium, high, xhigh, max; max stays max). Spawn the subagent with that `model` and `effort`, and print one line first: `Session NN: <model> <effort>[, capped from <model>]`. Include these lines in the final report.
 
 If a subagent ends its run with a question for the user instead of finishing (its session's implementation rules tell it to, rather than guess), ask the user with AskUserQuestion in plain English, then send the answer to that same subagent with SendMessage so it continues with its context intact.
 

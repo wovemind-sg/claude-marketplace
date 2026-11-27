@@ -116,7 +116,7 @@ bash ${CLAUDE_PLUGIN_ROOT}/skills/apply/scripts/wait_pr.sh <pr> 60 6
 | 10 | `BEHIND` or `DIRTY` — other collaborators moved `<base>` | `git fetch origin <base> && git merge origin/<base>`; on conflicts spawn an implementer subagent to resolve them keeping both sides' intent; push; rerun the poller. Expect this several times per PR. |
 | 30 | a check failed | read the failing job log (`gh run view --log-failed`), spawn an implementer subagent to fix, push, rerun the poller. Third failure on the same check → **Stuck**. |
 | 20 | closed without merging | **Stuck** |
-| 40 | still open after 6 h (usually a required review) | **Stuck**; keep polling after notifying |
+| 40 | still open after 6 h (usually a required review) | **Stuck**; wait |
 
 ### 3.8 Close out the card
 

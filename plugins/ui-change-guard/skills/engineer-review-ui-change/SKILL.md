@@ -34,7 +34,7 @@ Ask one question per flagged danger (each D-item), in order, and only one per `A
 
 Make each question stand alone: say where the problem is (page or element in user terms, then `file:line`), what the evidence is, and offer the options: safe as is, apply the suggested fix, or something else. Put your recommendation first and say why.
 
-Never assume. When an answer is ambiguous, or you hit anything unclear at any point, ask a follow-up question (again, one per call). Add your own questions for dangers you found in the code that the handoff missed.
+When an answer is ambiguous, ask a follow-up (again, one question per call). Add your own questions for dangers you found in the code that the handoff missed.
 
 ## Step 4: Build the task list
 
@@ -49,7 +49,7 @@ For each task, launch a subagent with the `Agent` tool and `model: "sonnet"`. La
 - **Non-trivial task** (more than one file, or a behavior change): first launch a plan subagent (`subagent_type: "Plan"`, `model: "sonnet"`), show its plan to the engineer, get their approval, then launch the implementation subagent with the approved plan.
 - **Trivial task:** launch the implementation subagent directly.
 
-Each subagent prompt must contain: the task, the engineer's decision and its reason, the files involved, and these instructions: "Do not assume anything. If something is unclear, stop and return your open questions instead of guessing. Do not commit." Tell a plan subagent it is read-only: no edits, no commits.
+Each subagent prompt must contain: the task, the engineer's decision and its reason, the files involved, and these instructions: "If a decision the engineer has not made would change the result, stop and return it as a question; otherwise follow the existing code's patterns. Do not commit." Tell a plan subagent it is read-only: no edits, no commits.
 
 Subagents cannot talk to the engineer. When one returns open questions, ask the engineer (one question per `AskUserQuestion` call), then load `SendMessage` (a deferred tool: `ToolSearch` with `select:SendMessage`) and resume the same agent with it and the answers. Do not start a fresh agent for it.
 

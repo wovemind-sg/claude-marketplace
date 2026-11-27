@@ -16,7 +16,7 @@ started locally, onboarding flow.
 
 ## One action per message
 
-Give the user one action per message, because a non-technical user loses track of bundled steps.
+Give the user one action per message, because a non-technical user loses track of bundled steps. If a phase has several manual steps, that is several messages.
 
 - Each of your messages ends with exactly one action for the user, in plain language,
   then "Tell me when that's done". Then stop and wait.

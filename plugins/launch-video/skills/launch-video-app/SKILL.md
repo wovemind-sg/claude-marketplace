@@ -16,7 +16,7 @@ what the app does and what the screens are called.
 
 ## One action per message
 
-Give the user one action per message, because a non-technical user loses track of bundled steps.
+Give the user one action per message, because a non-technical user loses track of bundled steps. If a phase has five manual steps, that is five messages.
 
 - Each of your messages ends with exactly one action for the user, in plain language,
   then "Tell me when that's done". Then stop and wait.

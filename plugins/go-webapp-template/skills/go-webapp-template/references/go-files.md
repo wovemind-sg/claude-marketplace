@@ -812,7 +812,7 @@ import (
 
 const (
 	endpoint     = "https://openrouter.ai/api/v1/chat/completions"
-	DefaultModel = "openai/gpt-4o-mini"
+	DefaultModel = "anthropic/claude-haiku-5.5"
 )
 
 type Message struct {
@@ -968,7 +968,7 @@ func truncate(s string, n int) string {
 }
 ```
 
-Write the `--ai-model` value as `DefaultModel` (`openai/gpt-4o-mini` when the flag is not given).
+Write the `--ai-model` value as `DefaultModel` (`anthropic/claude-haiku-5.5` when the flag is not given).
 
 ---
 

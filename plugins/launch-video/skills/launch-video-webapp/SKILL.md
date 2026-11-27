@@ -14,16 +14,14 @@ Read the repo before anything else: routes, templates/pages, README, how the app
 started locally, onboarding flow. The whole point of running inside the repo is that you already know
 what the app does and what the screens are called.
 
-## The one-step rule (most important)
+## One action per message
 
-The user must never be asked to do more than one thing in a single message.
+Give the user one action per message, because a non-technical user loses track of bundled steps. If a phase has five manual steps, that is five messages.
 
 - Each of your messages ends with exactly one action for the user, in plain language,
   then "Tell me when that's done". Then stop and wait.
 - Verify their step with a command (file exists, ffprobe shows audio, etc.) before
   moving on. Don't trust "done" on its own.
-- Never present a to-do list. No "first… then…". If a phase has five manual steps, that
-  is five messages.
 - No jargon without a one-phrase gloss. Never show commands or code to the user unless
   they ask; run them yourself and report the outcome in a sentence.
 - Do everything you can yourself. Starting the app locally, writing the flows,
@@ -138,14 +136,12 @@ it's split into beats, so a re-record never wastes a split.
    - a note → do what it asks in that beat's flow (a different click, a longer pause to
      read something, a different screen, etc.).
    - a trim window that lines up with a `pause(...)` call (or a slow/redundant step) in
-     that beat's flow → shorten or remove it there. This is the root-cause fix: the footage
-     is only slow because the flow told it to wait, so make the flow not wait as long.
+     that beat's flow → shorten or remove it there.
    - a trim window that *doesn't* line up with anything the flow controls — real page-load,
      network, or animation latency (a modal's own entrance animation, for example) — there's
      no `pause()` to shorten, so shortening the footage means cutting it. Run `python3
      <skill>/scripts/apply_crops.py video` instead; it removes exactly that window from
-     `video/recordings/full.mp4` and shifts `video/marks.json` to match. Safe at this stage:
-     no voice-over or captions exist yet to fall out of sync. If unsure which case you're in,
+     `video/recordings/full.mp4` and shifts `video/marks.json` to match. If unsure which case you're in,
      `ffmpeg -ss <t> -frames:v 1 out.png` a frame or two around the window to see what's
      actually happening on screen before deciding.
    If you edited any flow, re-run `record_web.py video` for a fresh take (this also

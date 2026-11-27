@@ -1,7 +1,7 @@
 ---
 name: ntfy
 description: >
-  Send push notifications to the user's phone/desktop via ntfy (https://ntfy.sh
+  Sends push notifications to the user's phone/desktop via ntfy (https://ntfy.sh
   or the server set in the plugin's settings). Use this whenever the user asks to be
   notified, pinged, alerted, or sent a push notification about something —
   e.g. "let me know when this finishes", "ping me if it fails", "notify me",

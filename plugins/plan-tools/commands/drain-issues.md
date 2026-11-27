@@ -11,7 +11,7 @@ Resolve label: if "$ARGUMENTS" contains `--label <name>`, remove it before resol
 
 Determine the main branch (`git symbolic-ref refs/remotes/origin/HEAD`, or ask if ambiguous) once, up front.
 
-A subagent cannot itself spawn further subagents — so each cycle below runs as ONE subagent that does everything inline. Rather than restating `/impl-issue`'s, `/finalize-pr`'s, and `/write-issue`'s steps here, point the subagent at those command files directly (`${CLAUDE_PLUGIN_ROOT}/commands/impl-issue.md`, `finalize-pr.md`, `write-issue.md`) and tell it to read and follow each one — skipping only their own "spawn an agent" sub-step, since it must do that work itself instead of delegating further. This keeps the three commands as the single source of truth; this file just wires them together. Spawning one subagent per cycle also gives each cycle a clean context, standing in for the `/clear` the user originally asked for — there's no tool that can trigger `/clear` from inside a running command.
+A subagent cannot itself spawn further subagents — so each cycle below runs as ONE subagent that does everything inline. Rather than restating `/impl-issue`'s, `/finalize-pr`'s, and `/write-issue`'s steps here, point the subagent at those command files directly (`${CLAUDE_PLUGIN_ROOT}/commands/impl-issue.md`, `finalize-pr.md`, `write-issue.md`) and tell it to read and follow each one — skipping only their own "spawn an agent" sub-step, since it must do that work itself instead of delegating further. This keeps the three commands as the single source of truth; this file just wires them together. Spawning one subagent per cycle gives each cycle a clean context.
 
 Loop:
 

@@ -12,7 +12,7 @@ Everything downstream is only as good as the inputs collected here. A subagent w
 
 Two optional flags in `$ARGUMENTS`; remove them before using the rest as the seed:
 - `--host railway|generic` (default `railway`). With `generic`, skip every Railway provisioning and deploy step below (the `use-railway` provisioning of the database and the Railway deploy target in section 4, the "Railway via `Procfile`" deploy step in section 5) and tell the user they deploy to their own host; if mobile = yes, ask them for the public HTTPS URL of that host instead.
-- `--ai-model <openrouter model id>` (default `openai/gpt-4o-mini`).
+- `--ai-model <openrouter model id>` (default `anthropic/claude-haiku-5.5`).
 
 Pass both values to `fastapi-template:fastapi-template` wherever this skill or its subagents use it (section 5 step 1, section 7): the template is applied as if run with `--host <host> --ai-model <model>`, and the Plan prompt carries both values verbatim.
 
@@ -47,7 +47,7 @@ The `fastapi-template:fastapi-template` skill supports more than most apps need.
 Because the web app is what the WebView shows, it must be Capacitor-ready from session 1 — retrofitting is painful:
 - mobile-first responsive layout, safe-area CSS (`env(safe-area-inset-*)`)
 - every text input, textarea and select at `font-size: 16px` minimum (iOS auto-zoom)
-- **IMPORTANT: `hx-boost="true"` on `<body>` in `base.html`, on every page, no exceptions.** Without it every link and form does a full-page navigation, and in a Capacitor WebView that means a white blink on every click — the app feels like a website in a box. Boosted navigation swaps the body in place and the blink disappears. No plain full-page `<a href>` as the primary nav path, no `window.location` / JS redirects where a boosted link or form works, and server redirects (303 after POST) are fine only because the boosted form follows them via HTMX.
+- **`hx-boost="true"` on `<body>` in `base.html`, on every page.** Without it every link and form does a full-page navigation, and in a Capacitor WebView that means a white blink on every click — the app feels like a website in a box. Boosted navigation swaps the body in place and the blink disappears. No plain full-page `<a href>` as the primary nav path, no `window.location` / JS redirects where a boosted link or form works, and server redirects (303 after POST) are fine only because the boosted form follows them via HTMX.
 - Google login goes through a native hop (`ASWebAuthenticationSession` / Custom Tabs) inside the app, gated on `Capacitor.isNativePlatform()` — the plain browser OAuth stays for the web; both flows end by setting the same signed `user_id` cookie
 - native features the feature list implies (camera, share, push, haptics) go through Capacitor plugins with denied-permission handling, not `getUserMedia`-style web APIs
 
@@ -83,7 +83,7 @@ The implementing subagents run unattended. Anything they cannot do themselves mu
 - **Design reference readable** — image path exists / URL fetches.
 - **Mobile toolchain** (mobile = yes) — `node --version`, `npm --version`; Xcode + CocoaPods (`xcodebuild -version`, `pod --version`) for iOS; Android Studio / SDK (`ANDROID_HOME` set, `adb version`) for Android. Ask which platforms the user wants and only check those.
 - **Deploy target** (mobile = yes) — the WebView needs a public HTTPS URL. Confirm a Railway project (or other host) exists or can be created (`use-railway` skill, if the `railway` plugin is installed; otherwise skip it and say so in the report), and capture the URL for `capacitor.config.ts`.
-- **Anything feature-specific** — third-party APIs, webhooks, domains, paid accounts the features imply. Read the feature list once more with this lens.
+- **Anything feature-specific** — third-party APIs, webhooks, domains, paid accounts the features imply. Check the feature list for these.
 
 Present failures as a numbered list, one line each, then wait for the user to fix them. Re-test after they say done. Do not move on with a known-broken dependency — the planner will plan around it and the implementer will hit it in session 1.
 

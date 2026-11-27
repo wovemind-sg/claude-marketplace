@@ -65,7 +65,7 @@ The implementing subagents run unattended. Anything they cannot do themselves mu
 - **Apple / Play accounts** (if submission in scope) — user confirms the app record exists in App Store Connect / Play Console with the chosen bundle id; you cannot test this.
 - **Model files** (if on-device ML) — file present at the agreed path, size sane (`ls -l`).
 - **Design reference readable** — image path exists / URL fetches.
-- **Anything feature-specific** — third-party APIs, backend availability, paid accounts the features imply. Read the feature list once more with this lens.
+- **Anything feature-specific** — third-party APIs, backend availability, paid accounts the features imply. Check the feature list for these.
 
 Present failures as a numbered list, one line each, then wait for the user to fix them. Re-test after they say done. Do not move on with a known-broken toolchain — the implementer will hit it in session 1 at `npx expo prebuild`.
 

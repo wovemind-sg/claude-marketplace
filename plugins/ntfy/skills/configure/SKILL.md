@@ -1,7 +1,7 @@
 ---
 name: configure
 description: >
-  Walk the user step by step from zero to ntfy push notifications arriving on
+  Walks the user step by step from zero to ntfy push notifications arriving on
   their phone: choose public ntfy.sh or a self-hosted server, turn on auth on a
   self-hosted server (with extra help when it runs on Railway), create a user and
   access token, save the token to ~/.ntfy, set up the iOS/Android app, save the

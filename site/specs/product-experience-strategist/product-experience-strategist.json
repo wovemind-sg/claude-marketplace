@@ -462,9 +462,7 @@
             "Design flow",
             "Resolve material compliance issues",
             "Design interaction/states",
-            "Design UI",
-            "Verify",
-            "Refine only if materially necessary"
+            "Design UI"
           ]
         },
         {
@@ -480,48 +478,30 @@
       ]
     },
     {
-      "heading": "It uses up to three passes and stops when done",
+      "heading": "It fixes problems in order and stops when done",
       "short": "How much work",
       "blocks": [
-        {
-          "type": "stats",
-          "items": [
-            {
-              "value": "3",
-              "label": "Meaningful cycles at most",
-              "icon": "repeat",
-              "note": "for substantial tasks, not automatically 3"
-            },
-            {
-              "value": "1",
-              "label": "Cycles a simple task needs",
-              "icon": "check",
-              "note": "usually"
-            }
-          ]
-        },
         {
           "type": "stepper",
           "steps": [
             {
-              "title": "Cycle 1: Product & Flow",
-              "text": "Fixes structural problems first."
+              "title": "Product & flow",
+              "text": "Fixed first."
             },
             {
-              "title": "Cycle 2: UX, Business & Risk",
-              "text": "Only if needed."
+              "title": "UX",
+              "text": "Fixed second."
             },
             {
-              "title": "Cycle 3: UI & Final QA",
-              "text": "Only if needed."
+              "title": "UI",
+              "text": "Fixed last; it stops when what remains is cosmetic."
             }
           ]
         },
         {
           "type": "list",
           "items": [
-            "It stops when the goal is satisfied and another cycle would only bring minor cosmetic improvement.",
-            "If more work is still needed, it states what remains and why."
+            "For a simple request it gives one strong recommendation, without repeated searches or exhaustive lists."
           ]
         }
       ]
@@ -550,7 +530,7 @@
             "Persistent memory",
             "Job/result protocol",
             "QA routes",
-            "The correction-loop cap"
+            "When to stop"
           ]
         }
       ]

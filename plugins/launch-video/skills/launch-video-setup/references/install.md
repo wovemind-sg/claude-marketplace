@@ -49,15 +49,12 @@ macOS-only gotcha — but if the checker reports it missing on Linux too, reinst
 - If pip refuses with "externally-managed-environment" (newer Ubuntu), add `--break-system-packages`.
 - Verify: `python3 -c "import PIL"`
 
-## playwright-cli — "drives the browser for web app recording"
+## Playwright — "drives the browser for web app recording"
 
-Web app only. The `/playwright-cli` skill drives Chromium directly — no pip install needed.
+Web app only. `record_web.py` uses the Python package plus a Chromium browser.
 
-- Needs Node.js: macOS `brew install node`, Ubuntu/WSL `sudo apt-get install -y nodejs npm`.
-- Install: `npm install -g @playwright/cli@latest` (or use it via `npx playwright-cli` without a global install).
-- Verify: `playwright-cli --version` (or `npx --no-install playwright-cli --version`).
-- If the first `playwright-cli open` reports no browser found, fall back to
-  `npx playwright install chromium` once.
+- Install: `python3 -m pip install playwright pillow` (add `--break-system-packages` if pip refuses, as above), then `python3 -m playwright install chromium`.
+- Verify: `python3 -c "import PIL, playwright"`.
 
 ## ElevenLabs API key — "the voice that reads the script"
 

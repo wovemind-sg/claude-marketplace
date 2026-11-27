@@ -1,7 +1,7 @@
 # Routing index — signal/answer → modules
 last-reviewed: 2026-10-13
 
-SKILL.md embeds table 1. Tables 2 and 3 mirror each module's header and must be updated whenever a module's `applies-when:` or `last-reviewed:` line changes (pipes inside cells are escaped as `\|`). Consistency check: `grep -h '^applies-when:' references/*.md` must equal table 2 with the escapes removed.
+SKILL.md points to table 1. Tables 2 and 3 mirror each module's header and must be updated whenever a module's `applies-when:` or `last-reviewed:` line changes (pipes inside cells are escaped as `\|`). Consistency check: `grep -h '^applies-when:' references/*.md` must equal table 2 with the escapes removed.
 
 ## 1. Route — which modules to load
 

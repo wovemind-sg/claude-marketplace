@@ -36,7 +36,6 @@ Web replay is not delegated: it is one `capture.py` call (step 4), which also ch
 
 Use Haiku (one subagent per platform, or per batch of screens) for:
 - Native boot/install/launch/screenshot loops from `references/native.md`.
-- Running the scripts in steps 3 and 5 when you only need their JSON, and assembling the spec from `diff_images.py` output for items you have already classified.
 
 Keep on the main model (or Sonnet), never Haiku:
 - First-run setup, screen discovery, and writing or refreshing recipes (step 0, and a recipe step that no longer matches).

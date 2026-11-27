@@ -10,7 +10,7 @@
       },
       {
         "icon": "flag",
-        "label": "Haiku reads the guide",
+        "label": "Claude reads the guide",
         "arrow": "reads task table"
       },
       {
@@ -21,7 +21,7 @@
       }
     ]
   },
-  "bottom_line": "Describe your job. A Haiku subagent reads Anthropic's guide and recommends a Claude model and effort level. It never runs the job.",
+  "bottom_line": "Describe your job. Claude reads Anthropic's guide and recommends a Claude model and effort level. It never runs the job.",
   "sections": [
     {
       "heading": "Run it with a description of the job",

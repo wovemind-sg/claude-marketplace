@@ -4,7 +4,7 @@ description: Orchestrate execution of a session-split implementation plan (produ
 argument-hint: "[--branch <name>] [--model <name|auto>] [--max-model <name>]"
 ---
 
-You are the orchestrator for a session-split implementation plan. NEVER implement anything yourself — only delegate to subagents and monitor.
+You are the orchestrator for a session-split implementation plan. Delegate implementation to subagents so this context stays on coordination, and monitor them.
 
 ## Setup
 
@@ -22,12 +22,12 @@ You are the orchestrator for a session-split implementation plan. NEVER implemen
 
 Before spawning any subagent, read through every remaining session file (not just the next one) looking for blockers — steps the plan depends on that no subagent can complete on its own, because they require the user's own credentials, accounts, or access. Typical examples: signing up for or logging into a third-party service, creating an API key or OAuth app, granting a permission or dashboard access, buying a domain, or any manual action in a UI the subagent has no path to.
 
-- If you find any, respond with **only** a numbered checklist of the blockers — no heading, no preamble, no explanation, no summary after. Be concise: one line per blocker, just enough for the user to act on it. Then stop and wait — do not spawn any subagent yet. Once the user confirms they're done, re-check anything ambiguous rather than assuming, then proceed.
+- If you find any, reply with just a numbered checklist, one line per blocker. Then stop and wait — do not spawn any subagent yet. Once the user confirms they're done, re-check anything ambiguous rather than assuming, then proceed.
 - If you find none, say so in one line and go straight into the execution loop — don't wait for a go-ahead.
 
 ## Execution loop
 
-Run sessions strictly sequentially — each depends on the previous. NEVER run sessions in parallel.
+Run sessions strictly sequentially — each depends on the previous. Never run sessions in parallel.
 
 For each incomplete session, use the Task tool to spawn one subagent on the chosen model, instructed to:
 1. Read `.planning/CLAUDE.md` (plan conventions), then its session file.
@@ -59,4 +59,4 @@ mkdir <plan_location>/<feature_name>
 mv <plan_location>/*.md <plan_location>/sessions <plan_location>/<feature_name>/
 ```
 
-Do NOT commit the move — the plan location is almost always gitignored.
+do not commit the move — the plan location is almost always gitignored.

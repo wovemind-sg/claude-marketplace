@@ -1,6 +1,6 @@
 ---
 name: go-webapp-template
-description: Scaffolds a complete Go web application skeleton with server-side rendering (net/http + html/template), HTMX + Alpine.js, PostgreSQL via pgx with goose migrations, Redis caching, and OpenRouter AI — the Go counterpart of fastapi-template, with no Python anywhere. Always use this skill when the user wants to create a new Go web app, start a new Go server project, scaffold a golang backend with templates, set up a Go project structure, or bootstrap a full-stack app in Go. Invoke whenever the user says "new Go web app", "scaffold a Go project", "start a Go server", "Go + HTMX", "golang backend", "net/http app with templates", or anything about bootstrapping a Go web application from scratch. If the user asks for Python/FastAPI, use fastapi-template instead.
+description: Scaffolds a complete Go web application skeleton with server-side rendering (net/http + html/template), HTMX + Alpine.js, PostgreSQL via pgx with goose migrations, Redis caching, and OpenRouter AI — the Go counterpart of fastapi-template, with no Python anywhere. Use when the user wants to scaffold a new Go web app, start a Go server project with templates, or bootstrap a full-stack app in Go, e.g. "scaffold a Go project", "Go + HTMX", "golang backend", "net/http app with templates". If the user asks for Python/FastAPI, use fastapi-template instead.
 argument-hint: "[--host railway|generic] [--ai-model <openrouter model id>]"
 ---
 
@@ -23,7 +23,7 @@ Go port of the `fastapi-template` stack — same features, same env var names, s
 
 Two optional flags in `$ARGUMENTS`; remove them before reading the rest of the arguments:
 - `--host railway|generic` (default `railway`). With `generic`, skip every part marked "only when host is `railway`": `Procfile`, `railpack.json`, the `internal/wake` package (see the "Host `generic`" note at the top of `references/go-files.md` for the edits in the files that import it), the Railway pre-deploy command `./out migrate up`, and Railway deploy instructions. The app still reads `PORT` and its connection strings from the environment. Migrations then run by hand (`./out migrate up` against the production `ENGINE_URL`) or in the host's release step.
-- `--ai-model <openrouter model id>` (default `openai/gpt-4o-mini`) — the value of `DefaultModel` in `internal/ai/ai.go`.
+- `--ai-model <openrouter model id>` (default `anthropic/claude-haiku-5.5`) — the value of `DefaultModel` in `internal/ai/ai.go`.
 
 1. Ask for **app name** (kebab-case) if not provided. It is also the Go module path (`module <app-name>`), so imports are `<app-name>/internal/...`. Derive `<App Name>` (display name in templates) as Title Case of the kebab name (`my-app` → `My App`) unless the user gives one.
 2. Confirm which optional features to include:
@@ -91,7 +91,7 @@ go mod tidy && gofmt -l . && go build ./... && go vet ./... && go test ./...
 └── .gitignore
 ```
 
-## Critical Patterns (always follow these)
+## Patterns
 
 **Env validation** — `config.MustEnv(name)` for every required env var, called in `main` before anything connects. Fail at startup, not on the first request.
 

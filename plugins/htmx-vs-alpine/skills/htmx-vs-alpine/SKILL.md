@@ -1,17 +1,15 @@
 ---
 name: htmx-vs-alpine
 description: >
-  Decides whether to use HTMX or Alpine.js when writing frontend code for server-rendered web apps.
-  Use this skill whenever you are implementing any client-side behavior — form submission, UI toggles,
-  search, pagination, modals, dropdowns, filtering, infinite scroll, tabs, accordions, polling, lazy
-  loading, or any interactive element — even if the user hasn't explicitly mentioned HTMX or Alpine.js.
-  Always apply this skill before reaching for custom JavaScript in a server-rendered context.
+  Decides between HTMX and Alpine.js for interactive behavior in server-rendered apps.
+  Use when adding client-side interactivity (forms, toggles, search, modals, polling,
+  pagination, tabs, lazy loading), even if the user hasn't mentioned HTMX or Alpine.js,
+  and before reaching for custom JavaScript.
 ---
 
 # HTMX vs Alpine.js Decision Guide
 
-You are an expert web application architect specializing in server-driven web applications. Before
-writing any client-side interactivity, apply the decision framework below.
+Before writing any client-side interactivity, apply the decision framework below.
 
 ---
 
@@ -20,6 +18,8 @@ writing any client-side interactivity, apply the decision framework below.
 - **HTMX** — server drives state and renders HTML. The browser is a dumb terminal.
 - **Alpine.js** — browser drives ephemeral UI state. No server round-trip needed.
 - Prefer server-rendered HTML over JSON APIs. Avoid SPA patterns unless the user explicitly needs them.
+- For standard apps (dashboards, admin tools, internal tools, forms, business apps): HTMX is the **primary** interaction model, Alpine.js is a **lightweight complement** for UI behavior only, and custom JavaScript is the **exception**, not the rule.
+- Avoid recreating React or Vue patterns manually. If the requirement calls for complex client-side state, recommend a proper SPA framework rather than fighting against the server-rendered model.
 
 ---
 
@@ -54,20 +54,6 @@ The server should render or own the result. Common cases:
 | Authentication-gated UI | Server checks auth |
 | Polling for updates | Server is the source of truth |
 
-### HTMX Attribute Cheatsheet
-
-```html
-hx-get="/results"           <!-- fetch HTML via GET -->
-hx-post="/items"            <!-- submit via POST -->
-hx-put="/items/1"           <!-- update via PUT -->
-hx-delete="/items/1"        <!-- delete via DELETE -->
-hx-trigger="click"          <!-- when to fire (default: natural event) -->
-hx-target="#results"        <!-- where to inject the response -->
-hx-swap="innerHTML"         <!-- how to swap: innerHTML, outerHTML, beforeend… -->
-hx-select="#partial"        <!-- extract a subset of the response -->
-hx-indicator="#spinner"     <!-- show a loading element while request is in flight -->
-```
-
 ### HTMX Best Practices
 
 - Return **HTML fragments** from the server, not JSON.
@@ -93,19 +79,6 @@ The interactivity is local, visual, and ephemeral — no server round-trip neede
 | Loading / skeleton states | Transient UI polish |
 | Simple animations | CSS-driven |
 | Keyboard shortcuts | Browser event listeners |
-
-### Alpine.js Attribute Cheatsheet
-
-```html
-x-data="{ open: false }"    <!-- component scope -->
-x-show="open"               <!-- conditional visibility -->
-x-bind:class="{ ... }"      <!-- dynamic class binding -->
-x-model="query"             <!-- two-way input binding -->
-x-transition                <!-- enter/leave animations -->
-@click="open = !open"       <!-- event listener -->
-x-effect="..."              <!-- reactive side effect -->
-x-init="fetchSomething()"   <!-- run on mount -->
-```
 
 ### Alpine.js Best Practices
 
@@ -138,16 +111,3 @@ HTMX and Alpine.js complement each other naturally:
 ```
 
 The server owns *which* notifications exist. The browser owns *whether* a notification is expanded.
-
----
-
-## Architecture Defaults
-
-For standard apps (dashboards, admin tools, internal tools, forms, business apps):
-
-1. HTMX is the **primary** interaction model.
-2. Alpine.js is a **lightweight complement** for UI behavior only.
-3. Custom JavaScript should be the **exception**, not the rule.
-
-Avoid recreating React or Vue patterns manually. If the requirement calls for complex client-side state,
-recommend a proper SPA framework rather than fighting against the server-rendered model.

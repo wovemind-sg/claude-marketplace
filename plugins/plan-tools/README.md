@@ -40,7 +40,7 @@ These are the team conventions the skills assume. Each one can be changed with t
 | Sub-agents run on the `sonnet` model | `impl-issue`, `impl-issue-lite`, `drain-issues` (model word in the arguments, e.g. `opus`); `finalize-pr` (`--model <name>`); `create-webapp`, `create-app`, `plan-split-implment` and `plan-implement-complete` ask you up front (answer `Auto` to let `/model-picker:pick-model` choose per session, optionally capped); `split-plan` shapes sessions for a model word (`haiku`, `sonnet`, `opus`, `fable`) | see each skill |
 | A finished PR gets a `finalize-pr` commit status, and a UI audit gets a `ui-audit` status | `finalize-pr`, `monitor-pr` | fixed; a branch rule can require `finalize-pr` |
 | A PR whose designer review still fails gets the label `ui-risky` | `finalize-pr` | only runs when `designer_ui_review` is on |
-| New web apps use FastAPI + Jinja2 + HTMX + Alpine.js, deployed to Railway, with OpenRouter `openai/gpt-4o-mini` | `create-webapp` | `--host generic`, `--ai-model <model id>` |
+| New web apps use FastAPI + Jinja2 + HTMX + Alpine.js, deployed to Railway, with OpenRouter `anthropic/claude-haiku-5.5` | `create-webapp` | `--host generic`, `--ai-model <model id>` |
 | New mobile apps use Expo + React Native + expo-router, built and shipped with EAS | `create-app` | fixed |
 | Auto-merge uses an allowed merge method: `plan-implement-complete` prefers squash, `monitor-pr` asks when more than one is allowed | `plan-implement-complete`, `monitor-pr` | the repository's merge settings |
 
@@ -76,7 +76,7 @@ Bootstraps a brand-new FastAPI + Jinja2 + HTMX + Alpine.js web app end to end. G
 Usage:
 
 ```
-/plan-tools:create-webapp [--host railway|generic] [--ai-model <openrouter model id>] [optional one-line app idea]   # defaults railway, openai/gpt-4o-mini
+/plan-tools:create-webapp [--host railway|generic] [--ai-model <openrouter model id>] [optional one-line app idea]   # defaults railway, anthropic/claude-haiku-5.5
 ```
 
 Requires the `fastapi-template` and `htmx-vs-alpine` plugins from this marketplace to be installed; the `capacitor-core` plugin too when mobile apps are wanted.

@@ -37,7 +37,7 @@ The `fastapi-go-migration` skill has its own requirements, listed in its section
 | Default | Change it with |
 |---|---|
 | Deploy to Railway: `Procfile`, `railpack.json`, the `internal/wake` package that retries a sleeping Railway database or Redis, and `./out migrate up` as Railway's pre-deploy command | `--host generic` (then run `./out migrate up` by hand or in your host's release step) |
-| AI calls go to OpenRouter with the model `openai/gpt-4o-mini` | `--ai-model <openrouter model id>` |
+| AI calls go to OpenRouter with the model `anthropic/claude-haiku-5.5` | `--ai-model <openrouter model id>` |
 | Server listens on port 8000 in the main checkout, `8000+N` in each `claude --worktree` checkout | `PORT` in `.env` or the environment, or `make dev PORT=<port>` |
 | `fastapi-go-migration` works on a branch named `go-migration` | `--branch <name>` |
 
@@ -47,7 +47,7 @@ Invoke the skill by asking Claude to scaffold a new Go web app:
 
 ```
 /go-webapp-template:go-webapp-template create a new app called my-app
-/go-webapp-template:go-webapp-template [--host railway|generic] [--ai-model <openrouter model id>]   # defaults railway, openai/gpt-4o-mini
+/go-webapp-template:go-webapp-template [--host railway|generic] [--ai-model <openrouter model id>]   # defaults railway, anthropic/claude-haiku-5.5
 ```
 
 Or just describe what you want:

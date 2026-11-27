@@ -59,7 +59,7 @@ The `Down` section is deliberately empty. Leave it that way.
 
 ## Phase 3 — Mapping plan
 
-Spawn a Plan subagent with: `.planning/inventory.md`, `references/mapping.md`, `references/templates.md`, `references/grown-features.md`, and the instruction to load `go-webapp-template:go-webapp-template`. It writes `.planning/SPEC.md` containing:
+Write `.planning/SPEC.md` (a Plan subagent helps on large repos) from `.planning/inventory.md`, `references/mapping.md`, `references/templates.md`, `references/grown-features.md` and the `go-webapp-template:go-webapp-template` skill, containing:
 
 - the Go module path and the stack slice (no `internal/ai` if no AI, no `internal/cache` if no Redis — `go mod tidy` drops the dependency with the file);
 - the FuncMap list (every custom Jinja filter → Go func) and the `view()` globals list;
@@ -69,7 +69,7 @@ Spawn a Plan subagent with: `.planning/inventory.md`, `references/mapping.md`, `
 - the session list: session 1 is always the Go skeleton; then one session per router group (its db functions → handlers → templates), then one per cross-cutting feature (AI, jobs, email, webhooks, MCP…), then template residue, then gates, then cutover. Each session names its routes, so parity can be checked per session.
 
 Resolve all **ask** items with the user in **one** AskUserQuestion, write the answers into SPEC.md, then:
-- ≤ 3 routers and no grown features → one implementing subagent runs the sessions in order.
+- ≤ 3 routers and no grown features → run the sessions in order (in this session or one subagent).
 - Otherwise → `/plan-tools:split-plan` on SPEC.md, then `/plan-tools:plan-split-implment`. If the `plan-tools` plugin is not installed (`/plan-tools:split-plan` is not in the skill list), tell the user to install it (`/plugin install plan-tools@wovemind`) and wait. Progress lives in `.planning/progress.md` and in the repo itself (which Go files exist, what `--go-routes` reports), so any later session can resume from the diff.
 
 ## Session rules (every implementing session)
@@ -111,7 +111,7 @@ Follow `references/cutover.md` top to bottom: conftest, tests-only `pyproject.to
 - Any **ask** row in `grown-features.md` present in the inventory (numpy/pandas, websockets, i18n, HEIC/WebP encoding, MCP OAuth server, long-lived arq jobs).
 - `app/utils.py` signer differs from the template and the project has live users — confirm the port before touching sessions.
 - `itsdangerous` timed links in flight (email verification, unsubscribe): replicate the format or invalidate.
-- Commit on the branch, and anything that touches the production DB or Railway.
+- Anything that touches the production DB or Railway.
 
 ## Pitfalls that cost the most (details in `pitfalls.md`)
 

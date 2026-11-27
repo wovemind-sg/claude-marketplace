@@ -46,7 +46,7 @@
         {"title": "Starts a fresh branch", "text": "It branches from the latest version of the repository's default branch. It detects that branch's name and never assumes `main`."},
         {"title": "Builds exactly what the issue asks", "text": "No extra features, refactors or files beyond what the issue describes."},
         {"title": "Checks the work, then commits", "text": "Existing tests and build must pass, as applicable to the repository. It commits only complete work, never partial work, with a `Closes #<number>` line in the commit message."},
-        {"title": "Pushes and opens the PR", "text": "The PR has a title and body summarizing the change and carries the `Closes #<number>` line. If you have not already said yes to pushing in this session, it confirms the branch and base and asks first."}
+        {"title": "Pushes and opens the PR", "text": "The PR has a title and body summarizing the change and carries the `Closes #<number>` line. If you have not already said yes to pushing in this session, you are asked once, after the issue passes the size check and before the helper starts."}
       ]}
     ]},
     {"heading": "It stops without pushing if the issue is big or checks fail", "short": "If it stops", "blocks": [

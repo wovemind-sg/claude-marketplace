@@ -1,0 +1,6 @@
+1. Run `python3 plugins/model-picker/skills/check-guide/scripts/guide_hash.py` in full on every run (do not scope it to a diff range). It prints JSON with `status`.
+   - If the command exits 2 or `status` is `error` (for example no network), report the error only. Do not fail and do not change files.
+   - If `status` is `unchanged`, you are done.
+   - If `status` is `changed`, read the file named in `text_file` and `plugins/model-picker/skills/pick-model/references/guide.md`. Compare meaning only: recommendations, task table rows, models, effort levels, prices, defaults, escalation rules. Ignore wording, layout, navigation and related-post changes.
+   - If nothing changed in meaning, run `python3 plugins/model-picker/skills/check-guide/scripts/guide_hash.py --write-hash` and commit `plugins/model-picker/skills/pick-model/references/guide.lock.json` with message `chore: refresh model guide hash`.
+   - If the meaning changed, update `guide.md` so it matches the live guide (keep its structure and the source URL, set the copied date to today), run `python3 plugins/model-picker/skills/check-guide/scripts/guide_hash.py --write-hash`, bump the patch version in `plugins/model-picker/.claude-plugin/plugin.json`, commit all three files with message `fix: update model guide to match Anthropic's latest`, and report each change (old against new).

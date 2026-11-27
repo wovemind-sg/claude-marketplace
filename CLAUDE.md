@@ -90,6 +90,7 @@ for f in \
   plugins/compliance-audit/skills/apply/scripts/parse_cards.py \
   plugins/design-inspiration/skills/mockup/scripts/strip_wrapper.py \
   plugins/help-me-understand/skills/help-me-understand/scripts/build_page.py \
+  plugins/model-picker/skills/check-guide/scripts/guide_hash.py \
   site/build.py; do
   python3 "$f" --selftest || break
 done

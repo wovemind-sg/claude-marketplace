@@ -470,6 +470,23 @@
         "adhd",
         "learning"
       ]
+    },
+    {
+      "name": "model-picker",
+      "source": "./plugins/model-picker",
+      "description": "Recommends which Claude model and effort level to use for a job, using a Haiku subagent fed with Anthropic's model guide, and checks whether that guide has changed.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "workflow",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/model-picker#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
+      "tags": [
+        "model",
+        "effort",
+        "cost"
+      ]
     }
   ]
 }

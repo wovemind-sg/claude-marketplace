@@ -1,0 +1,124 @@
+{
+  "title": "Check the Model Guide",
+  "page_type": "how-to",
+  "gist": {
+    "kind": "chain",
+    "nodes": [
+      {
+        "icon": "file",
+        "label": "Fetch the live guide"
+      },
+      {
+        "icon": "flag",
+        "label": "Compare the hash",
+        "arrow": "fast check"
+      },
+      {
+        "icon": "check-circle",
+        "label": "Unchanged or what changed",
+        "arrow": "compares meaning",
+        "outcome": true
+      }
+    ]
+  },
+  "bottom_line": "Find out whether Anthropic's model guide still matches the stored copy. Unchanged answers instantly. A change reports only differences in meaning.",
+  "sections": [
+    {
+      "heading": "Run it with no arguments",
+      "short": "Run it",
+      "blocks": [
+        {
+          "type": "code",
+          "code": "/model-picker:check-guide",
+          "caption": "It takes no arguments."
+        },
+        {
+          "type": "text",
+          "text": "It needs network access to claude.dev and Python 3."
+        },
+        {
+          "type": "before_after",
+          "before": {
+            "label": "Guide unchanged",
+            "text": "Answer at once, nothing written"
+          },
+          "after": {
+            "label": "Guide changed",
+            "text": "Meaning compared, differences listed"
+          },
+          "caption": "The two ways the command ends."
+        }
+      ]
+    },
+    {
+      "heading": "Three outcomes are possible",
+      "short": "Outcomes",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "What you see",
+          "columns": [
+            "Result",
+            "What it means",
+            "What it writes"
+          ],
+          "rows": [
+            [
+              "Guide unchanged",
+              "The page text hashes to the stored value.",
+              "Nothing."
+            ],
+            [
+              "No meaningful change",
+              "The page changed in wording or layout only.",
+              "The new hash and today's date."
+            ],
+            [
+              "Changes listed",
+              "A recommendation, model, effort level, price or rule changed. Each is shown old against new.",
+              "Nothing. You decide what to update."
+            ],
+            [
+              "Could not fetch",
+              "No network or the page layout broke the check.",
+              "Nothing."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "A hash makes the usual answer fast",
+      "short": "How it works",
+      "blocks": [
+        {
+          "type": "stepper",
+          "steps": [
+            {
+              "title": "Fetches the page",
+              "text": "It reduces the page to its visible text and takes a sha256 hash."
+            },
+            {
+              "title": "Compares with the stored hash",
+              "text": "The hash is kept next to the stored guide copy. Equal means unchanged and it stops."
+            },
+            {
+              "title": "Compares meaning if different",
+              "text": "Wording or navigation can change the hash, so the model compares the live text with the stored guide and ignores anything that does not change a recommendation."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "next_action": {
+    "text": "Type `/model-picker:check-guide`.",
+    "detail": "Run it before you rely on `/model-picker:pick-model` after a long time."
+  },
+  "sources": [
+    {
+      "label": "model-picker on GitHub",
+      "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/model-picker"
+    }
+  ]
+}

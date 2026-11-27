@@ -14,16 +14,14 @@ Read the repo before anything else: manifest/`applicationId`, screens, strings, 
 onboarding flow. The whole point of running inside the repo is that you already know
 what the app does and what the screens are called.
 
-## The one-step rule (most important)
+## One action per message
 
-The user must never be asked to do more than one thing in a single message.
+Give the user one action per message, because a non-technical user loses track of bundled steps.
 
 - Each of your messages ends with exactly one action for the user, in plain language,
   then "Tell me when that's done". Then stop and wait.
 - Verify their step with a command (file exists, ffprobe shows audio, etc.) before
   moving on. Don't trust "done" on its own.
-- Never present a to-do list. No "first… then…". If a phase has five manual steps, that
-  is five messages.
 - No jargon without a one-phrase gloss. Never show commands or code to the user unless
   they ask; run them yourself and report the outcome in a sentence.
 - Do everything you can yourself. Building the app, starting the emulator, writing the
@@ -51,9 +49,7 @@ Scripts in this skill's `scripts/` folder (run with the repo as working director
 `parse_script.py`, `tts.py`, `record_app.sh`, `review.py`, `apply_crops.py`, `split_beats.py`,
 `assemble.py`. Read their docstrings if unsure.
 
-Any credential or setting this skill needs (the ElevenLabs key, or anything added later)
-belongs in `~/.launch-video/`, never in this skill's own directory — a plugin update
-replaces the installed skill folder wholesale, so config stored there would vanish.
+Store config in `~/.launch-video/`, never in the skill folder (plugin updates replace it).
 
 ## Resuming
 
@@ -139,15 +135,13 @@ it's split into beats, so a re-record never wastes a split.
    - a note → do what it asks in that beat's flow (a different tap, a longer pause to read
      something, a different screen, etc.).
    - a trim window that lines up with an `extendedWaitUntil` pseudo-sleep (or a slow/
-     redundant step) in that beat's flow → shorten or remove it there. This is the
-     root-cause fix: the footage is only slow because the flow told it to wait, so make the
-     flow not wait as long.
+     redundant step) in that beat's flow → shorten or remove it there.
    - a trim window that *doesn't* line up with anything the flow controls — real app/OS
      animation or network latency (`waitForAnimationToEnd` waiting out a real transition,
      for example) — there's nothing to shorten in the flow, so shortening the footage means
      cutting it. Run `python3 <skill>/scripts/apply_crops.py video` instead; it removes
      exactly that window from `video/recordings/full.mp4` and shifts `video/marks.json` to
-     match. Safe at this stage: no voice-over or captions exist yet to fall out of sync. If
+     match. If
      unsure which case you're in, `ffmpeg -ss <t> -frames:v 1 out.png` a frame or two around
      the window to see what's actually happening on screen before deciding.
    If you edited any flow, re-run `record_app.sh video` for a fresh take (this also

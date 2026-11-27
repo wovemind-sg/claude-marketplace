@@ -14,15 +14,13 @@ a time.
 Read the repo before anything else: routes, templates/pages, README, how the app is
 started locally, onboarding flow.
 
-## The one-step rule (most important)
+## One action per message
 
-The user must never be asked to do more than one thing in a single message.
+Give the user one action per message, because a non-technical user loses track of bundled steps.
 
 - Each of your messages ends with exactly one action for the user, in plain language,
   then "Tell me when that's done". Then stop and wait.
 - Verify their step with a command before moving on. Don't trust "done" on its own.
-- Never present a to-do list. No "first… then…". If a phase has several manual steps,
-  that is several messages.
 - No jargon without a one-phrase gloss. Never show commands or code to the user unless
   they ask; run them yourself and report the outcome in a sentence.
 - Do everything you can yourself. Starting the app locally, writing the flows,

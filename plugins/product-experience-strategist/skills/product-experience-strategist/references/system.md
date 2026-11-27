@@ -10,22 +10,24 @@ product/UX judgment, and never let it block a focused request that already has a
 
 ## Roles
 
+Spawn a worker only when the task needs separation (for example, QA separate from implementation). These are the roles available.
+
 | Role | Executor | Activated by | Boundary |
 | --- | --- | --- | --- |
-| Coordinator | The main session (Claude Code or equivalent) | The user | Routes stages, reads/writes memory, enforces gates and the cycle cap, consolidates results. Only agent that advances stage. |
+| Coordinator | The main session (Claude Code or equivalent) | The user | Routes stages, reads/writes memory, enforces gates, consolidates results. Only agent that advances stage. |
 | Business Development | Subagent, spun up only when opportunity/audience/pricing is unvalidated | Coordinator | Sourced one-pager: go/revise/stop. No design or code edits. |
 | Product Design | Subagent, one integrated UX+UI role | Coordinator | Research, flow, creative direction, design system, critique. Owns the design gates. |
 | Product Audit / Integration | Subagent, retrofit mode only | Coordinator | Read-only inventory first; later, conflict-mapping against the approved change. |
 | Implementation | Subagent | Coordinator, after the relevant gate | Applies only the approved job to the allowed files. One writer per shared scope. |
 | QA | Subagent, separate from Implementation | Coordinator, after a render/build exists | Compares actual output to approved evidence; returns findings, never edits the product. |
-| Independent reviewer (Codex) | Bounded local `codex exec`, read-only | Coordinator, for meaningful checkpoints only | Second opinion on supplied evidence. Cannot edit product files. Does not imply access to any other chat/session. |
+| Independent reviewer (Codex) | Bounded local `codex exec`, read-only | Coordinator, only when the user asks for a second opinion | Second opinion on supplied evidence. Cannot edit product files. Does not imply access to any other chat/session. |
 
 Workers report to the coordinator; they never form a chain of coordinators, and no worker's success
 counts as approval — only the user approves a gate.
 
 ## Interaction rule
 
-Ask one concise material product/taste question at a time, in Hebrew, with a recommendation, then
+Ask one concise material product/taste question at a time, in the user's language, with a recommendation, then
 wait. Give implementation instructions in English. Never repeat an already-answered question or
 re-open a decision already approved.
 
@@ -33,11 +35,10 @@ re-open a decision already approved.
 
 | Gate | Evidence required | Unlocks |
 | --- | --- | --- |
-| Business direction (if BD ran) | Sourced one-pager | Product/UX work using that decision |
-| UX flow + creative direction | UX-flow one-pager + one recommended direction | North Star design |
-| North Star | One representative screen (value, hierarchy, interaction, visual character) | Extending across the flow |
-| Complete flow + design system | Screens, states, final copy, component rules, responsive behavior | Implementation |
-| Scope/decision change | Concise note on the affected decision | Only the newly authorized scope |
+| Flow + direction | UX-flow one-pager + one recommended direction (plus a sourced business one-pager if BD ran) | Design work |
+| Design before implementation | Screens, states, final copy, component rules, responsive behavior | Implementation |
+
+A scope or decision change needs a concise note on the affected decision and unlocks only the newly authorized scope.
 
 Minimum artifacts before the first gate: a UX-flow one-pager (goal, user, journey, ordered screens,
 each screen's purpose/actions, essential branches; a diagram only for a non-obvious branch). No
@@ -66,8 +67,7 @@ fixed bundle.
 ## Job / result protocol
 
 Coordinator issues a job with: job ID, project ID, scope, approved decision/reference versions,
-role, allowed writes/tools, inputs, required outputs, acceptance checks, attempt cap, stop
-conditions.
+role, allowed writes/tools, inputs, required outputs, acceptance checks, stop conditions.
 
 Worker returns: job ID, tested/input revision, status (`pass` / `needs_fix` / `blocked` /
 `needs_approval`), evidence paths, findings by severity, changed files, tests run/not run, and a
@@ -86,17 +86,12 @@ own "pass" is not approval and workers never edit approval evidence or baselines
 - If evidence or tooling is missing: report **blocked/unverified**, never an invented pass, never a
   manufactured baseline.
 
-## Correction loop and cap
-
-Up to **3 meaningful cycles per work item**, counted centrally by the coordinator in the run-state
-record — not per worker, not per session. One cycle = a meaningful implementation/correction
-followed by a validation pass. A renamed job, a resumed session, or a replacement worker does not
-reset the counter. Stop early on success; don't spend all three because three are available.
+## Stopping
 
 Stop (and escalate to the user) on: success, a material approval need, an auth/permission failure,
-a configured cost/time limit, persistent no-progress, or the cap. Preserve findings and a resume
-point — the next entry should be able to continue from run state alone, without re-deriving what
-already happened.
+a configured cost/time limit, or persistent no-progress. Preserve findings and a resume point — the
+next entry should be able to continue from run state alone, without re-deriving what already
+happened.
 
 ## Agent dispatch discipline
 
@@ -118,7 +113,7 @@ run; don't turn it into a standing job on your own judgment.
 A bounded `codex exec` call is read-only by default and reaches only what's explicitly passed to
 it in that call — never assume it shares context with any other Codex conversation, and never let
 it write product files or delegate work back to Claude. If it isn't installed/authenticated, or a
-required check calls for it and it didn't run, report that plainly rather than mislabeling an
+user asked for it and it didn't run, report that plainly rather than mislabeling an
 internal review as a Codex review.
 
 ## Versioning

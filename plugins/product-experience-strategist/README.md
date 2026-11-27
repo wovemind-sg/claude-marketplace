@@ -13,7 +13,7 @@ accessibility, and implementation reviews.
 
 For multi-session or multi-agent work (a new flow, a redesign, an implementation handoff), the
 skill also loads `references/system.md` — the process layer: roles, approval gates, persistent
-memory, job/result protocol, QA routes, and the correction-loop cap.
+memory, job/result protocol, QA routes, and when to stop.
 
 ## When it activates
 

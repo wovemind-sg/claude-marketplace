@@ -26,6 +26,7 @@ Check everything the copies in play need before any agent starts, so a missing t
 | chromium, webkit, firefox | `playwright-cli --version`; webkit and firefox also need `playwright-cli install-browser <name>` once (run it if the first `open --browser <name>` fails) |
 | ios | macOS with Xcode: `xcrun simctl list devices available` lists an iPhone (and an iPad when the session sizes include tablet) |
 | android | `adb version` and `emulator -list-avds` list a phone (and a tablet AVD when needed) |
+| ios, with landscape in its sizes | Accessibility permission for the terminal (rotation sends a keystroke): `osascript -e 'tell application "System Events" to UI elements enabled'` prints `true`; if not, the user grants it in System Settings > Privacy & Security > Accessibility |
 | any native recording | `ffmpeg -version` (optional: without it iOS recordings stay `.mov`) |
 
 - **Credentials:** `launch.test_account` (or `.pre-deploy-tests/CLAUDE.md`) names the environment variables that hold test credentials. Check each is set (`[ -n "$VAR" ]`); never print a value.
@@ -44,7 +45,7 @@ A lane is one test agent running at a time.
   - Count the copies in play, each `ios` or `android` copy counting as two (a simulator or emulator is heavy). Suggest `max(1, min(that count, floor(cores / 2), floor((free GB - 4) / 4)))`.
   - Ask (AskUserQuestion) with the suggestion first, marked (Recommended), showing the cores and free RAM it came from; the user can type another number.
 
-A simulator or emulator takes two lanes while it runs.
+A simulator or emulator takes two lanes while it runs. iOS simulator copies of one session run one after another, never side by side, and each keeps one simulator booted at a time (phone, then tablet): iOS rotation sends a keystroke to whichever Simulator window is in front, so two booted simulators can rotate the wrong device. Android emulator and browser copies are unaffected.
 
 ## 4. Local target: one worktree, app and database per copy
 
@@ -63,7 +64,7 @@ With fewer lanes than copies, keep at most the lane count of apps running: start
 
 ## 5. Run each session
 
-For each session to run, in order: set it to `active` in `progress.md`, then spawn one subagent per platform copy the session lists (left-out copies excepted), side by side up to the lane count; the rest wait for a free lane. Use the session's `Model` as the Agent `model` and its `Effort` as the `effort`. Print one line per agent first: `Session NN <copy>: <model> <effort>`.
+For each session to run, in order: set it to `active` in `progress.md`, then spawn one subagent per platform copy the session lists (left-out copies excepted), side by side up to the lane count (iOS simulator copies one after another, see step 3); the rest wait for a free lane. Use the session's `Model` as the Agent `model` and its `Effort` as the `effort`. Print one line per agent first: `Session NN <copy>: <model> <effort>`.
 
 The subagent prompt (fill in the absolute paths; `${CLAUDE_SKILL_DIR}` is this skill's folder):
 

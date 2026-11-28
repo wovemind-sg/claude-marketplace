@@ -178,7 +178,7 @@ For a single capture of a running app, outside a base/head audit (for example a 
    playwright-cli -s=shot open "$URL"                    # Chromium; add --browser webkit for Safari's engine
    playwright-cli -s=shot resize 390 844
    ```
-3. Phone or tablet in Chromium: emulate the device after every `resize` (WebKit: skip this, the capture is viewport-only).
+3. Phone or tablet in Chromium: emulate the device after every `resize`, with the width and height you resized to (swapped for landscape; tablet: `deviceScaleFactor` 2) (WebKit: skip this, the capture is viewport-only).
    ```bash
    playwright-cli -s=shot run-code "async page => {
      const cdp = await page.context().newCDPSession(page);

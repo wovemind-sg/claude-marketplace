@@ -1,0 +1,170 @@
+{
+  "title": "Run Pre-deploy Tests",
+  "page_type": "how-to",
+  "gist": {
+    "kind": "chain",
+    "nodes": [
+      {
+        "icon": "check",
+        "label": "Preflight and lanes"
+      },
+      {
+        "icon": "bug",
+        "label": "Agents test and record",
+        "arrow": "side by side"
+      },
+      {
+        "icon": "check-circle",
+        "label": "Bug review page",
+        "arrow": "you choose",
+        "outcome": true
+      }
+    ]
+  },
+  "bottom_line": "Run it after the plan. Test agents record every bug with steps, captures and a fix prompt, then you choose Fix or Skip per bug.",
+  "sections": [
+    {
+      "heading": "Run it after the plan, in the app's repository",
+      "short": "Run it",
+      "blocks": [
+        {
+          "type": "code",
+          "code": "/pre-deploy-tests:run",
+          "caption": "No arguments. It reads the sessions that /pre-deploy-tests:plan wrote in .pre-deploy-tests/."
+        },
+        {
+          "type": "text",
+          "text": "It changes no app code and commits nothing: test agents only test and record. If the run stops, run it again; it resumes at the first unfinished session."
+        },
+        {
+          "type": "table",
+          "title": "What each platform copy needs",
+          "columns": [
+            "Copy",
+            "Needs"
+          ],
+          "rows": [
+            [
+              "Chromium, WebKit, Firefox",
+              "`playwright-cli`; WebKit and Firefox are installed once on first use"
+            ],
+            [
+              "iOS",
+              "macOS with Xcode and an iPhone simulator (an iPad one for tablet sizes)"
+            ],
+            [
+              "Android",
+              "`adb` and an emulator image (a tablet one for tablet sizes)"
+            ],
+            [
+              "Native recordings",
+              "`ffmpeg`, optional: without it iOS clips stay `.mov`"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Fix what preflight finds, or continue without it",
+      "short": "Preflight",
+      "blocks": [
+        {
+          "type": "chain",
+          "nodes": [
+            {
+              "icon": "search",
+              "label": "Tools and credentials checked"
+            },
+            {
+              "icon": "question",
+              "label": "Missing ones listed",
+              "arrow": "you decide",
+              "note": "Fix them and continue, or continue without them."
+            },
+            {
+              "icon": "warning",
+              "label": "Session marked blocked",
+              "arrow": "if left out",
+              "note": "The reason is kept and the run goes on."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "Test credentials come from the environment variables the plan named. Their values are never printed or saved."
+        }
+      ]
+    },
+    {
+      "heading": "Choose how many agents run at once",
+      "short": "Lanes",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Local default branch",
+              "state": "info",
+              "text": "Each copy gets its own worktree, app and database. You get a suggested number of lanes from the machine's cores and free RAM, and can type another."
+            },
+            {
+              "title": "Integration environment",
+              "state": "info",
+              "text": "One agent at a time, so agents never change each other's data. No question asked."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "The suggestion is the smallest of: the copies in play (a simulator or emulator counts as two), half the cores, and free RAM minus 4 GB divided by 4 GB."
+        }
+      ]
+    },
+    {
+      "heading": "Review the bugs and mark Fix or Skip",
+      "short": "Review",
+      "blocks": [
+        {
+          "type": "list",
+          "title": "Each bug card shows",
+          "items": [
+            "Title, severity (Blocker, Major, Minor, Cosmetic), area, and every place it occurs.",
+            "What it means for a user, expected and actual result, steps, and how often it reproduced out of 3.",
+            "A screenshot for a static bug, a recording for a bug with movement, and the reproduction script.",
+            "The suspected cause and a ready-to-use fix prompt."
+          ]
+        },
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Not ready",
+              "state": "bad",
+              "text": "Any Blocker or Major bug, or any planned session that could not be tested."
+            },
+            {
+              "title": "Ready",
+              "state": "good",
+              "text": "Every session complete and no Blocker or Major bug."
+            }
+          ],
+          "caption": "The verdict at the top of the page."
+        },
+        {
+          "type": "text",
+          "text": "The page is a private Artifact; share it from claude.ai. Choices are shared with everyone who opens it, and only editors can change them. Bug files stay in `.pre-deploy-tests/bugs/`."
+        }
+      ]
+    }
+  ],
+  "next_action": {
+    "text": "Run `/pre-deploy-tests:run`, then mark each bug Fix or Skip on the page.",
+    "detail": "Bugs marked Fix are what /pre-deploy-tests:fix works through."
+  },
+  "sources": [
+    {
+      "label": "pre-deploy-tests on GitHub",
+      "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/pre-deploy-tests"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # pre-deploy-tests
 
-Tests an app before it is deployed. The plan skill writes a test plan for the app's logic and its UI on every platform, screen size, orientation and browser it supports, and splits it into test sessions, each with the model that suits it.
+Tests an app before it is deployed. The plan skill writes a test plan for the app's logic and its UI on every platform, screen size, orientation and browser it supports, and splits it into test sessions, each with the model that suits it. The run skill executes the sessions, records every bug without fixing it, and publishes a bug review page.
 
 ## Install
 
@@ -14,6 +14,7 @@ claude plugin marketplace add wovemind-sg/claude-marketplace
 | Command | What it does |
 |---|---|
 | `/pre-deploy-tests:plan [--full]` | Detects the app type (web, Capacitor, native iOS / Android), confirms it with you along with device sizes, orientations, browsers, the test target and the highest model, then writes `.pre-deploy-tests/SPEC.md` and splits it into test sessions with `/plan-tools:split-plan`, each with a model from `/model-picker:pick-model`. Uses `user-flows.md` when present. A later run plans only what changed since the last plan; `--full` plans everything again. Commits only `.pre-deploy-tests/record.json` (after asking) and publishes a `pre-deploy-tests` commit status. |
+| `/pre-deploy-tests:run` | Runs the sessions in order, one test agent per platform copy (Chromium, WebKit, Firefox, iOS Simulator, Android emulator) side by side, each on its own worktree, app and database; on an integration environment, one at a time. Checks tools and credentials first and suggests a lane count from the machine's cores and free RAM. Agents change no code: each bug is reproduced 3 times and recorded with steps, a screenshot or recording, the reproduction script and a fix prompt in `.pre-deploy-tests/bugs/`. Publishes a private bug review page with a ready / not-ready verdict and a Fix / Skip choice per bug. Resumes an interrupted run. |
 
 ## Example
 
@@ -25,10 +26,18 @@ claude plugin marketplace add wovemind-sg/claude-marketplace
 2. Read the coverage summary (areas, platforms, sizes, sessions with their models) and say go.
 3. The sessions are in `.pre-deploy-tests/sessions/` and the record is committed.
 
+```
+/pre-deploy-tests:run
+```
+
+4. Fix what the preflight lists, or continue without it; accept the suggested lane count.
+5. Open the bug review page, read the verdict and mark each bug Fix or Skip.
+
 ## Requirements
 
 - Plugins `plan-tools`, `model-picker` and `user-flows` (installed with this plugin).
 - `git`, and `gh` signed in for the commit status (optional: a failed status is reported, not fatal).
+- For the run, per platform copy: `playwright-cli` (Chromium, WebKit, Firefox); macOS with Xcode (iOS Simulator); the Android SDK with `adb` and an emulator (Android); `ffmpeg` optional, to convert iOS recordings. The run lists what is missing before it starts.
 
 ## Environment variables and settings
 

@@ -1,0 +1,12 @@
+{
+  "name": "pre-deploy-tests",
+  "description": "Pre-deployment testing for web, Capacitor and native iOS/Android apps: plans the tests of the app's logic and UI (every screen size, orientation and browser it supports) and splits them into sessions, each with its own model.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Wovemind"
+  },
+  "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/pre-deploy-tests#readme",
+  "repository": "https://github.com/wovemind-sg/claude-marketplace",
+  "license": "MIT",
+  "dependencies": ["plan-tools", "model-picker", "user-flows"]
+}

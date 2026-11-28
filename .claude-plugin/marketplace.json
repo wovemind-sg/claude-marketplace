@@ -487,6 +487,24 @@
         "effort",
         "cost"
       ]
+    },
+    {
+      "name": "pre-deploy-tests",
+      "source": "./plugins/pre-deploy-tests",
+      "description": "Plans pre-deployment tests of a web, Capacitor or native iOS/Android app's logic and UI (every screen size, orientation and browser it supports) and splits them into sessions, each with its own model.",
+      "author": {
+        "name": "Wovemind"
+      },
+      "license": "MIT",
+      "category": "workflow",
+      "homepage": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/pre-deploy-tests#readme",
+      "repository": "https://github.com/wovemind-sg/claude-marketplace",
+      "tags": [
+        "testing",
+        "qa",
+        "deployment",
+        "mobile"
+      ]
     }
   ]
 }

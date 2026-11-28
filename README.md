@@ -36,6 +36,7 @@ Our zen:
 | [token-utilization](plugins/token-utilization) | stops the agent when session or weekly usage reaches a limit you name in the prompt (`until /session-token-utilization gets to 90%`), at once or after a short wrap-up that saves handoff notes. | `claude plugin install token-utilization@wovemind` |
 | [help-me-understand](plugins/help-me-understand) | reorganises a long or tangled answer, file, web page or artifact into a published page that holds the same information in a form that is easier to take in: bottom line first, one idea per stop, visuals and plain English. | `claude plugin install help-me-understand@wovemind` |
 | [model-picker](plugins/model-picker) | recommends a Claude model and effort level for a job from Anthropic's model guide, and checks the guide for changes. | `claude plugin install model-picker@wovemind` |
+| [pre-deploy-tests](plugins/pre-deploy-tests) | plans the tests to run before a deploy: the app's logic and UI on every screen size, orientation and browser it supports, split into sessions with a model each. | `claude plugin install pre-deploy-tests@wovemind` |
 
 ### UI quality
 

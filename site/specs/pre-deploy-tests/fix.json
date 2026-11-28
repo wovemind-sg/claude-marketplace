@@ -1,0 +1,136 @@
+{
+  "title": "Fix Pre-deploy Bugs",
+  "page_type": "how-to",
+  "gist": {
+    "kind": "chain",
+    "nodes": [
+      {
+        "icon": "check",
+        "label": "Bugs marked Fix"
+      },
+      {
+        "icon": "bug",
+        "label": "One subagent per bug",
+        "arrow": "in series"
+      },
+      {
+        "icon": "check-circle",
+        "label": "Merged PR per bug",
+        "arrow": "auto-merge",
+        "outcome": true
+      }
+    ]
+  },
+  "bottom_line": "Run it after you mark bugs Fix or Skip on the bug review page. Each bug marked Fix becomes its own merged pull request.",
+  "sections": [
+    {
+      "heading": "Run it after choosing Fix or Skip on the page",
+      "short": "Run it",
+      "blocks": [
+        {
+          "type": "code",
+          "code": "/pre-deploy-tests:fix [artifact url]",
+          "caption": "With no URL it uses the page from the last /pre-deploy-tests:run in this repository."
+        },
+        {
+          "type": "text",
+          "text": "It needs the `plan-tools` and `model-picker` plugins, which install with this one, `gh` signed in, and auto-merge allowed in the repository. It commits, pushes, opens pull requests and enables auto-merge without asking again."
+        },
+        {
+          "type": "table",
+          "title": "What it asks before starting",
+          "columns": [
+            "Question",
+            "Default"
+          ],
+          "rows": [
+            [
+              "Fix the bugs nobody marked Fix or Skip?",
+              "Skip them"
+            ],
+            [
+              "Highest model a fix may use (asked every run)",
+              "Opus"
+            ],
+            [
+              "How to start the app locally (only after a run on an integration environment, since a fix is proven on a local app)",
+              "No default: you give the commands once"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Each bug becomes one pull request",
+      "short": "Per bug",
+      "blocks": [
+        {
+          "type": "chain",
+          "nodes": [
+            {
+              "icon": "search",
+              "label": "Reproduce",
+              "note": "From the bug's steps or its reproduction script."
+            },
+            {
+              "icon": "code",
+              "label": "Fix and re-check",
+              "arrow": "if it reproduces",
+              "note": "The same reproduction must now give the expected result. UI bugs get an \"after\" capture."
+            },
+            {
+              "icon": "check-circle",
+              "label": "PR merged",
+              "arrow": "/plan-tools:finalize-pr",
+              "note": "Squash auto-merge, watched by /plan-tools:monitor-pr."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "Bugs go by severity, Blocker first, then by number. The next bug starts only after the previous PR merges, so every fix builds on the ones before it."
+        }
+      ]
+    },
+    {
+      "heading": "Follow progress on the bug review page",
+      "short": "Progress",
+      "blocks": [
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Fixed",
+              "state": "good",
+              "text": "The card shows the PR link and the \"after\" capture next to the \"before\" one."
+            },
+            {
+              "title": "Could not reproduce",
+              "state": "info",
+              "text": "No code changed. The card says what was tried."
+            },
+            {
+              "title": "Needs attention",
+              "state": "bad",
+              "text": "Checks failed three times, auto-merge is off, or the PR waits on a review. The card says why; the run goes on to the next bug."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "Run it again to retry bugs that could not be reproduced or need attention. Bugs marked Skip are never touched."
+        }
+      ]
+    }
+  ],
+  "next_action": {
+    "text": "Mark each bug Fix or Skip on the page, then run `/pre-deploy-tests:fix`.",
+    "detail": "The final report lists each fixed bug with its PR, and the ones not reproduced or needing attention."
+  },
+  "sources": [
+    {
+      "label": "pre-deploy-tests on GitHub",
+      "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/pre-deploy-tests"
+    }
+  ]
+}

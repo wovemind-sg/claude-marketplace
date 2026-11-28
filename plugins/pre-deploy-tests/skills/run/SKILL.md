@@ -106,7 +106,7 @@ Wait for every agent of the session before step 6. An agent that ends with no `r
    ```
 
    At most 255 files go in one publish: above that, publish the rest in further calls to the returned `url`, each with the same `file_path`. The page title is `<project> Pre-deploy Tests` (the template's `<title>`); the plan and fix skills find the page by that title and its `data-repo`, so keep both.
-5. **Published before in this run** (`.pre-deploy-tests/page.json` exists, for example after retrying blocked sessions): run Artifact `action: "list"`, `scope: "files"` with its `url` first, then publish to that `url`, so Fix / Skip choices already made stay. A new plan archives `page.json`, so the next plan's run gets a new page and old choices never land on new bug numbers.
+5. **Published before in this run** (`.pre-deploy-tests/page.json` exists, for example after retrying blocked sessions): run Artifact `action: "list_files"` with its `url` first, then publish to that `url`, so Fix / Skip choices already made stay. A new plan archives `page.json`, so the next plan's run gets a new page and old choices never land on new bug numbers.
 6. Write `.pre-deploy-tests/page.json`: `{"url": "<artifact url>", "published_at": "<YYYY-MM-DD>", "verdict": "Ready|Not ready", "reasons": [...]}`.
 
 Shared state on the page (the fix skill reads and writes it with Artifact `read_db` / `write_db`):

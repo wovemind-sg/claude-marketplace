@@ -164,6 +164,9 @@ def safe_name(kind, n):
     return n
 
 
+BROWSERS = ("chromium", "chrome", "msedge", "firefox", "webkit")
+
+
 def variants(config):
     """[(variant name, base viewport name, viewport info)]: each viewport x config orientations x web.browsers.
     Name <viewport>[-landscape][-<browser>]; defaults (portrait, chromium) add no suffix, so old configs keep their paths.
@@ -172,7 +175,10 @@ def variants(config):
     bad = sorted(set(orients) - {"portrait", "landscape"})
     if bad:
         raise ValueError(f"orientations {json.dumps(bad)}: only \"portrait\" and \"landscape\"")
-    browsers = [safe_name("browser", b) for b in (config.get("web") or {}).get("browsers") or ["chromium"]]
+    browsers = (config.get("web") or {}).get("browsers") or ["chromium"]
+    badb = sorted({json.dumps(b) for b in browsers} - {json.dumps(b) for b in BROWSERS})
+    if badb:  # playwright-cli silently falls back to chromium for an unknown --browser
+        raise ValueError(f"web.browsers [{', '.join(badb)}]: only {', '.join(BROWSERS)}")
     out = []
     for vname, v in config["viewports"].items():
         for o in orients:
@@ -467,7 +473,7 @@ def selftest():
         # defaults: explicit portrait + chromium plans exactly what an old config plans
         assert build_plan(dict(config, orientations=["portrait"], web={"browsers": ["chromium"]}), manifest, sides, w,
                           themes="light+dark") == build_plan(config, manifest, sides, w, themes="light+dark")
-        for bad in ({"orientations": ["sideways"]}, {"web": {"browsers": ["../x"]}}):
+        for bad in ({"orientations": ["sideways"]}, {"web": {"browsers": ["../x"]}}, {"web": {"browsers": ["firefoxx"]}}):
             try:
                 build_plan(dict(config, **bad), manifest, sides, w)
                 raise AssertionError(f"bad variant accepted: {bad}")

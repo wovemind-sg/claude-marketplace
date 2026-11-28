@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Capture every web screen/state in one pass: one playwright-cli session per side x viewport x theme, in parallel.
+"""Capture every web screen/state in one pass: one playwright-cli session per side x viewport variant x theme, in parallel.
+Variants: each viewport x config `orientations` x `web.browsers`, named <viewport>[-landscape][-<browser>] (see variants()).
 
 Each session runs one `run-code` call that loops over its jobs: fresh goto of the route, dark setup, freeze CSS,
 fonts and network idle, steps, full-page screenshot (the routine in references/web.md). Writes
@@ -147,9 +148,11 @@ def step_error(s):
             + ", ".join(f'{{"{k}": ...}}' for k in SINGLE_STEPS) + ', {"fill": selector, "value": text}')
 
 
-def viewport_info(v):
-    emu = any(k in v for k in EMULATION_KEYS)
-    return {"width": v["width"], "height": v["height"], "emulate": emu, "dpr": v.get("device_scale_factor", 1),
+def viewport_info(v, landscape=False, browser="chromium"):
+    # CDP emulation is Chromium-only: other engines get the viewport size alone
+    emu = browser in ("chromium", "chrome", "msedge") and any(k in v for k in EMULATION_KEYS)
+    w, h = (v["height"], v["width"]) if landscape else (v["width"], v["height"])
+    return {"width": w, "height": h, "emulate": emu, "browser": browser, "dpr": v.get("device_scale_factor", 1),
             "mobile": bool(v.get("is_mobile")), "touch": bool(v.get("has_touch")),
             "ua": v.get("user_agent") or (IPHONE_UA if v.get("is_mobile") else None)}
 
@@ -161,8 +164,36 @@ def safe_name(kind, n):
     return n
 
 
+BROWSERS = ("chromium", "chrome", "msedge", "firefox", "webkit")
+
+
+def variants(config):
+    """[(variant name, base viewport name, viewport info)]: each viewport x config orientations x web.browsers.
+    Name <viewport>[-landscape][-<browser>]; defaults (portrait, chromium) add no suffix, so old configs keep their paths.
+    Landscape swaps width and height, only for a viewport taller than wide (desktop already is landscape)."""
+    orients = config.get("orientations") or ["portrait"]
+    bad = sorted(set(orients) - {"portrait", "landscape"})
+    if bad:
+        raise ValueError(f"orientations {json.dumps(bad)}: only \"portrait\" and \"landscape\"")
+    browsers = (config.get("web") or {}).get("browsers") or ["chromium"]
+    badb = sorted({json.dumps(b) for b in browsers} - {json.dumps(b) for b in BROWSERS})
+    if badb:  # playwright-cli silently falls back to chromium for an unknown --browser
+        raise ValueError(f"web.browsers [{', '.join(badb)}]: only {', '.join(BROWSERS)}")
+    out = []
+    for vname, v in config["viewports"].items():
+        for o in orients:
+            land = o == "landscape"
+            if land and v["width"] >= v["height"]:
+                continue
+            for b in browsers:
+                name = vname + ("-landscape" if land else "") + ("" if b == "chromium" else f"-{b}")
+                out.append((name, vname, viewport_info(v, land, b)))
+    return out
+
+
 def build_plan(config, manifest, sides, work, screens=None, themes="light", only=None):
-    """Sessions {name: {side, base, viewport, viewport_name, dark, jobs}}; job key = <screen>/<viewport>/<state>[--dark]."""
+    """Sessions {name: {side, base, viewport, viewport_name, dark, jobs}}; job key = <screen>/<variant>/<state>[--dark].
+    viewport_name is the variant (mobile-landscape-webkit); a state's `viewports` limit names the base viewport."""
     cfg_screens = config.get("screens", [])
     for s in cfg_screens:
         safe_name("screen", s["name"])
@@ -182,8 +213,9 @@ def build_plan(config, manifest, sides, work, screens=None, themes="light", only
     dark_cfg = config.get("dark_mode") if isinstance(config.get("dark_mode"), dict) else None
     want_dark = dark_cfg is not None and themes == "light+dark"
     sessions = {}
+    vars_ = variants(config)
     for side, base in sides:
-        for vname, v in config["viewports"].items():
+        for vname, base_v, vinfo in vars_:
             for dark in ([False, True] if want_dark else [False]):
                 jobs = []
                 for s in selected:
@@ -193,7 +225,7 @@ def build_plan(config, manifest, sides, work, screens=None, themes="light", only
                     rec = recipes.get(s["name"], {})
                     for name in list(states) + [n for n in rec if n not in states]:
                         st = states.get(name, {})
-                        if st.get("viewports") and vname not in st["viewports"]:
+                        if st.get("viewports") and base_v not in st["viewports"]:
                             continue
                         if dark and "dark" not in st.get("themes", ["light", "dark"]):
                             continue
@@ -214,7 +246,7 @@ def build_plan(config, manifest, sides, work, screens=None, themes="light", only
                 if jobs:
                     sessions[f"{side}-{vname}" + ("-dark" if dark else "")] = {
                         "side": side, "base": base.rstrip("/"), "viewport_name": vname,
-                        "viewport": viewport_info(v), "dark": dark_cfg if dark else None, "jobs": jobs}
+                        "viewport": vinfo, "dark": dark_cfg if dark else None, "jobs": jobs}
     return sessions
 
 
@@ -336,7 +368,8 @@ def run_session(work, name, sess, storage_state):
     for j in jobs:
         os.makedirs(os.path.dirname(j["out"]), exist_ok=True)
     try:
-        cli(work, name, "open")
+        b = sess["viewport"].get("browser", "chromium")
+        cli(work, name, "open", *([] if b == "chromium" else ["--browser", b]))
         if storage_state:
             cli(work, name, "state-load", storage_state)
         cli(work, name, "resize", str(sess["viewport"]["width"]), str(sess["viewport"]["height"]))
@@ -422,6 +455,30 @@ def selftest():
         assert redirect_target("http://h:1/schedule.html?token=abc", "old", routes) == "sched"
         assert redirect_target("http://h:1/schedule.html", "old", routes) is None
         assert redirect_target("http://h:1/old.html", "old", dict(routes, alias="/old.html")) is None  # shared route
+        # orientations x browsers: suffixed variants; landscape swaps the size (only for viewports taller than wide);
+        # a state's viewports limit names the base viewport and covers its variants
+        vb = build_plan(dict(config, orientations=["portrait", "landscape"], web={"browsers": ["chromium", "webkit"]}),
+                        manifest, sides[:1], w)
+        assert sorted(vb) == sorted(["head-desktop", "head-desktop-webkit", "head-mobile", "head-mobile-webkit",
+                                     "head-mobile-landscape", "head-mobile-landscape-webkit"]), sorted(vb)
+        ml = vb["head-mobile-landscape"]
+        assert (ml["viewport"]["width"], ml["viewport"]["height"]) == (844, 390) and ml["viewport"]["emulate"]
+        assert ml["jobs"][0]["out"] == os.path.join(w, "head/home/mobile-landscape/default.png")
+        assert ml["jobs"][0]["key"] == "home/mobile-landscape/default"
+        mw = vb["head-mobile-webkit"]["viewport"]
+        assert mw["browser"] == "webkit" and not mw["emulate"] and mw["width"] == 390  # viewport-only
+        dk = [j["key"] for j in vb["head-desktop-webkit"]["jobs"]]
+        assert "home/desktop-webkit/menu" in dk and not any("menu" in j["key"] for j in ml["jobs"]), dk
+        assert vb["head-desktop"]["viewport"] == s["head-desktop"]["viewport"] | {"browser": "chromium"}
+        # defaults: explicit portrait + chromium plans exactly what an old config plans
+        assert build_plan(dict(config, orientations=["portrait"], web={"browsers": ["chromium"]}), manifest, sides, w,
+                          themes="light+dark") == build_plan(config, manifest, sides, w, themes="light+dark")
+        for bad in ({"orientations": ["sideways"]}, {"web": {"browsers": ["../x"]}}, {"web": {"browsers": ["firefoxx"]}}):
+            try:
+                build_plan(dict(config, **bad), manifest, sides, w)
+                raise AssertionError(f"bad variant accepted: {bad}")
+            except ValueError:
+                pass
         bare = build_plan({"viewports": {"d": {"width": 9, "height": 9}}, "screens": [{"name": "x", "route": "/x"}]},
                           {}, sides[:1], w)
         assert [j["key"] for j in bare["head-d"]["jobs"]] == ["x/d/default"]  # no states: default only

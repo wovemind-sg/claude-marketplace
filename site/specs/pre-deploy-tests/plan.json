@@ -1,0 +1,221 @@
+{
+  "title": "Plan Pre-deploy Tests",
+  "page_type": "how-to",
+  "gist": {
+    "kind": "chain",
+    "nodes": [
+      {
+        "icon": "search",
+        "label": "Detect the app type"
+      },
+      {
+        "icon": "question",
+        "label": "Confirm sizes and target",
+        "arrow": "you answer"
+      },
+      {
+        "icon": "check-circle",
+        "label": "Test sessions written",
+        "arrow": "after your go-ahead",
+        "outcome": true
+      }
+    ]
+  },
+  "bottom_line": "Run it in your app's repo. Answer a few questions, approve the coverage summary, and get test sessions, each with its own model.",
+  "sections": [
+    {
+      "heading": "Run it in the app's repository",
+      "short": "Run it",
+      "blocks": [
+        {
+          "type": "code",
+          "code": "/pre-deploy-tests:plan [--full]",
+          "caption": "With no argument, a later run plans only what changed since the last plan. --full plans everything again."
+        },
+        {
+          "type": "text",
+          "text": "It needs the `plan-tools`, `model-picker` and `user-flows` plugins, which install with it, and a git repository. It plans only: it runs no test and changes no app code."
+        },
+        {
+          "type": "table",
+          "title": "What it detects before asking",
+          "columns": [
+            "Found in the repo",
+            "App type"
+          ],
+          "rows": [
+            [
+              "`@capacitor/core` or `capacitor.config.*`",
+              "Web + native (Capacitor)"
+            ],
+            [
+              "`expo` or `react-native` in `package.json`",
+              "Native (React Native / Expo)"
+            ],
+            [
+              "`*.xcodeproj` or `build.gradle` alone",
+              "Native iOS or Android"
+            ],
+            [
+              "A web framework and none of the above",
+              "Web only"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Answer one round of questions",
+      "short": "The questions",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "What you are asked",
+          "columns": [
+            "Question",
+            "Choices"
+          ],
+          "rows": [
+            [
+              "App type",
+              "Web only, web + native, native only; iOS, Android or both"
+            ],
+            [
+              "Device classes",
+              "Desktop 1440x900, tablet 820x1180, phone 390x844, small phone 360x640"
+            ],
+            [
+              "Orientations",
+              "Portrait only, or portrait and landscape"
+            ],
+            [
+              "Firefox",
+              "Tested only if you support it. Chromium and WebKit are always tested."
+            ],
+            [
+              "Dark mode, right-to-left, languages",
+              "Asked only when the code has them"
+            ],
+            [
+              "Test target",
+              "The default branch run locally, or an integration environment URL"
+            ],
+            [
+              "Highest model",
+              "Opus (default), Fable, Sonnet or Haiku"
+            ]
+          ]
+        },
+        {
+          "type": "text",
+          "text": "The detected answer comes first. A later run asks only the test target and the highest model. For a local target on a project not made from a template, it also asks once how to start the app on a given port and database."
+        }
+      ]
+    },
+    {
+      "heading": "Approve the coverage summary",
+      "short": "Approve",
+      "blocks": [
+        {
+          "type": "chain",
+          "nodes": [
+            {
+              "icon": "file",
+              "label": "Test spec drafted",
+              "note": "Every item traces to a user flow, a screen or a source file."
+            },
+            {
+              "icon": "chart",
+              "label": "Model per session",
+              "arrow": "pick-model",
+              "note": "A pick above your highest model gets that model with one more effort level."
+            },
+            {
+              "icon": "flag",
+              "label": "Summary shown",
+              "arrow": "you review",
+              "note": "Areas, platforms, sizes, sessions and their models."
+            },
+            {
+              "icon": "check-circle",
+              "label": "Sessions written",
+              "arrow": "you say go",
+              "outcome": true
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "If `user-flows.md` exists, every flow becomes a test item. If not, it offers to extract the flows first, or plans from the code."
+        },
+        {
+          "type": "list",
+          "title": "Areas it covers",
+          "items": [
+            "Logic: user flows, validation, permissions, data changes, errors, double submits, session expiry, existing test suites.",
+            "UI: layout, every size and orientation, typography, color and dark mode, states, forms, navigation, modals, scrolling, touch, animation, browsers.",
+            "Native shell: safe areas, status bar, keyboard, splash, permissions, background and resume, offline, tablets.",
+            "Accessibility and performance."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "What you get",
+      "short": "The output",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "Files in .pre-deploy-tests/",
+          "columns": [
+            "File",
+            "Committed"
+          ],
+          "rows": [
+            [
+              "`SPEC.md`: the test plan",
+              "No"
+            ],
+            [
+              "`sessions/session-NN.md`: one per session, with its model, effort, platform copies and what it covers",
+              "No"
+            ],
+            [
+              "`progress.md`: session, model and status table",
+              "No"
+            ],
+            [
+              "`record.json`: what the next plan needs to test only the change",
+              "Yes, after you agree"
+            ]
+          ]
+        },
+        {
+          "type": "cards",
+          "cards": [
+            {
+              "title": "Commit status",
+              "state": "info",
+              "text": "A `pre-deploy-tests` status on the planned commit says how many sessions were planned. If it cannot be written, you are told; the plan still stands."
+            },
+            {
+              "title": "Old files archived",
+              "state": "info",
+              "text": "A new plan moves the earlier spec, sessions and bugs to `archive/<date>/`."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "next_action": {
+    "text": "Open your app's repository and type `/pre-deploy-tests:plan`.",
+    "detail": "Have the integration environment URL ready if you test there rather than on the default branch."
+  },
+  "sources": [
+    {
+      "label": "pre-deploy-tests on GitHub",
+      "url": "https://github.com/wovemind-sg/claude-marketplace/tree/main/plugins/pre-deploy-tests"
+    }
+  ]
+}

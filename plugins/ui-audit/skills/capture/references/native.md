@@ -71,6 +71,18 @@ adb uninstall "$APP_ID"                                  # reset between base an
 
 Taps when no deep link exists: `adb shell input tap X Y` or `adb shell input text`, and `uiautomator dump` to find element bounds by accessibility label. `screenrecord` has a 3 minute cap and needs the clip kept short anyway.
 
+## Rotation and tablets
+
+Config `orientations` (see `config-schema.md`) applies to native too: with `landscape` in it, capture each state a second time after rotating, into `<device>-landscape` (for example `iphone-15-landscape`, `pixel-8-landscape`). Rotate back to portrait before the next portrait capture. Wait about a second after rotating so the layout settles.
+
+- iOS rotation (untested on a device, like the rest of this file): `xcrun simctl` has no rotate command; rotate the Simulator window with its keyboard shortcut (Device > Rotate Left is Cmd+Left arrow). The keystroke goes to the frontmost Simulator window, so first raise the window of the device you capture by its name (the window title starts with the device name, for example `iPhone 15`):
+  `osascript -e 'tell application "Simulator" to activate' -e 'tell application "System Events" to tell process "Simulator" to perform action "AXRaise" of (first window whose name starts with "iPhone 15")' -e 'tell application "System Events" to key code 123 using command down'` (key code 124, Cmd+Right arrow, rotates back). It needs the Simulator window open (`open -a Simulator`). Even so, keep one iOS simulator booted at a time (`xcrun simctl shutdown <udid>` before booting the next, for example the iPad after the iPhone), so a wrong window can never rotate.
+- Accessibility permission: the raise and the keystroke need macOS Accessibility permission for the app that runs the commands (the terminal or IDE), in System Settings > Privacy & Security > Accessibility. `osascript -e 'tell application "System Events" to UI elements enabled'` prints `true` when it is granted. Without it the command fails with an error such as `osascript is not allowed to send keystrokes` or `not allowed assistive access`, and nothing rotates.
+- Android rotation: `adb shell settings put system accelerometer_rotation 0` (stop auto-rotate), then `adb shell settings put system user_rotation 1` for landscape and `... user_rotation 0` for portrait.
+- iPad: `xcrun simctl list devices available | grep iPad`, then boot and use it like the iPhone (`"device": "iPad Air 11-inch (M2)"` in `config.native.ios`). Folder name after the device (`ipad-air-11`).
+- Android tablet: an AVD with a tablet profile, for example `avdmanager create avd -n Pixel_Tablet_API_34 -k "system-images;android-34;google_apis;arm64-v8a" -d pixel_tablet` (install the system image first with `sdkmanager`), then `emulator -avd Pixel_Tablet_API_34` as above. Folder `pixel-tablet`.
+- Capture phone and tablet as separate devices in separate runs of the commands above, each compared only with itself (same device on base and head).
+
 ## Expo / React Native specifics
 
 - Dev client or release-like build: install a development build (`eas build --profile development --platform ios|android --local`, or `npx expo run:ios|android`), then point it at the Metro server for the commit being captured. Expo Go works only when the app uses no custom native code.

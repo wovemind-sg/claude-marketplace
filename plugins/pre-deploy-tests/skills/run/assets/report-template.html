@@ -1,0 +1,232 @@
+<meta charset="utf-8">
+<title>{{PROJECT}} Pre-deploy Tests</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one triage column. Verdict band first, then severity tallies, sessions, and one bug card per bug with its evidence and the Fix / Skip decision. */
+:root{
+  --paper:#f3f5f7; --sheet:#ffffff; --ink:#17212b; --dim:#566372; --rule:#d9e0e6; --wash:#e9eef2;
+  --accent:#0f6f86; --accent-wash:#dcf0f4;
+  --blocker:#b4233c; --blocker-wash:#fbe7ea;
+  --major:#a14e0b; --major-wash:#fdeedd;
+  --minor:#7a6a00; --minor-wash:#f6f0cf;
+  --cosmetic:#5a5f8f; --cosmetic-wash:#ebecf6;
+  --ok:#17784a; --ok-wash:#def3e7;
+  --f-head:"Space Grotesk","Segoe UI",system-ui,sans-serif;
+  --f-body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#11171d; --sheet:#182029; --ink:#e3e9ee; --dim:#97a5b3; --rule:#2a3541; --wash:#202a35;
+  --accent:#5cc3db; --accent-wash:#163640;
+  --blocker:#ff8597; --blocker-wash:#3b1a21; --major:#ffaa63; --major-wash:#3a2614;
+  --minor:#e2cf5b; --minor-wash:#332e12; --cosmetic:#aeb2e8; --cosmetic-wash:#252840;
+  --ok:#62d398; --ok-wash:#163222; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#11171d; --sheet:#182029; --ink:#e3e9ee; --dim:#97a5b3; --rule:#2a3541; --wash:#202a35;
+  --accent:#5cc3db; --accent-wash:#163640;
+  --blocker:#ff8597; --blocker-wash:#3b1a21; --major:#ffaa63; --major-wash:#3a2614;
+  --minor:#e2cf5b; --minor-wash:#332e12; --cosmetic:#aeb2e8; --cosmetic-wash:#252840;
+  --ok:#62d398; --ok-wash:#163222; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.6 var(--f-body);padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:880px;margin:0 auto;display:grid;gap:28px}
+h1,h2,h3,h4{font-family:var(--f-head);text-wrap:balance;margin:0}
+h1{font-size:clamp(26px,4.5vw,36px);line-height:1.15;font-weight:700}
+h2{font-size:20px;font-weight:600;display:flex;gap:10px;align-items:baseline}
+h3{font-size:18px;font-weight:600;line-height:1.3}
+h4{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--dim)}
+p{margin:0}
+code,.mono{font-family:var(--f-mono);font-size:13px}
+code{background:var(--wash);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.head{display:grid;gap:6px}
+.sub{color:var(--dim)}
+/* Verdict band: the one loud element on the page. */
+.verdict{display:grid;gap:8px;padding:18px 20px;border-radius:10px;background:var(--blocker-wash);color:var(--ink);border:1px solid var(--blocker)}
+.verdict[data-v="ready"]{background:var(--ok-wash);border-color:var(--ok)}
+.verdict b{font:700 22px/1.2 var(--f-head);color:var(--blocker)}
+.verdict[data-v="ready"] b{color:var(--ok)}
+.verdict ul{margin:0;padding-left:20px}
+.tally{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.tally div{background:var(--sheet);border:1px solid var(--rule);border-radius:8px;padding:12px 14px;display:grid;gap:2px}
+.tally b{font:600 28px/1 var(--f-head);font-variant-numeric:tabular-nums}
+.tally span{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+.tally .blocker b{color:var(--blocker)}.tally .major b{color:var(--major)}.tally .minor b{color:var(--minor)}.tally .cosmetic b{color:var(--cosmetic)}
+.decided{color:var(--dim);font-size:14px}
+.decided b{color:var(--ink);font-variant-numeric:tabular-nums}
+.tw{overflow-x:auto;background:var(--sheet);border:1px solid var(--rule);border-radius:8px}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:14px}
+th,td{text-align:left;padding:8px 12px;border-top:1px solid var(--rule);vertical-align:top}
+th{border-top:0;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);font-weight:600}
+td:first-child{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.st-complete{color:var(--ok);font-weight:600}.st-blocked{color:var(--blocker);font-weight:600}
+.bugs{display:grid;gap:16px}
+/* Bug card: severity stripe on the left, evidence inside. */
+.bug{background:var(--sheet);border:1px solid var(--rule);border-left:5px solid var(--sev);border-radius:8px;padding:16px 18px;display:grid;gap:14px;min-width:0}
+.bug[data-sev="blocker"]{--sev:var(--blocker);--sev-wash:var(--blocker-wash)}
+.bug[data-sev="major"]{--sev:var(--major);--sev-wash:var(--major-wash)}
+.bug[data-sev="minor"]{--sev:var(--minor);--sev-wash:var(--minor-wash)}
+.bug[data-sev="cosmetic"]{--sev:var(--cosmetic);--sev-wash:var(--cosmetic-wash)}
+.bug.is-skip{opacity:.6}
+.bug header{display:grid;gap:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{font:500 11.5px/1 var(--f-mono);padding:4px 7px;border-radius:4px;background:var(--wash);color:var(--dim);letter-spacing:.02em}
+.chip.sev{background:var(--sev-wash);color:var(--sev);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.chip.id{color:var(--ink)}
+.chip.s-fixing{background:var(--accent-wash);color:var(--accent)}
+.chip.s-fixed{background:var(--ok-wash);color:var(--ok)}
+.chip.s-norepro,.chip.s-attention{background:var(--major-wash);color:var(--major)}
+.meaning{font-size:16px}
+.facts{display:grid;grid-template-columns:110px 1fr;gap:6px 14px;margin:0;font-size:14px}
+.facts dt{color:var(--dim)}
+.facts dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.facts ul{margin:0;padding-left:18px}
+.ea{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ea>div{background:var(--wash);border-radius:6px;padding:10px 12px;display:grid;gap:4px;min-width:0;overflow-wrap:anywhere}
+.blk{display:grid;gap:6px;min-width:0}
+.blk ol{margin:0;padding-left:20px}
+.media{display:grid;align-items:start;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+figure{margin:0;display:grid;gap:4px;min-width:0}
+figure img,figure video{display:block;max-width:100%;width:100%;height:auto;max-height:520px;object-fit:contain;background:var(--wash);border:1px solid var(--rule);border-radius:6px}
+figcaption{font-size:13px;color:var(--dim);overflow-wrap:anywhere}
+.after{border-top:1px dashed var(--rule);padding-top:12px}
+.fp pre{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.5 var(--f-mono);background:var(--wash);border-radius:6px;padding:10px 12px;margin:8px 0 0}
+.fp summary{cursor:pointer;font:600 14px var(--f-head)}
+.act{display:flex;flex-wrap:wrap;gap:10px;align-items:center;border-top:1px solid var(--rule);padding-top:12px}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.seg button{font:600 13px var(--f-body);padding:7px 16px;border:0;background:var(--sheet);color:var(--ink);cursor:pointer}
+.seg button+button{border-left:1px solid var(--rule)}
+.seg button[aria-pressed="true"][data-k="fix"]{background:var(--accent);color:var(--sheet)}
+.seg button[aria-pressed="true"][data-k="skip"]{background:var(--dim);color:var(--sheet)}
+.btn{font:600 13px var(--f-body);padding:7px 14px;border-radius:8px;border:1px solid var(--rule);background:var(--sheet);color:var(--ink);cursor:pointer}
+.ro{font-size:14px;color:var(--dim)}
+.ro b{color:var(--ink)}
+.note{font-size:13px;color:var(--dim)}
+footer{color:var(--dim);font-size:13px}
+@media (max-width:560px){.tally{grid-template-columns:repeat(2,1fr)}.ea{grid-template-columns:1fr}.facts{grid-template-columns:1fr}.facts dd{padding-bottom:6px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<!-- Fill by the comments. Escape &, < and > in every text taken from a record, and " in attribute values.
+     data-repo is owner/name: the plan and fix skills find this page by its title and data-repo. -->
+<main data-repo="{{OWNER/NAME}}">
+<div class="head">
+<h1>{{PROJECT}} pre-deploy tests</h1>
+<p class="sub">Tested commit <code>{{SHA7}}</code> of <code>{{BRANCH or integration URL}}</code> on {{YYYY-MM-DD}} · copies: {{chromium, webkit, ios, ...}}</p>
+</div>
+
+<!-- data-v: "ready" or "not-ready". Reasons: every Blocker/Major count and every blocked session. Ready: one line "All sessions complete; no Blocker or Major bug." -->
+<section class="verdict" data-v="{{not-ready}}" aria-label="Verdict">
+<b>{{Not ready}}</b>
+<ul><li>{{1 Blocker, 2 Major open}}</li><li>{{Session 04 blocked: android: no emulator}}</li></ul>
+</section>
+
+<section class="tally" aria-label="Bugs by severity">
+<div class="blocker"><b>{{N}}</b><span>Blocker</span></div>
+<div class="major"><b>{{N}}</b><span>Major</span></div>
+<div class="minor"><b>{{N}}</b><span>Minor</span></div>
+<div class="cosmetic"><b>{{N}}</b><span>Cosmetic</span></div>
+</section>
+
+<section class="blk">
+<h2>How to use this page</h2>
+<p>Each card is one bug the test agents found and reproduced. Choose <b>Fix</b> or <b>Skip</b> on every card; a bug with no choice is undecided, and <code>/pre-deploy-tests:fix</code> asks about undecided bugs before it starts. Choices and fix progress are shared with everyone who can open this page; only people who can edit it can change a choice.</p>
+<p class="decided" id="decided">Decisions: loading…</p>
+</section>
+
+<section class="blk">
+<h2>Sessions</h2>
+<div class="tw"><table>
+<tr><th>Session</th><th>Title</th><th>Model</th><th>Copies</th><th>Status</th></tr>
+<!-- One row per session. Status cell class st-complete or st-blocked ("Blocked: <copy>: <reason>"). -->
+<tr><td>{{01}}</td><td>{{title}}</td><td>{{opus high}}</td><td>{{chromium, webkit}}</td><td class="st-complete">Complete</td></tr>
+</table></div>
+</section>
+
+<section class="blk">
+<h2>Bugs</h2>
+<div class="bugs">
+<!-- One article per bug, Blocker first, then Major, Minor, Cosmetic; by number inside each.
+     data-id: BUG-NNN (the shared-state key; never change it). data-sev: blocker | major | minor | cosmetic.
+     The script adds the Fix / Skip switch, the status chip and PR link, and Copy fix prompt.
+     Captures: <img> for .png, <video controls muted playsinline preload="metadata"> for .webm/.mov/.mp4.
+     The .after section stays empty here; the fix skill adds "after" figures to it when it republishes. -->
+<article class="bug" data-id="{{BUG-001}}" data-sev="{{blocker}}">
+<header>
+<div class="chips"><span class="chip id">{{BUG-001}}</span><span class="chip sev">{{Blocker}}</span><span class="chip">{{area}}</span></div>
+<h3>{{title}}</h3>
+</header>
+<p class="meaning">{{Meaning}}</p>
+<dl class="facts">
+<dt>Where</dt><dd><ul><li>{{webkit, phone 390x844, landscape, /checkout}}</li></ul></dd>
+<dt>Found by</dt><dd>{{session 03, T-014, sonnet}}</dd>
+<dt>Reproduced</dt><dd>{{3/3 (webkit), 3/3 (chromium)}}</dd>
+</dl>
+<div class="ea"><div><h4>Expected</h4><p>{{Expected}}</p></div><div><h4>Actual</h4><p>{{Actual}}</p></div></div>
+<div class="blk"><h4>Steps</h4><ol><li>{{step}}</li></ol></div>
+<div class="blk"><h4>Captures</h4><div class="media">
+<figure><img src="{{BUG-001/captures/webkit-phone-landscape.png}}" alt="{{what it shows}}" loading="lazy"><figcaption>{{copy, size, orientation: what it shows}}</figcaption></figure>
+</div></div>
+<!-- Reproduction script: link the published file and show its text inline (the viewer cannot download files). No script: <p>None.</p> and no details. -->
+<div class="blk"><h4>Reproduction script</h4><p><a href="{{BUG-001/repro.js}}" target="_blank" rel="noopener">{{repro.js}}</a> {{how to run it}}</p><details class="fp"><summary>Show script</summary><pre>{{script text, escaped}}</pre></details></div>
+<div class="blk"><h4>Suspected cause</h4><p>{{file:line and why, or unknown}}</p></div>
+<details class="fp"><summary>Fix prompt</summary><pre>{{fix prompt}}</pre></details>
+<section class="blk after" hidden><h4>After the fix</h4><div class="media"></div></section>
+</article>
+</div>
+</section>
+
+<footer>Generated by <code>/pre-deploy-tests:run</code>. Bug files live in <code>.pre-deploy-tests/bugs/</code> in the repository; this page shows them as they were at the end of the run.</footer>
+</main>
+<script>
+/* Shared state: collection "choice" (doc = bug id, {choice: "fix"|"skip"}, editors set it here)
+   and collection "status" (doc = bug id, {status, pr, note}, written by /pre-deploy-tests:fix). */
+(function(){
+var SL={fixing:"Fixing",fixed:"Fixed",norepro:"Could not reproduce",attention:"Needs attention"};
+var ch={},st={},canWrite=false,db=null,ready=false;
+var bugs=[].slice.call(document.querySelectorAll(".bug"));
+var dec=document.getElementById("decided");
+function copy(s){if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(s);return Promise.reject()}
+bugs.forEach(function(b){
+var af=b.querySelector(".after");if(af&&af.querySelector("figure"))af.hidden=false;
+var act=document.createElement("div");act.className="act";
+var slot=document.createElement("span");slot.className="ctl";act.appendChild(slot);
+var pre=b.querySelector(".fp pre");
+if(pre){var cp=document.createElement("button");cp.type="button";cp.className="btn";cp.textContent="Copy fix prompt";
+cp.onclick=function(){copy(pre.textContent).then(function(){cp.textContent="Copied"},function(){cp.textContent="Copy failed"}).then(function(){setTimeout(function(){cp.textContent="Copy fix prompt"},1500)})};act.appendChild(cp)}
+var pr=document.createElement("span");pr.className="note";act.appendChild(pr);
+b.appendChild(act);b._slot=slot;b._pr=pr;
+});
+function set(id,k){if(!db)return;var r=db.collection("choice").doc(id);(k?r.set({choice:k}):r.delete()).catch(function(){dec.textContent="Your choice was not saved. Reload the page and try again."})}
+function render(){
+var n={fix:0,skip:0,none:0};
+bugs.forEach(function(b){
+var id=b.dataset.id,c=ch[id],s=st[id]||{};
+n[c==="fix"||c==="skip"?c:"none"]++;
+b.classList.toggle("is-skip",c==="skip");
+var chips=b.querySelector(".chips"),old=chips.querySelector(".chip.status");if(old)old.remove();
+if(SL[s.status]){var t=document.createElement("span");t.className="chip status s-"+s.status;t.textContent=SL[s.status];chips.appendChild(t)}
+b._pr.textContent="";
+if(/^https:\/\//i.test(s.pr)){var a=document.createElement("a");a.href=s.pr;a.textContent="Pull request";a.target="_blank";a.rel="noopener";b._pr.appendChild(a)}
+if(s.note){b._pr.appendChild(document.createTextNode((s.pr?" · ":"")+s.note))}
+var slot=b._slot;slot.textContent="";slot.className="ctl";
+if(canWrite){var seg=document.createElement("span");seg.className="seg";seg.setAttribute("role","group");seg.setAttribute("aria-label","Decision for "+id);
+[["fix","Fix"],["skip","Skip"]].forEach(function(p){var bt=document.createElement("button");bt.type="button";bt.dataset.k=p[0];bt.textContent=p[1];bt.setAttribute("aria-pressed",String(c===p[0]));bt.onclick=function(){set(id,c===p[0]?null:p[0])};seg.appendChild(bt)});
+slot.appendChild(seg)}
+else{slot.className="ro";slot.innerHTML="Decision: <b></b>";slot.querySelector("b").textContent=c==="fix"?"Fix":c==="skip"?"Skip":"Undecided"}
+});
+dec.innerHTML=ready?"Decisions: <b>"+n.fix+"</b> to fix · <b>"+n.skip+"</b> skipped · <b>"+n.none+"</b> undecided":"Decisions are shown when the page is opened on claude.ai.";
+}
+render();
+if(!window.claude||!claude.use)return;
+Promise.all([claude.use("db"),claude.use("user")]).then(async function(a){
+db=a[0];if(!db)return;
+try{canWrite=a[1]?await a[1].canEdit():false}catch(e){}
+ready=true;render();
+db.collection("choice").onSnapshot(function(s){ch={};s.docs.forEach(function(d){ch[d.id]=d.data().choice});render()},function(){});
+db.collection("status").onSnapshot(function(s){st={};s.docs.forEach(function(d){st[d.id]=d.data()});render()},function(){});
+}).catch(function(){});
+})();
+</script>

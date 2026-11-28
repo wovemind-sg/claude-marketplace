@@ -63,7 +63,7 @@ None are needed to publish as a Claude artifact. To publish to Cloudflare Pages,
 |---|---|
 | Publish as a private Claude artifact | `--publish cloudflare`, or `hosting.target` in `.ui-audit/config.json` |
 | Compare base and head (`base+head`), showing only screens that really changed | `--baseline head-only` or `--baseline head+base-related` |
-| Capture desktop 1440x900 and mobile 390x844 | viewports in `.ui-audit/config.json` |
+| Capture desktop 1440x900 and mobile 390x844 (new setups are also offered tablet 820x1180), portrait, Chromium | `viewports`, `orientations` and `web.browsers` in `.ui-audit/config.json` |
 | Light theme only; dark is captured too once the repo opts in with a `dark_mode` object in `.ui-audit/config.json` | `--themes light` for a quick run |
 | Helper subagents run on the `haiku` model | `--model <name>` |
 | Audit only what changed since the last audited commit | `--full` |
@@ -72,7 +72,7 @@ None are needed to publish as a Claude artifact. To publish to Cloudflare Pages,
 ## Repo metadata
 
 Committed in the target repo under `.ui-audit/`:
-- `config.json`: platforms, launch command and base URL, login and seed data, hosting target and Cloudflare Pages project name (`hosting`), viewports (default desktop 1440x900 and mobile 390x844 with touch, via browser emulation), screens and states, masked regions, diff thresholds, default baseline mode, native device settings. Platform ids: `web`, `capacitor-ios`, `capacitor-android`, `expo-ios`, `expo-android`.
+- `config.json`: platforms, launch command and base URL, login and seed data, hosting target and Cloudflare Pages project name (`hosting`), viewports (default desktop 1440x900 and mobile 390x844 with touch, via browser emulation; tablet 820x1180 offered to new setups), orientations (portrait, landscape) and web browsers (Chromium, WebKit), each extra one captured into its own folder such as `mobile-landscape` or `mobile-webkit`, screens and states, masked regions, diff thresholds, default baseline mode, native device settings. Platform ids: `web`, `capacitor-ios`, `capacitor-android`, `expo-ios`, `expo-android`.
 - `manifest.json`: maintained by the skill. Per screen its dependency files, hash, last audited sha, interaction recipes and motion entries; shared files and the screens they affect; ripple notes. This is what makes repeat runs cheap: only screens whose hash changed are re-captured and the model reasons only about new screens and shared-file ripples.
 
 Full schemas: `skills/capture/references/config-schema.md`.

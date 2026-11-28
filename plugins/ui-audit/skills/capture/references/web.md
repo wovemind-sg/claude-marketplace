@@ -10,7 +10,7 @@ python3 -I "${CLAUDE_SKILL_DIR}/scripts/capture.py" --config .ui-audit/config.js
   --screens home,login --themes light+dark      # --screens default: every config screen
 ```
 
-It opens one playwright-cli session per side x viewport x theme (`head-mobile-dark`), all in parallel, each running one `run-code` call that loops over its jobs and does exactly what the sections below describe: `state-load` of `web.storage_state`, `resize`, mobile emulation, dark setup, a fresh `goto` per state, freeze CSS plus `web.freeze_css`, fonts and network idle, the recipe steps (shapes in `config-schema.md`), the full-page routine (or a viewport shot for `full_page: false`). It writes the layout below plus `<state>.txt` (page text after the steps) and prints JSON:
+It opens one playwright-cli session per side x viewport variant x theme (`head-mobile-dark`, `head-mobile-landscape-webkit`; variants in "Orientation and browser engine"), all in parallel, each running one `run-code` call that loops over its jobs and does exactly what the sections below describe: `state-load` of `web.storage_state`, `resize`, mobile emulation, dark setup, a fresh `goto` per state, freeze CSS plus `web.freeze_css`, fonts and network idle, the recipe steps (shapes in `config-schema.md`), the full-page routine (or a viewport shot for `full_page: false`). It writes the layout below plus `<state>.txt` (page text after the steps) and prints JSON:
 
 - `written`: PNG paths, each checked to exist at the viewport width.
 - `failed`: `{session, screen, state, key, error}`. A job that throws (bad selector, timeout, unknown step shape) does not stop the others. A dark session fails when its method left the page background and text color unchanged on every side (one side unchanged is fine: the base may predate dark mode; a base-only call never fails on this). An `--only` rerun of a dark item without its light item still gets this check: the dark session reads the light colors itself before it switches theme (no extra screenshot). Rerun fixed items with `--only <key> ...`. Exit code 1 when anything failed.
@@ -30,6 +30,8 @@ Use the `playwright-cli` skill for the browser. Commands below were verified aga
 $WORK/base/<screen>/<viewport>/<state>.png
 $WORK/head/<screen>/<viewport>/<state>.png
 ```
+
+`<viewport>` is the variant name: the config viewport, plus `-landscape` and `-<browser>` when config `orientations` and `web.browsers` add them (`mobile`, `mobile-landscape`, `mobile-webkit`, `mobile-landscape-webkit`). Portrait and Chromium add no suffix, so a config without those keys keeps its paths.
 
 Run `playwright-cli` from `$WORK` (it creates a `.playwright-cli/` dir in the current directory; do not let it land in the repo). `$WORK` is a scratch dir (for example `ui-audit-workspace/run-<sha>`). This exact layout is what `diff_images.py --base $WORK/base --head $WORK/head` expects and what `build_report.py` items point to. Use one playwright session per side and per viewport (`-s=head-mobile`) so emulation settings do not leak.
 
@@ -59,6 +61,14 @@ playwright-cli -s=head-mobile run-code "async page => {
 After emulating, check `playwright-cli -s=head-mobile eval innerWidth` (the value is under `### Result`) prints 390 and that the first screenshot is the expected width; a wrong size means every mobile diff is silently wrong. If the CDP route is unavailable (non-Chromium), fall back to `resize 390 844` alone and tell the user the mobile capture is viewport-only. Screenshots at DPR 3 are large; for diffing use DPR 1 unless config demands otherwise (set `deviceScaleFactor` from config, default to 1 for speed and consistent diffs). Use identical settings for base and head.
 
 Fallback that always works (used in the fixture): `playwright-cli -s=NAME resize 390 844`. It takes two separate args. Ignore the update banner on stderr.
+
+Tablet: the same emulation at 820x1180 (`deviceScaleFactor` 2, `mobile: true`, touch on, an iPad user agent such as `Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1`). In config it is a viewport like `mobile` (see `config-schema.md`).
+
+### Orientation and browser engine
+
+- Landscape: swap width and height (`resize 844 390` for the 390x844 phone), then re-apply the CDP emulation with the swapped values, since `resize` drops it. Only a viewport taller than wide gets a landscape variant; desktop already is landscape. Verified on the fixture: the `mobile-landscape` shot is 844 px wide.
+- Browser engine: `playwright-cli -s=NAME open --browser webkit` (also `firefox`, `chrome`, `msedge`; no flag means Chromium). WebKit needs a one-time `playwright-cli install-browser webkit`; without it `open` fails with `Browser "webkit" is not installed`. The CDP emulation above is Chromium-only, so a WebKit capture is viewport-only: `resize` to the size, no device pixel ratio, touch or mobile user agent. Say so in the report when it matters (a touch-only layout).
+- `capture.py` does both from config: `orientations` and `web.browsers` expand each viewport into variants, each with its own session and output folder. A state's `viewports` limit names the base viewport (`mobile`) and covers its variants.
 
 ## Stable stills
 
@@ -157,6 +167,41 @@ async page => {
 ```
 
 Use an absolute output path and generate the file with the path substituted for each side. If the selector does not match, the script times out after 30 s without stopping the screencast; close the session and rerun. Save clips as `$WORK/<side>/<screen>/<viewport>/<state>-<side>.webm` (the side in the file name keeps base and head clips from overwriting each other) and pass base and head clips to `build_report.py` as `clips` (head first, base second when both exist) along with the three stills. If the motion change has no still difference (like the fixture's c3 dropdown timing), the item is classified from the clip and the reason says that stills are identical.
+
+## One screenshot or one recording outside a comparison
+
+For a single capture of a running app, outside a base/head audit (for example a test agent recording evidence of a bug). Nothing else in this file is needed. Requires `playwright-cli` on PATH (WebKit also needs `playwright-cli install-browser webkit` once).
+
+1. Run from a scratch directory, never the repo root: `playwright-cli` writes a `.playwright-cli/` folder into the current directory. Use one named session per capture (`-s=NAME`) and an absolute output path.
+2. Open and size the page. Pick the size from the target: desktop 1440x900, tablet 820x1180, phone 390x844, small phone 360x640; landscape swaps width and height.
+   ```bash
+   playwright-cli -s=shot open "$URL"                    # Chromium; add --browser webkit for Safari's engine
+   playwright-cli -s=shot resize 390 844
+   ```
+3. Phone or tablet in Chromium: emulate the device after every `resize` (WebKit: skip this, the capture is viewport-only).
+   ```bash
+   playwright-cli -s=shot run-code "async page => {
+     const cdp = await page.context().newCDPSession(page);
+     await cdp.send('Emulation.setDeviceMetricsOverride', {width: 390, height: 844, deviceScaleFactor: 3, mobile: true});
+     await cdp.send('Emulation.setTouchEmulationEnabled', {enabled: true});
+     await page.reload();
+   }"
+   playwright-cli -s=shot eval innerWidth                # must print the width you set (under ### Result)
+   ```
+4. Bring the page to the state to show (`click`, `fill`, `press`, or `run-code` with Playwright calls), then wait for it: `run-code "async page => { await page.evaluate(() => document.fonts.ready); await page.waitForLoadState('networkidle'); }"`.
+5. Screenshot. Viewport only: `playwright-cli -s=shot screenshot --filename=/abs/path/shot.png`. Whole page: `run-code "async page => { await page.screenshot({path: '/abs/path/shot.png', fullPage: true}); }"` (a page with its own scrolling panels needs the full-page routine in "Stable stills" step 4).
+6. Recording: a `run-code` script that starts the screencast, performs the interaction, waits, and stops. It writes `.webm`. Keep it short (under 10 seconds).
+   ```js
+   // /abs/path/rec.js, run with: playwright-cli -s=shot run-code --filename=/abs/path/rec.js
+   async page => {
+     await page.screencast.start({ path: '/abs/path/clip.webm', size: { width: 390, height: 844 } });
+     await page.click('button[type=submit]');   // the interaction to show
+     await page.waitForTimeout(1500);
+     await page.screencast.stop();
+   }
+   ```
+   If a selector does not match, the script times out after 30 s without stopping the screencast: close the session and run it again.
+7. `playwright-cli -s=shot close`. Check the file exists and, for a PNG, that its width matches the size you set.
 
 ## Cleanup
 `playwright-cli -s=NAME close` for every session, `kill` the servers you started, remove the base worktree. Keep `$WORK` until the report is built (media gets copied into the audit dir).

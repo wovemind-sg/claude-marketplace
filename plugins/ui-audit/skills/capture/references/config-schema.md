@@ -18,10 +18,14 @@ Both files are committed in the target repo under `.ui-audit/`. No images are ev
     "login_steps": [],
     "seed": "make seed-fixtures",
     "feature_flags": {"new_nav": true},
-    "freeze_css": null
+    "freeze_css": null,
+    "browsers": ["chromium"]
   },
+  "orientations": ["portrait"],
   "viewports": {
     "desktop": {"width": 1440, "height": 900},
+    "tablet": {"width": 820, "height": 1180, "device_scale_factor": 2, "is_mobile": true, "has_touch": true,
+               "user_agent": "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"},
     "mobile": {"width": 390, "height": 844, "device_scale_factor": 3, "is_mobile": true, "has_touch": true,
                "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"}
   },
@@ -51,10 +55,12 @@ Field notes:
 - `web.storage_state`: path to a Playwright storage-state file (gitignored) for logged-in screens, or `null`. `login_steps` is an alternative: a list of `{goto|fill|click|press}` steps that produce a session, after which the skill runs `state-save` to create the file.
 - `web.seed`: command that makes the data deterministic. It must run in both worktrees against the same dataset.
 - `web.freeze_css`: extra CSS injected for stills besides the built-in animation freeze (see `web.md`).
-- `viewports`: names are free-form but `desktop` and `mobile` are the defaults. A viewport with `is_mobile`/`has_touch`/`device_scale_factor`/`user_agent` is captured through browser emulation (see `web.md`). Remember `dep_hash`/`diff_images` paths use the viewport name.
+- `viewports`: names are free-form but `desktop` and `mobile` are the defaults; `tablet` (820x1180, shown above) is offered to new setups only, so existing configs are unchanged. A viewport with `is_mobile`/`has_touch`/`device_scale_factor`/`user_agent` is captured through browser emulation (see `web.md`). Remember `dep_hash`/`diff_images` paths use the viewport name.
+- `orientations`: `["portrait"]` (default; absent means the same) or `["portrait", "landscape"]` (or `["landscape"]` alone). Landscape swaps a viewport's width and height and is captured into a `<viewport>-landscape` folder (`mobile-landscape`); a viewport already wider than tall (desktop) gets no landscape variant. Native platforms use the same key: rotate the device (`native.md` "Rotation and tablets").
+- `web.browsers`: `["chromium"]` (default; absent means the same), add `"webkit"` (Safari's engine) or `"firefox"`. Each extra engine is captured into a `<viewport>-<browser>` folder (`mobile-webkit`, with landscape `mobile-landscape-webkit`). Non-Chromium captures are viewport-only (no device pixel ratio, touch or mobile user agent emulation, see `web.md`). Portrait and Chromium add no suffix, so the paths of a config without these keys never change. These variant names are the viewport names everywhere downstream (`--only` keys, `diff_images.py` paths, the audit page).
 - `screens[].full_page`: default `true`; set `false` for a viewport-only screenshot of that screen (`references/web.md` step 4).
 - `screens[].route`: URL path (web) or deep link (native). Instead of a route, a screen can have `nav_steps` (list of steps replayed from the base URL), same step vocabulary as states.
-- `screens[].states[]`: `name` (file name, kebab-case), optional `steps`, optional `viewports` to limit where it applies. Each step is one of these shapes, and `capture.py` fails the state with a clear message on any other: `{"goto": path}` (opens a starting page, for a recipe that does not begin on the screen's own route), `{"click": selector}`, `{"hover": selector}`, `{"fill": selector, "value": text}`, `{"press": key}`, `{"wait_for": selector}`, `{"scroll_to": selector}`. Selectors are Playwright selectors; `press` is a keyboard key such as `Enter`. State `default` is always the page right after load and settle.
+- `screens[].states[]`: `name` (file name, kebab-case), optional `steps`, optional `viewports` to limit where it applies (base viewport names such as `mobile`; the limit covers that viewport's landscape and browser variants). Each step is one of these shapes, and `capture.py` fails the state with a clear message on any other: `{"goto": path}` (opens a starting page, for a recipe that does not begin on the screen's own route), `{"click": selector}`, `{"hover": selector}`, `{"fill": selector, "value": text}`, `{"press": key}`, `{"wait_for": selector}`, `{"scroll_to": selector}`. Selectors are Playwright selectors; `press` is a keyboard key such as `Enter`. State `default` is always the page right after load and settle.
 - `masks`: per screen name (or `*` for every screen), a list of `[x, y, w, h]` rectangles in screenshot pixels, passed to `diff_images.py --mask`. Use for clocks, avatars, ads, randomized content. Prefer fixing the data (seed) over masking.
 - `dark_mode`: omit until dark mode has been offered; `false` records that the app has no dark theme or the user declined, so it is not asked again. `method` is how dark is switched on, see `web.md` "Dark mode": `media` (`prefers-color-scheme`, also what Tailwind's default `darkMode: 'media'` uses), `class` (add `class`, default `dark`, to `<html>`) or `attribute` (set `attribute`, default `data-theme`, to `value`, default `dark`); optional `storage` `{"key": "theme", "value": "dark"}` is written to localStorage first for apps that read the preference on load. Optional `screens[].dark: false` skips dark for a screen, `states[].themes: ["light"]` for a state.
 - `hosting.target`: `artifact` (default; absent also means artifact) or `cloudflare`. Preselected in the per-run publish question; `--publish` overrides it. See `hosting.md`.
@@ -111,7 +117,7 @@ Ask with AskUserQuestion, a few questions at a time, offer discovered defaults s
 3. Does the app need login? Provide a test account or storage-state, or should I use an existing dev-login route?
 4. Is there seed/fixture data so screens look the same on every run? If not, which regions are dynamic (clocks, avatars, random content) and should be masked?
 5. Feature flags or env vars that need to be on for the screens to render?
-6. Viewports: keep desktop 1440x900 and mobile 390x844 (touch, DPR 3), or different?
+6. Viewports: desktop 1440x900, tablet 820x1180 (touch, DPR 2) and mobile 390x844 (touch, DPR 3); keep all three, drop some, or different sizes? Also: portrait only, or landscape too (`orientations`)? Chromium only, or WebKit too (`web.browsers`; web only)? Each extra orientation or browser roughly doubles the capture time.
 7. Default baseline mode (base+head recommended).
 8. Publish target: Claude artifact (default) or Cloudflare Pages; only if Cloudflare, the Pages project name (default `<repo-name>-ui-audit`). Write `hosting.target` (and the project).
 9. Only if dark mode was detected: capture dark too? Confirm the detected `dark_mode` method.

@@ -95,7 +95,7 @@
         },
         {
           "type": "text",
-          "text": "You can also use it to set up, refresh or inspect the `.ui-audit/` config and manifest in a repo. It works for web (Playwright, desktop and mobile emulation) and, for Capacitor/Expo apps, simulators and emulators."
+          "text": "You can also use it to set up, refresh or inspect the `.ui-audit/` config and manifest in a repo. It works for web (Playwright, desktop, tablet and mobile emulation, portrait and landscape, Chromium and WebKit) and, for Capacitor/Expo apps, simulators and emulators."
         }
       ]
     },
@@ -197,7 +197,7 @@
             "Does the app need login? Provide a test account or storage-state, or should I use an existing dev-login route?",
             "Is there seed/fixture data so screens look the same on every run? If not, which regions are dynamic (clocks, avatars, random content) and should be masked?",
             "Feature flags or env vars that need to be on for the screens to render?",
-            "Viewports: keep desktop 1440x900 and mobile 390x844 (touch, DPR 3), or different?",
+            "Viewports: desktop 1440x900, tablet 820x1180 and mobile 390x844, or different? Portrait only or landscape too? Chromium only or WebKit too?",
             "Default baseline mode (base+head recommended).",
             "Publish target: Claude artifact (default) or Cloudflare Pages. Only if Cloudflare, the Pages project name (default `<repo-name>-ui-audit`).",
             "Only if dark mode was detected: capture dark too? Confirm the detected `dark_mode` method."
@@ -326,7 +326,7 @@
           "items": [
             "Platforms, only if more than one is enabled in config: which to capture this run (for example web, iOS simulator, Android emulator). Native captures are slower, so you pick.",
             "Baseline mode, always (default `base+head`).",
-            "Viewports: confirm the configured ones (default desktop and mobile). Mobile is browser emulation on web.",
+            "Viewports: confirm the configured ones (default desktop and mobile; new setups also get tablet), with their orientations and, on web, browsers. Each landscape or WebKit variant gets its own folder (`mobile-landscape`, `mobile-webkit`) and roughly doubles the capture time.",
             "Publish target, unless `--publish` is given or the run is unattended: `Claude artifact` or `Cloudflare Pages`, with the config's `hosting.target` (default `artifact`) preselected.",
             "Themes, unless `--themes` is given, only if config has a `dark_mode` object (web only): `light+dark` (default) or `light` only. Dark doubles the captures, so `light` is offered for quick runs."
           ]
@@ -586,8 +586,8 @@
               "`--baseline head-only` or `--baseline head+base-related`"
             ],
             [
-              "Capture desktop 1440x900 and mobile 390x844",
-              "viewports in `.ui-audit/config.json`"
+              "Capture desktop 1440x900 and mobile 390x844 (new setups are also offered tablet 820x1180), portrait, Chromium",
+              "`viewports`, `orientations` and `web.browsers` in `.ui-audit/config.json`"
             ],
             [
               "Light theme only; dark is captured too once the repo opts in with a `dark_mode` object in `.ui-audit/config.json`",
@@ -611,7 +611,7 @@
           "type": "list",
           "title": "Committed in your repo under .ui-audit/",
           "items": [
-            "`config.json`: platforms, launch command and base URL, login and seed data, hosting target and Cloudflare Pages project name (`hosting`), viewports (default desktop 1440x900 and mobile 390x844 with touch, via browser emulation), screens and states, masked regions, diff thresholds, default baseline mode, native device settings.",
+            "`config.json`: platforms, launch command and base URL, login and seed data, hosting target and Cloudflare Pages project name (`hosting`), viewports (default desktop 1440x900 and mobile 390x844 with touch, via browser emulation; tablet 820x1180 offered to new setups), orientations (portrait, landscape) and web browsers (Chromium, WebKit), screens and states, masked regions, diff thresholds, default baseline mode, native device settings.",
             "Platform ids in `config.json`: `web`, `capacitor-ios`, `capacitor-android`, `expo-ios`, `expo-android`.",
             "`manifest.json`: maintained by the skill. Only screens whose hash changed are re-captured on repeat runs."
           ]

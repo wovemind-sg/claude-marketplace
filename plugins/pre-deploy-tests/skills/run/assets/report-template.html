@@ -211,7 +211,7 @@ if(SL[s.status]){var t=document.createElement("span");t.className="chip status s
 b._pr.textContent="";
 if(s.pr){var a=document.createElement("a");a.href=s.pr;a.textContent="Pull request";a.target="_blank";a.rel="noopener";b._pr.appendChild(a)}
 if(s.note){b._pr.appendChild(document.createTextNode((s.pr?" · ":"")+s.note))}
-var slot=b._slot;slot.textContent="";
+var slot=b._slot;slot.textContent="";slot.className="ctl";
 if(canWrite){var seg=document.createElement("span");seg.className="seg";seg.setAttribute("role","group");seg.setAttribute("aria-label","Decision for "+id);
 [["fix","Fix"],["skip","Skip"]].forEach(function(p){var bt=document.createElement("button");bt.type="button";bt.dataset.k=p[0];bt.textContent=p[1];bt.setAttribute("aria-pressed",String(c===p[0]));bt.onclick=function(){set(id,c===p[0]?null:p[0])};seg.appendChild(bt)});
 slot.appendChild(seg)}
